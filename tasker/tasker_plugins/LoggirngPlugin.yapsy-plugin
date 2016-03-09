@@ -1,0 +1,9 @@
+[Core]
+Name = Logging Plugin
+Module = LoggingPlugin
+
+[Documentation]
+Author = Josh ENglish
+Version = 0.1
+Website = http://joshuarenglish.com
+Description = Prints activities in the task manager.
