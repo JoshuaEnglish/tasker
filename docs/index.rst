@@ -3,13 +3,22 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to tasker's documentation!
+Welcome to Tasker's documentation!
 ==================================
 
-Contents:
+Tasker is another text-based file that follows some of Gina Trapani's Todo.txt
+format and interface rules.
+
+Tasker is extensible, allowing users to write their own commands and
+subprograms.
+
+
+Using Tasker:
 
 .. toctree::
    :maxdepth: 2
+
+   basic_usage
 
 
 

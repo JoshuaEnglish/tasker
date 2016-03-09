@@ -15,8 +15,7 @@ import logging
 
 logging.basicConfig(format="%(asctime)s %(name)s %(levelname)s: %(message)s in %(module)s:%(funcName)s",
                    datefmt="%Y-%m-%d %I:%M:%S %p")
-logging.getLogger('bosscmd').setLevel(logging.DEBUG)
-logging.getLogger('minioncmd').setLevel(logging.DEBUG)
+
 
 
 class BossCmd(cmd.Cmd):
@@ -136,7 +135,9 @@ class BossCmd(cmd.Cmd):
         return stop 
 
     def onecmd(self, line):
-        """Process a single command and process the cmdqueue"""
+        """Process a single command and process the cmdqueue
+        :rtype: boolean
+        """
         stop = super().onecmd( line)
         while len(self.cmdqueue):
             text = self.cmdqueue.pop(0)
@@ -183,6 +184,10 @@ class MinionCmd(cmd.Cmd):
         self.stdout.write('*** Unknown %s syntax: %s\n'% (self.__class__.__name__, line))
 
 if __name__=='__main__':
+    logging.getLogger('bosscmd').setLevel(logging.DEBUG)
+    logging.getLogger('minioncmd').setLevel(logging.DEBUG)
+    
+    
     class SubmissionCmd(MinionCmd):
         doc_leader = "Help for SubmissionCmd"
 
@@ -209,5 +214,3 @@ if __name__=='__main__':
     Mark = MarketCmd('market', Boss)
 
     Boss.onecmd('story market hello from onecmd')
-
-    

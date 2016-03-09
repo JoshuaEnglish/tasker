@@ -20,8 +20,8 @@ import minioncmd
 import basetaskerplugin
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m%d %I:%M:%S %p')
-logging.getLogger('plugin').setLevel(logging.DEBUG)
-logging.getLogger('bosscmd').setLevel(logging.DEBUG)
+#logging.getLogger('plugin').setLevel(logging.DEBUG)
+#logging.getLogger('bosscmd').setLevel(logging.DEBUG)
 
 config = configparser.ConfigParser()
 config.read_dict({'Files': {'tasker-dir': os.path.join(os.environ['APPDATA'], 'tasker'),
@@ -45,19 +45,23 @@ class TaskCmd(minioncmd.BossCmd):
     prompt = "tasker> "
     doc_leader = "Tasker Help"
 
+    def help_list(self):
+        list_parser.print_help()
+
     def do_list(self, line):
+        "Lists tasks"
         args = list_parser.parse_args(line.split())
-        #print(args)
         print(list_tasks(**vars(args)))
 
     def do_add(self, line):
+        """Add a task"""
         args = add_parser.parse_args(line.split())
-        #print(args)
         print(add_task(" ".join(args.text)))
         
     def do_do(self, line):
+        """Mark a task as complete"""
         args = do_parser.parse_args(line.split())
-        #print(args)
+
         print(complete_task(args.tasknum, " ".join(args.comment)))
 
 c = TaskCmd()
@@ -67,7 +71,7 @@ manager.setPluginPlaces(["tasker_plugins" ])
 manager.setCategoriesFilter({
     "NewCommand": basetaskerplugin.NewCommandPlugin,
     "SubCommand": basetaskerplugin.SubCommandPlugin,
-    #"Generic": basetaskerplugin.TaskerPlugin,
+    "Generic": basetaskerplugin.TaskerPlugin,
 })
 
 # collectPlugins automatically loads plugins configured to load
@@ -76,7 +80,6 @@ manager.collectPlugins()
 for info in manager.getAllPlugins():
     if not info.is_activated:
         continue
-    print("Dealing with active plugin {} ({})".format(info.name, info.category))
     plugin = info.plugin_object
     if hasattr(plugin, 'cli'):
         name = getattr(plugin, 'cli_name')
@@ -125,7 +128,7 @@ list_parser.add_argument('-a', dest="showcomplete", action="store_true", default
 list_parser.add_argument('-u', dest="showuid", action="store_true", default=False,
                          help="Shows the unique ID of each task")
 
-add_parser =commands.add_parser('add', help="add a task")
+add_parser = commands.add_parser('add', help="add a task")
 add_parser.add_argument(nargs="+", dest="text",
                         help="text of the new task")
 
@@ -206,6 +209,12 @@ def parse_task(text):
 def graft(complete, priority, start, end, text):
     """Return a single line of text representing the task.
     Does not append a line return
+    :param boolean complete: True if task has been completed
+    :param str priority: Single letter A-W for priority, or blank
+    :param datetime.datetime start: Time the task was added to the list
+    :param datetime.datetime end: Time the task was completed (or None)
+    :param str text: remaining text of the task
+    :return: string representation of the task
     """
     res = []
     if complete:
@@ -222,6 +231,9 @@ def graft(complete, priority, start, end, text):
 
 def get_tasks(path):
     """Returns a dictionary of (line number (starting at 1), task text) pairs
+    :rtype: dict
+    :param path:
+    :return: dictionary of line number, text pairs
     """
     res = {}
     with open(path, 'r') as fp:
@@ -264,7 +276,7 @@ def add_task(text):
     err, msg, c, p, s, e, t = run_hooks('add_task', c, p, s, e, t, o, j, x)
     if err:
         return err, msg
-    print(c,p,s,e,t, sep=":")
+
     new_task = graft(c, p, s, e, t)
 
     with open(FILES['task-path'], 'a') as fp:
@@ -488,6 +500,7 @@ def list_tasks(by_pri=True, filters: str = None, filterop=None, showcomplete=Non
                     task = extension_hiders[ext].sub("", task)
             print(("{1:{0}d} {2}".format(idlen, idx, task)))
             count += 1
+        print('-'*(idlen+1))
     msg=("{:d} tasks shown".format(count))
     print(msg)
     return TASK_OK, msg
