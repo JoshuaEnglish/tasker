@@ -5,10 +5,13 @@ Created on Mon Feb 29 11:51:14 2016
 @author: jenglish
 """
 
-#from yapsy.IPlugin import IPlugin
 import basetaskerplugin
 
 class Logging(basetaskerplugin.TaskerPlugin):
+    def activate(self):
+        self._log.debug("Activating Workflows")
+        super().activate()
+        
     def print_name(self):
         print("This is the logging plugin")
         

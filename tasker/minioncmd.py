@@ -13,10 +13,10 @@ return to the main BossCmd instance.
 import cmd 
 import logging
 
-logging.basicConfig(format="%(asctime)s %(name)s %(levelname)s: %(message)s",
-                    datefmt="%Y-%m-%d %I:%M:%S %p")
-#logging.getLogger('bosscmd').setLevel(logging.DEBUG)
-#logging.getLogger('minioncmd').setLevel(logging.DEBUG)
+logging.basicConfig(format="%(asctime)s %(name)s %(levelname)s: %(message)s in %(module)s:%(funcName)s",
+                   datefmt="%Y-%m-%d %I:%M:%S %p")
+logging.getLogger('bosscmd').setLevel(logging.DEBUG)
+logging.getLogger('minioncmd').setLevel(logging.DEBUG)
 
 
 class BossCmd(cmd.Cmd):
@@ -29,9 +29,15 @@ class BossCmd(cmd.Cmd):
 
     prompt = 'Boss> '
 
-    def __init__(self): 
-        super().__init__(self)
+    def __init__(self, completekey='tab', stdin=None, stdout=None): 
+        super().__init__(completekey, stdin, stdout)
+        
+        #: Flag to detect when minions call to quit the program
         self.exit_called_from_minion = False
+        
+        #: flag to determine if the BossCmd instance is in the middle of a
+        #: loop or not (if not, assume a call to onecmd)
+        self.inloop = False
 
         #: Dictionary of minion_name: MinionCmd instance
         self.minions = {}
@@ -42,7 +48,30 @@ class BossCmd(cmd.Cmd):
 
         self.doc_leader = "Help for BossCmd"
 
+    def preloop(self):
+        self.inloop = True
+        super().preloop()
+
+    def postloop(self): 
+        self.inloop = False
+        super().postloop()
+        
+    def default(self, line):
+        """Called on an input line when the command prefix is not recognized.
+
+        If this method is not overridden, it prints an error message and
+        returns.
+
+        """
+        self.stdout.write('*** Unknown %s syntax: %s\n' % 
+            (self.__class__.__name__, line))
+        
     def add_minion(self, name, cmder):
+        """add_minion(name, minion)
+        
+        Adds the minion to the current instance of BossCmd. This method
+        can be called automatically when creating an instance of MinionCmd.
+        """
         self._log.debug("Adding minion %s", name)
         self.minions[name] = cmder
 
@@ -63,26 +92,28 @@ class BossCmd(cmd.Cmd):
 
         setattr(self.__class__, "do_{}".format(name), do_minion)
 
-        # step two: create the switch methods between minions
-        # the first minion doesn't need any switch methods
-        # the second minion needs a switch to the first, and the first needs a switch to the second
-        # the third minion needs a switch to the first and second, the first to the third, and the second to the third
-        # this means it may be wiser to build a dictionary of switch methods
-        # when adding a minion, create a switch method to go to that minion
+        
         self._log.debug('Creating Switch to minion for %s', name)
 
+
+        # step two: create a "do_" method for the minions
         def switch_to_minion(self, line):
             if line:
 
                 self._log.debug("Calling co-minion with line %s", line)
                 self.master.minions[name].onecmd(line)
-                self._log.debug("Adding switch back to master.cmdqueue")
-                self.master.cmdqueue.append(self.name)
+                
+                if self.master.inloop:
+                    self._log.debug("Adding switch back to master.cmdqueue")
+                    self.master.cmdqueue.append(self.name)
+                    
             else:
                 self._log.debug("Adding co-minon command to master.cmdqueue")
                 self.master.cmdqueue.append('{} {}'.format(name, line))
+                
             return True
-
+        
+        switch_to_minion.__name__ = "do_%s" % name
         switch_to_minion.__doc__ = "Send a single command to the {} subprogram or begin its loop".format(name)
 
         self.switchers[name] = switch_to_minion
@@ -91,16 +122,13 @@ class BossCmd(cmd.Cmd):
             for minion in self.minions:
                 if switch == minion:
                     continue
-                self._log.debug('Add switch to %s to %s', switch, minion)
+                self._log.debug('Adding do_%s to %s', switch, minion)
                 setattr(self.minions[minion].__class__, "do_{}".format(switch), self.switchers[switch])
 
     def do_quit(self, line):
         "Quits the program"
         return True 
-    
-    def postloop(self): 
-        pass
-    
+     
     def postcmd(self, stop, line): 
         # check if minion called for exit 
         if self.exit_called_from_minion: 
@@ -108,25 +136,27 @@ class BossCmd(cmd.Cmd):
         return stop 
 
     def onecmd(self, line):
+        """Process a single command and process the cmdqueue"""
         stop = super().onecmd( line)
         while len(self.cmdqueue):
             text = self.cmdqueue.pop(0)
-            #self.cmdqueue = self.cmdqueue[1:]
-            #print('postcmd: {}'.format(text))
             self._log.debug("Processing queued command: %s", text)
-            stop = self.onecmd(text)
+            self.onecmd(text)
         return stop
 
     def do_qlist(self, line):
         """lists all items in the command queue"""
+        if not self.cmdqueue:
+            self.stdout.write("No Queued Commands\n")
         for item in self.cmdqueue:
-            print("Queued Command: {}".format(item))
+            self.stdout.write("Queued Command: {}\n".format(item))
 
 class MinionCmd(cmd.Cmd):
     _log = logging.getLogger('minioncmd')
 
-    def __init__(self, name, master=None):
-        super().__init__(self)
+    def __init__(self, name, master=None, 
+                 completekey='tab', stdin=None, stdout=None):
+        super().__init__(completekey, stdin, stdout)
         self.prompt = "{}> ".format(name)
         self.name = name
         self.master = master
@@ -143,6 +173,14 @@ class MinionCmd(cmd.Cmd):
         """Exits the sub program and returns to the main program"""
         return True
 
+    def default(self, line):
+        """Called on an input line when the command prefix is not recognized.
+
+        If this method is not overridden, it prints an error message and
+        returns.
+
+        """
+        self.stdout.write('*** Unknown %s syntax: %s\n'% (self.__class__.__name__, line))
 
 if __name__=='__main__':
     class SubmissionCmd(MinionCmd):
@@ -157,8 +195,8 @@ if __name__=='__main__':
         doc_leader = "Help for MarketCmd"
 
         def do_hello(self, line):
-            print("Hello to {} from Market".format(line))
-            self.master.cmdqueue.append('goodbye cruel world')
+            print("Hello to '{}' from Market".format(line))
+            self.master.cmdqueue.append('qlist')
 
     Boss = BossCmd()
 
@@ -172,4 +210,4 @@ if __name__=='__main__':
 
     Boss.onecmd('story market hello from onecmd')
 
-    Boss.onecmd('market submission see ya! from onecmd')
+    

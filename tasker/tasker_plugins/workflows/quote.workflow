@@ -1,13 +1,16 @@
-# -*- coding: utf-8 -*-
 [Workflow]
-Name = Quote
-Description = Tasks related to creating quotes for HP TMs
+name = Quote
+description = Tasks related to creating quotes for HP TMs
+vocabulary = project, TM
 
 [Steps]
-1 = Log request for +$name @quote
-2 = Get complete information for +$name @quote
-3 = Submit approval for +$name @quote
-4 = Check for approval for +$name @quote
-5 = Send views to $TM for +$name @quote
+1 = (A) Log request for +$project @quote
+2 = (B) Get complete information for +$project @quote
+3 = (A) Submit approval for +$project @quote
+4 = (A) Check for approval for +$project @quote
+5 = (A) Send views to $TM for +$project @quote
 
 [Instances]
+1 = FourthProject,AllenM
+2 = Fifth,Allen,Malarkey
+

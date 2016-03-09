@@ -12,17 +12,23 @@ import re
 from operator import itemgetter
 import configparser
 import argparse
+import logging
 
 import yapsy.ConfigurablePluginManager
 
 import minioncmd
 import basetaskerplugin
 
+logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m%d %I:%M:%S %p')
+logging.getLogger('plugin').setLevel(logging.DEBUG)
+logging.getLogger('bosscmd').setLevel(logging.DEBUG)
+
 config = configparser.ConfigParser()
 config.read_dict({'Files': {'tasker-dir': os.path.join(os.environ['APPDATA'], 'tasker'),
                             'task-path': "%(tasker-dir)s/todo.txt",
                             'done-path': "%(tasker-dir)s/done.txt",
-                            }})
+                            },
+                'Tasker': {'hidden_extensions': 'uid'}})
 
 if hasattr(sys, "frozen"):
     configdir = os.path.dirname(sys.executable)
@@ -37,29 +43,46 @@ FILES = config['Files']
 
 class TaskCmd(minioncmd.BossCmd):
     prompt = "tasker> "
+    doc_leader = "Tasker Help"
 
     def do_list(self, line):
         args = list_parser.parse_args(line.split())
-        print(args)
+        #print(args)
         print(list_tasks(**vars(args)))
 
     def do_add(self, line):
         args = add_parser.parse_args(line.split())
-        print(args)
+        #print(args)
         print(add_task(" ".join(args.text)))
+        
+    def do_do(self, line):
+        args = do_parser.parse_args(line.split())
+        #print(args)
+        print(complete_task(args.tasknum, " ".join(args.comment)))
 
+c = TaskCmd()
 
 manager = yapsy.ConfigurablePluginManager.ConfigurablePluginManager(config)
-manager.setPluginPlaces(["tasker_plugins", ])
+manager.setPluginPlaces(["tasker_plugins" ])
 manager.setCategoriesFilter({
     "NewCommand": basetaskerplugin.NewCommandPlugin,
     "SubCommand": basetaskerplugin.SubCommandPlugin,
-    "Generic": basetaskerplugin.TaskerPlugin,
+    #"Generic": basetaskerplugin.TaskerPlugin,
 })
 
 # collectPlugins automatically loads plugins configured to load
 manager.collectPlugins()
 
+for info in manager.getAllPlugins():
+    if not info.is_activated:
+        continue
+    print("Dealing with active plugin {} ({})".format(info.name, info.category))
+    plugin = info.plugin_object
+    if hasattr(plugin, 'cli'):
+        name = getattr(plugin, 'cli_name')
+        cli = getattr(plugin, 'cli')
+        if info.category == 'SubCommand':
+            c.add_minion(name, cli)
 
 TODO = """ Allow for keywords in text like TODAY or NOW or SHORTDATE to
 automatically add the current date and/or time in notes or text
@@ -433,6 +456,7 @@ def _sort_tasks(by_pri=True, filters=None, filterop=None, showcomplete=None):
         stuff = sorted(everything, key=first)
     return stuff
 
+extension_hiders = {}
 
 def list_tasks(by_pri=True, filters: str = None, filterop=None, showcomplete=None,
                showuid=None):
@@ -449,12 +473,19 @@ def list_tasks(by_pri=True, filters: str = None, filterop=None, showcomplete=Non
     showuid = showuid or False
     count = 0
     shown_tasks = _sort_tasks(by_pri, filters, filterop, showcomplete)
+
+    for ext in config['Tasker']['hidden_extensions'].split(','):
+        if ext not in extension_hiders:
+            extension_hiders[ext] = re.compile(r"\s{%s:[^}]*}" % ext.strip())
+        
+    
     if shown_tasks:
         maxid = max([a for a, b in shown_tasks])
         idlen = len(str(maxid))
         for idx, task in shown_tasks:
             if not showuid:
-                task = re_uid.sub("", task)
+                for ext in extension_hiders:
+                    task = extension_hiders[ext].sub("", task)
             print(("{1:{0}d} {2}".format(idlen, idx, task)))
             count += 1
     msg=("{:d} tasks shown".format(count))
@@ -683,7 +714,7 @@ def find(stuff):
 
 
 
-c = TaskCmd()
+
 
 if __name__ == '__main__':
     import sys
