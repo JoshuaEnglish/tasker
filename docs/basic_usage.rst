@@ -71,5 +71,11 @@ given, the program lists all open tasks:
 Tasker adds a ``uid`` extension to each task it creates but does not list this
 when it prints the task list. The ``uid`` is used to chain tasks together.
 
+    .. note::
+
+        Tasker comes with a Windows batch file that runs the Python script
+        directly. It can be used so ``t`` is a shortcut to Tasker.py.
+
+
 
 
