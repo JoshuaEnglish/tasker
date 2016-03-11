@@ -20,6 +20,20 @@ Using Tasker:
 
    basic_usage
 
+Extending Tasker:
+
+.. toctree::
+   :maxdepth: 2
+
+   pluginprimer
+
+Modules:
+
+.. toctree::
+   :maxdepth: 1
+
+   minioncmd
+
 
 
 Indices and tables

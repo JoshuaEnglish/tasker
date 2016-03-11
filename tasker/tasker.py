@@ -5,30 +5,29 @@ Functions with regular names should return a code and a message
 Functions beginning with underlines should return task dictionaries
 """
 
-import sys
-import os
-import datetime
-import re
-from operator import itemgetter
-import configparser
 import argparse
+import configparser
+import datetime
 import logging
+import os
+import re
+import sys
+from operator import itemgetter
 
+import basetaskerplugin
 import yapsy.ConfigurablePluginManager
 
-import minioncmd
-import basetaskerplugin
+from tasker import minioncmd
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m%d %I:%M:%S %p')
-#logging.getLogger('plugin').setLevel(logging.DEBUG)
-#logging.getLogger('bosscmd').setLevel(logging.DEBUG)
+#logging.getLogger('yapsy').setLevel(logging.DEBUG)
 
 config = configparser.ConfigParser()
 config.read_dict({'Files': {'tasker-dir': os.path.join(os.environ['APPDATA'], 'tasker'),
                             'task-path': "%(tasker-dir)s/todo.txt",
                             'done-path': "%(tasker-dir)s/done.txt",
                             },
-                'Tasker': {'hidden_extensions': 'uid'}})
+                  'Tasker': {'hidden_extensions': 'uid'}})
 
 if hasattr(sys, "frozen"):
     configdir = os.path.dirname(sys.executable)
@@ -39,40 +38,371 @@ configpath = os.path.join(configdir, 'tasker.ini')
 
 config.read(configpath)
 
+def save_config():
+    with open(configpath,'w') as fp:
+        config.write(fp)
+
 FILES = config['Files']
+
+first = itemgetter(0)
+second = itemgetter(1)
 
 class TaskCmd(minioncmd.BossCmd):
     prompt = "tasker> "
     doc_leader = "Tasker Help"
+    
+    def __init__(self, completekey='tab', stdin=None, stdout=None, 
+                 config=None, manager=None): 
+        super().__init__(completekey, stdin, stdout)
+        
+        self.config = config
+        self.manager = manager
+        
+        self.extension_hiders = {}
 
+    def parse_task(self, text):
+        """Return a tuple of the following fields:
+            complete - boolean 
+            priority - single letter (blank if complete or unprioritized)
+            start - datetime.datetime object
+            end - datetime.datetime object or None
+            task - remaining text (including any projects or contexts)
+            contexts - tuple of contexts (including '@')
+            projects - tuple of projects (including '+')
+            extensions - dictionary of extension values
+            :type text: str
+            :param text: text of a task.
+        """
+        text = text.strip()
+        match = re_task.match(text)
+        if not any(match.groups()):
+            raise ValueError('Task did not parse')
+        complete = bool(match.group('complete'))
+        p_log.debug('Complete: %s', complete)
+        priority = match.group('priority')[1] if match.group('priority') else ''
+        p_log.debug('Prioroty: %s', priority)
+    
+        if match.group('start'):
+            start = datetime.datetime.strptime(match.group('start').strip(), TIMEFMT)
+        else:
+            start = datetime.datetime.now()
+        p_log.debug('Start: %s', start)
+    
+        if match.group('end'):
+            end = datetime.datetime.strptime(match.group('end').strip(), TIMEFMT)
+        else:
+            end = None
+        p_log.debug('End: %s', end)
+    
+        task = match.group('text').strip()
+        p_log.debug('Text: %s', text)
+    
+        context = [t.strip() for t in re_context.findall(text)]
+        projects = [t.strip() for t in re_project.findall(text)]
+        extensions = re_ext.findall(text)
+        edict = {}
+        for ext in extensions:
+            key, val = ext.split(':', 1)
+            key = key.replace(' {', '')
+            val = val.replace('}', '')
+            edict[key] = val.strip()
+        if 'uid' not in edict:
+            edict['uid'] = start.strftime(IDFMT)
+            task += " {uid:%s}" % edict['uid']
+        return complete, priority, start, end, task, context, projects, edict
+
+
+    def graft(self, complete, priority, start, end, text):
+        """Return a single line of text representing the task.
+        Does not append a line return
+        :param boolean complete: True if task has been completed
+        :param str priority: Single letter A-W for priority, or blank
+        :param datetime.datetime start: Time the task was added to the list
+        :param datetime.datetime end: Time the task was completed (or None)
+        :param str text: remaining text of the task
+        :return: string representation of the task
+        """
+        res = []
+        if complete:
+            res.append('x')
+        if priority and not complete:
+            res.append('(%s)' % priority)
+        if start:
+            res.append(start.strftime(TIMEFMT))
+        if end:
+            res.append(end.strftime(TIMEFMT))
+        res.append(text.strip())
+        return " ".join(res)
+    
+    
+    def get_tasks(self, path):
+        """Returns a dictionary of (line number (starting at 1), task text) pairs
+        :rtype: dict
+        :param path: path to the file to read
+        :return: dictionary of line number, text pairs
+        """
+        res = {}
+        with open(path, 'r') as fp:
+            idx = 1
+            for line in fp.readlines():
+                if line.strip():
+                    res[idx] = line.strip()
+                    idx += 1
+        return res
+    
+    
+    def write_tasks(self, task_dict, local_path):
+        """write_tasks(task_dict, local_path)
+        Writes the working task_dictionary to the appropriate file
+        :type local_path: file path
+        """
+        with open(local_path, 'w') as fp:
+            for linenum in sorted(task_dict):
+                fp.write("{}{}".format(task_dict[linenum].strip(), os.linesep))
+        return TASK_OK, "{:d} Tasks written".format(len(task_dict))
+    
+    
+    def run_hooks(self, func_name, c, p, s, e, t, o, j, x):
+        ok = TASK_OK
+        msg = ""
+        for plugin in self.manager.getAllPlugins():
+            if not plugin.is_activated:
+                continue
+            if hasattr(plugin.plugin_object, func_name):
+                func = getattr(plugin.plugin_object, func_name)
+                ok, msg, c, p, s, e, t = func(c, p, s, e, t, o, j, x)
+        return ok, msg, c, p, s, e, t
+    
+    
+    def add_task(self, text):
+        stuff = self.parse_task(text)
+        c, p, s, e, t, o, j, x = stuff
+        print(stuff)
+        if c and not e:
+            e = datetime.datetime.now()
+        # run hooks, say, if there is a pend extension, check that the pend id is a valid ID
+        err, msg, c, p, s, e, t = self.run_hooks('add_task', c, p, s, e, t, o, j, x)
+        if err:
+            return err, msg
+    
+        new_task = self.graft(c, p, s, e, t)
+    
+        with open(self.config['Files']['task-path'], 'a') as fp:
+            fp.write('{}{}'.format(new_task.strip(), os.linesep))
+        return TASK_OK, new_task
+    
+
+    def add_done(self, text):
+        """Adds a completed task. Uses the entry time as start and close
+        :param text: Text of the completed task
+        """
+        c, p, s, e, t, o, j, x = self.parse_task(text)
+        if not e:
+            e = datetime.datetime.now()
+        err, msg, c, p, s, e, t = self.run_hooks('add_task', c, p, s, e, t, o, j, x)
+        if err:
+            return err, msg
+    
+        c = True
+    
+        err, msg, c, p, s, e, t = self.run_hooks('complete_task', c, p, s, e, t, o, j, x)
+        if not err:
+            return err, msg
+    
+        done = self.graft(c, p, s, e, t)
+        with open(self.config['Files']['task-path'], 'a') as fp:
+            fp.write('{}{}'.format(done.strip(), os.linesep))
+        return TASK_OK, done    
+    
+    
+    def complete_task(self, tasknum, comment=None):
+        tasks = self.get_tasks(self.config['Files']['task-path'])
+        if tasknum not in tasks:
+            return TASK_ERROR, "Task number not in task list"
+        if tasks[tasknum].startswith('x'):
+            return TASK_ERROR, "Task already completed"
+        c, p, s, e, t, o, j, x = self.parse_task(tasks[tasknum])
+        c = True
+        e = datetime.datetime.now()
+        if comment:
+            t += " # {}".format(comment)
+        tasks[tasknum] = self.graft(c, p, s, e, t)
+        # run hooks - anything that should happen in response (grab next item in queue)
+        #tasks = _update_pending(tasks, x['uid']) # turn into plugin
+        err, msg, c, p, s, e, t = self.run_hooks('complete_task', c, p, s, e, t, o, j, x)
+        if err:
+            return err, msg
+        # End hooks
+        self.write_tasks(tasks, self.config['Files']['task-path'])
+        return TASK_OK, tasks[tasknum]
+        
+
+
+
+    def _sort_tasks(self, by_pri=True, filters=None, filterop=None, showcomplete=None):
+        """_sort_tasks([by_pri, filters, filteropp, showcomplete])
+        Returns a list of (line, task) tuples.
+        Default behavior sorts by priority.
+        Default behavior does no filtering.-
+        Default filter operation is all (all must match).
+        Default behavior does not list completed tasks
+        Default behavior does not look in the done.txt file.
+        To filter, provide a list of strings to filter by.
+        """
+        # by_pri = by_pri or True # or logic doesn't work when default is true
+        filters = filters or []
+        filterop = filterop if filterop in (all, any) else all
+        if filterop not in (any, all):
+            return TASK_ERROR, "Filter Operation must by any or all"
+        showcomplete = showcomplete or False
+    
+        everything = [(key, val) for key, val in list(self.get_tasks(FILES['task-path']).items())
+                      if (showcomplete or not val.startswith('x'))]
+    
+        if filters:
+            everything = [(key, val) for key, val in everything
+                          if filterop([_ in val for _ in filters])]
+    
+        # everything has all open tasks if showcomplete is false.
+        # todo .. print completed tasks in revers Cron order? The priorities get wiped
+        if by_pri:
+            stuff = sorted(everything, key=second)
+        else:
+            stuff = sorted(everything, key=first)
+        return stuff
+
+    
+    
+    def list_tasks(self, by_pri=True, filters: str = None, filterop=None, showcomplete=None,
+                   showuid=None):
+        """list_tasks([by_pri, filters, filterop, showcomplete, showuid)
+        Displays a list of tasks.
+        :type by_pri: Boolean
+        :param by_pri: If true, sorts by priority, if false, sorts by order in file
+        :param filters: Words to filter the list
+        :param filterop: all or any (the functions, not strings
+        :param showcomplete: If true, shows completed tasks
+        :param showuid: If true, shows the Unique ID of the task.
+        :rtype: None
+        """
+        showuid = showuid or False
+        count = 0
+        shown_tasks = self._sort_tasks(by_pri, filters, filterop, showcomplete)
+    
+        for ext in config['Tasker']['hidden_extensions'].split(','):
+            if ext not in self.extension_hiders:
+                self.extension_hiders[ext] = re.compile(r"\s{%s:[^}]*}" % ext.strip())
+            
+        
+        if shown_tasks:
+            maxid = max([a for a, b in shown_tasks])
+            idlen = len(str(maxid))
+            for idx, task in shown_tasks:
+                if not showuid:
+                    for ext in self.extension_hiders:
+                        task = self.extension_hiders[ext].sub("", task)
+                print(("{1:{0}d} {2}".format(idlen, idx, task)))
+                count += 1
+            print('-'*(idlen+1))
+        msg=("{:d} tasks shown".format(count))
+        print(msg)
+        return TASK_OK, msg
+        
     def help_list(self):
         list_parser.print_help()
 
     def do_list(self, line):
         "Lists tasks"
         args = list_parser.parse_args(line.split())
-        print(list_tasks(**vars(args)))
+        print(self.list_tasks(**vars(args)))
 
     def do_add(self, line):
         """Add a task"""
         args = add_parser.parse_args(line.split())
-        print(add_task(" ".join(args.text)))
+        print(self.add_task(" ".join(args.text)))
         
     def do_do(self, line):
         """Mark a task as complete"""
         args = do_parser.parse_args(line.split())
+        print(self.complete_task(args.tasknum, " ".join(args.comment)))
 
-        print(complete_task(args.tasknum, " ".join(args.comment)))
 
-c = TaskCmd()
 
-manager = yapsy.ConfigurablePluginManager.ConfigurablePluginManager(config)
+class PluginCmd(minioncmd.MinionCmd):
+    prompt = "plugins> "
+    doc_leader = "Plugins Help"
+    
+    def get_plugin_name_and_category(self, name):
+        candidates = [info for info in manager.getAllPlugins() if 
+                      info.name == name]
+        if not candidates:
+            return None, None
+        elif len(candidates) > 1:
+            return None, None
+        else:
+            info = candidates[0]
+            return info.name, info.category
+            
+    def do_list(self, line):
+        "Lists all plugins and their categories"
+        for info in manager.getAllPlugins():
+            print(info.name, info.category, info.is_activated, sep=", ")
+    
+    def do_categories(self, line):
+        "Lists all plugin categories"
+        for category in manager.getCategories():
+            print(category)
+            
+    def do_activate(self, line):
+        """Activates a plugin by name. 
+        Plugin will be activated on next launch
+        """
+        stuff = line.split(maxsplit=1)
+        if len(stuff)== 1:
+            name, category = self.get_plugin_name_and_category(line)
+        else:
+            name, category = stuff
+        info = manager.getPluginByName(name, category)
+        if not info:
+            name, category = self.get_plugin_name_and_category(name)
+        if not name:
+            print("No plugin found")
+            return None
+        else:
+            manager.activatePluginByName(name, category, True)
+            print("Plugin activated. Will be active when program restarts.")
+    
+    def do_deactivate(self, line):
+        """Deactivates a plugin by name. 
+        Plugin will be deactivated on next launch.
+        """
+        stuff = line.split(maxsplit=1)
+        if len(stuff)== 1:
+            name, category = self.get_plugin_name_and_category(line)
+        else:
+            name, category = stuff
+        info = manager.getPluginByName(name, category)
+        if not info:
+            name, category = self.get_plugin_name_and_category(name)
+        if not name:
+            print("No plugin found")
+            return None
+        else:
+            manager.deactivatePluginByName(name, category, True)
+            print("Plugin activated. Will be active when program restarts.")
+            
+
+    
+
+manager = yapsy.ConfigurablePluginManager.ConfigurablePluginManager(config, save_config)
 manager.setPluginPlaces(["tasker_plugins" ])
 manager.setCategoriesFilter({
     "NewCommand": basetaskerplugin.NewCommandPlugin,
     "SubCommand": basetaskerplugin.SubCommandPlugin,
     "Generic": basetaskerplugin.TaskerPlugin,
 })
+
+c = TaskCmd(config=config, manager=manager)
 
 # collectPlugins automatically loads plugins configured to load
 manager.collectPlugins()
@@ -86,6 +416,15 @@ for info in manager.getAllPlugins():
         cli = getattr(plugin, 'cli')
         if info.category == 'SubCommand':
             c.add_minion(name, cli)
+    if info.category == 'NewCommand':
+        methods = plugin.getConfigOption('public_methods').split(',')
+        methods = [m.strip() for m in methods]
+        print("DEBUG: %s" % methods)
+        for method in methods:
+            setattr(c.__class__, method, getattr(plugin, method))
+            
+
+PluginCmd('plugins', c)
 
 TODO = """ Allow for keywords in text like TODAY or NOW or SHORTDATE to
 automatically add the current date and/or time in notes or text
@@ -145,8 +484,8 @@ IDFMT = '%H%M%S%d%m%y'
 re_task = re.compile(
     r"(?P<complete>x\s)?"
     r"(?P<priority>[(][A-Z][)]\s)?"
-    r"(?P<start>\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}\s)?"
-    r"(?P<end>\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}\s)?"
+    r"(?P<start>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\s)?"
+    r"(?P<end>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\s)?"
     r"(?P<text>.*)"
 )
 
@@ -158,153 +497,161 @@ re_uid = re.compile(r"\s{uid:[^}]*}")
 re_pend = re.compile(r"\s{pend:([^}]*)}")
 re_note = re.compile(r"\s{note:([^}]*)}")
 
-
-def parse_task(text):
-    """Return a tuple of the following fields:
-        complete - boolean 
-        priority - single letter (blank if complete or unprioritized)
-        start - datetime.datetime object
-        end - datetime.datetime object or None
-        task - remaining text (including any projects or contexts)
-        contexts - tuple of contexts (including '@')
-        projects - tuple of projects (including '+')
-        extensions - dictionary of extension values
-        :type text: str
-        :param text: text of a task.
-    """
-    text = text.strip()
-    match = re_task.match(text)
-    if not any(match.groups()):
-        raise ValueError('Task did not parse')
-    complete = bool(match.group('complete'))
-    priority = match.group('priority')[1] if match.group('priority') else ''
-
-    if match.group('start'):
-        start = datetime.datetime.strptime(match.group('start').strip(), TIMEFMT)
-    else:
-        start = datetime.datetime.now()
-
-    if match.group('end'):
-        end = datetime.datetime.strptime(match.group('end').strip(), TIMEFMT)
-    else:
-        end = None
-
-    task = match.group('text').strip()
-
-    context = [t.strip() for t in re_context.findall(text)]
-    projects = [t.strip() for t in re_project.findall(text)]
-    extensions = re_ext.findall(text)
-    edict = {}
-    for ext in extensions:
-        key, val = ext.split(':', 1)
-        key = key.replace(' {', '')
-        val = val.replace('}', '')
-        edict[key] = val.strip()
-    if 'uid' not in edict:
-        edict['uid'] = start.strftime(IDFMT)
-        task += " {uid:%s}" % edict['uid']
-    return complete, priority, start, end, task, context, projects, edict
-
-
-def graft(complete, priority, start, end, text):
-    """Return a single line of text representing the task.
-    Does not append a line return
-    :param boolean complete: True if task has been completed
-    :param str priority: Single letter A-W for priority, or blank
-    :param datetime.datetime start: Time the task was added to the list
-    :param datetime.datetime end: Time the task was completed (or None)
-    :param str text: remaining text of the task
-    :return: string representation of the task
-    """
-    res = []
-    if complete:
-        res.append('x')
-    if priority and not complete:
-        res.append('(%s)' % priority)
-    if start:
-        res.append(start.strftime(TIMEFMT))
-    if end:
-        res.append(end.strftime(TIMEFMT))
-    res.append(text.strip())
-    return " ".join(res)
-
-
-def get_tasks(path):
-    """Returns a dictionary of (line number (starting at 1), task text) pairs
-    :rtype: dict
-    :param path:
-    :return: dictionary of line number, text pairs
-    """
-    res = {}
-    with open(path, 'r') as fp:
-        idx = 1
-        for line in fp.readlines():
-            if line.strip():
-                res[idx] = line.strip()
-                idx += 1
-    return res
-
-
-def write_tasks(task_dict, local_path):
-    """write_tasks(task_dict, local_path)
-    Writes the working task_dictionary to the appropriate file
-    :type local_path: file path
-    """
-    with open(local_path, 'w') as fp:
-        for linenum in sorted(task_dict):
-            fp.write("{}{}".format(task_dict[linenum].strip(), os.linesep))
-    return TASK_OK, "{:d} Tasks written".format(len(task_dict))
-
-
-def run_hooks(func_name, c, p, s, e, t, o, j, x):
-    ok = TASK_OK
-    msg = ""
-    for plugin in manager.getAllPlugins():
-        if hasattr(plugin.plugin_object, func_name):
-            func = getattr(plugin.plugin_object, func_name)
-            ok, msg, c, p, s, e, t = func(c, p, s, e, t, o, j, x)
-    return ok, msg, c, p, s, e, t
-
-
-def add_task(text):
-    stuff = parse_task(text)
-    c, p, s, e, t, o, j, x = stuff
-    print(stuff)
-    if c and not e:
-        e = datetime.datetime.now()
-    # run hooks, say, if there is a pend extension, check that the pend id is a valid ID
-    err, msg, c, p, s, e, t = run_hooks('add_task', c, p, s, e, t, o, j, x)
-    if err:
-        return err, msg
-
-    new_task = graft(c, p, s, e, t)
-
-    with open(FILES['task-path'], 'a') as fp:
-        fp.write('{}{}'.format(new_task.strip(), os.linesep))
-    return TASK_OK, new_task
-
-
-def add_done(text):
-    """Adds a completed task. Uses the entry time as start and close
-    :param text: Text of the completed task
-    """
-    c, p, s, e, t, o, j, x = parse_task(text)
-    if not e:
-        e = datetime.datetime.now()
-    err, msg, c, p, s, e, t = run_hooks('add_task', c, p, s, e, t, o, j, x)
-    if err:
-        return err, msg
-
-    c = True
-
-    err, msg, c, p, s, e, t = run_hooks('complete_task', c, p, s, e, t, o, j, x)
-    if not err:
-        return err, msg
-
-    done = graft(c, p, s, e, t)
-    with open(FILES['task-path'], 'a') as fp:
-        fp.write('{}{}'.format(done, os.linesep))
-    return TASK_OK, done
+p_log = logging.getLogger('task parser')
+#p_log.setLevel(logging.DEBUG)
+#def parse_task(text):
+#    """Return a tuple of the following fields:
+#        complete - boolean 
+#        priority - single letter (blank if complete or unprioritized)
+#        start - datetime.datetime object
+#        end - datetime.datetime object or None
+#        task - remaining text (including any projects or contexts)
+#        contexts - tuple of contexts (including '@')
+#        projects - tuple of projects (including '+')
+#        extensions - dictionary of extension values
+#        :type text: str
+#        :param text: text of a task.
+#    """
+#    text = text.strip()
+#    match = re_task.match(text)
+#    if not any(match.groups()):
+#        raise ValueError('Task did not parse')
+#    complete = bool(match.group('complete'))
+#    p_log.debug('Complete: %s', complete)
+#    priority = match.group('priority')[1] if match.group('priority') else ''
+#    p_log.debug('Prioroty: %s', priority)
+#
+#    if match.group('start'):
+#        start = datetime.datetime.strptime(match.group('start').strip(), TIMEFMT)
+#    else:
+#        start = datetime.datetime.now()
+#    p_log.debug('Start: %s', start)
+#
+#    if match.group('end'):
+#        end = datetime.datetime.strptime(match.group('end').strip(), TIMEFMT)
+#    else:
+#        end = None
+#    p_log.debug('End: %s', end)
+#
+#    task = match.group('text').strip()
+#    p_log.debug('Text: %s', text)
+#
+#    context = [t.strip() for t in re_context.findall(text)]
+#    projects = [t.strip() for t in re_project.findall(text)]
+#    extensions = re_ext.findall(text)
+#    edict = {}
+#    for ext in extensions:
+#        key, val = ext.split(':', 1)
+#        key = key.replace(' {', '')
+#        val = val.replace('}', '')
+#        edict[key] = val.strip()
+#    if 'uid' not in edict:
+#        edict['uid'] = start.strftime(IDFMT)
+#        task += " {uid:%s}" % edict['uid']
+#    return complete, priority, start, end, task, context, projects, edict
+#
+#
+#def graft(complete, priority, start, end, text):
+#    """Return a single line of text representing the task.
+#    Does not append a line return
+#    :param boolean complete: True if task has been completed
+#    :param str priority: Single letter A-W for priority, or blank
+#    :param datetime.datetime start: Time the task was added to the list
+#    :param datetime.datetime end: Time the task was completed (or None)
+#    :param str text: remaining text of the task
+#    :return: string representation of the task
+#    """
+#    res = []
+#    if complete:
+#        res.append('x')
+#    if priority and not complete:
+#        res.append('(%s)' % priority)
+#    if start:
+#        res.append(start.strftime(TIMEFMT))
+#    if end:
+#        res.append(end.strftime(TIMEFMT))
+#    res.append(text.strip())
+#    return " ".join(res)
+#
+#
+#def get_tasks(path):
+#    """Returns a dictionary of (line number (starting at 1), task text) pairs
+#    :rtype: dict
+#    :param path: path to the file to read
+#    :return: dictionary of line number, text pairs
+#    """
+#    res = {}
+#    with open(path, 'r') as fp:
+#        idx = 1
+#        for line in fp.readlines():
+#            if line.strip():
+#                res[idx] = line.strip()
+#                idx += 1
+#    return res
+#
+#
+#def write_tasks(task_dict, local_path):
+#    """write_tasks(task_dict, local_path)
+#    Writes the working task_dictionary to the appropriate file
+#    :type local_path: file path
+#    """
+#    with open(local_path, 'w') as fp:
+#        for linenum in sorted(task_dict):
+#            fp.write("{}{}".format(task_dict[linenum].strip(), os.linesep))
+#    return TASK_OK, "{:d} Tasks written".format(len(task_dict))
+#
+#
+#def run_hooks(func_name, c, p, s, e, t, o, j, x):
+#    ok = TASK_OK
+#    msg = ""
+#    for plugin in manager.getAllPlugins():
+#        if not plugin.is_activated:
+#            continue
+#        if hasattr(plugin.plugin_object, func_name):
+#            func = getattr(plugin.plugin_object, func_name)
+#            ok, msg, c, p, s, e, t = func(c, p, s, e, t, o, j, x)
+#    return ok, msg, c, p, s, e, t
+#
+#
+#def add_task(text):
+#    stuff = parse_task(text)
+#    c, p, s, e, t, o, j, x = stuff
+#    print(stuff)
+#    if c and not e:
+#        e = datetime.datetime.now()
+#    # run hooks, say, if there is a pend extension, check that the pend id is a valid ID
+#    err, msg, c, p, s, e, t = run_hooks('add_task', c, p, s, e, t, o, j, x)
+#    if err:
+#        return err, msg
+#
+#    new_task = graft(c, p, s, e, t)
+#
+#    with open(FILES['task-path'], 'a') as fp:
+#        fp.write('{}{}'.format(new_task.strip(), os.linesep))
+#    return TASK_OK, new_task
+#
+#
+#def add_done(text):
+#    """Adds a completed task. Uses the entry time as start and close
+#    :param text: Text of the completed task
+#    """
+#    c, p, s, e, t, o, j, x = parse_task(text)
+#    if not e:
+#        e = datetime.datetime.now()
+#    err, msg, c, p, s, e, t = run_hooks('add_task', c, p, s, e, t, o, j, x)
+#    if err:
+#        return err, msg
+#
+#    c = True
+#
+#    err, msg, c, p, s, e, t = run_hooks('complete_task', c, p, s, e, t, o, j, x)
+#    if not err:
+#        return err, msg
+#
+#    done = graft(c, p, s, e, t)
+#    with open(FILES['task-path'], 'a') as fp:
+#        fp.write('{}{}'.format(done, os.linesep))
+#    return TASK_OK, done
 
 
 def _reprioritize(text, new_priority):
@@ -436,74 +783,74 @@ first = itemgetter(0)
 second = itemgetter(1)
 
 
-def _sort_tasks(by_pri=True, filters=None, filterop=None, showcomplete=None):
-    """_sort_tasks([by_pri, filters, filteropp, showcomplete])
-    Returns a list of (line, task) tuples.
-    Default behavior sorts by priority.
-    Default behavior does no filtering.-
-    Default filter operation is all (all must match).
-    Default behavior does not list completed tasks
-    Default behavior does not look in the done.txt file.
-    To filter, provide a list of strings to filter by.
-    """
-    # by_pri = by_pri or True # or logic doesn't work when default is true
-    filters = filters or []
-    filterop = filterop if filterop in (all, any) else all
-    if filterop not in (any, all):
-        return TASK_ERROR, "Filter Operation must by any or all"
-    showcomplete = showcomplete or False
-
-    everything = [(key, val) for key, val in list(get_tasks(FILES['task-path']).items())
-                  if (showcomplete or not val.startswith('x'))]
-
-    if filters:
-        everything = [(key, val) for key, val in everything
-                      if filterop([_ in val for _ in filters])]
-
-    # everything has all open tasks if showcomplete is false.
-    # todo .. print completed tasks in revers Cron order? The priorities get wiped
-    if by_pri:
-        stuff = sorted(everything, key=second)
-    else:
-        stuff = sorted(everything, key=first)
-    return stuff
-
-extension_hiders = {}
-
-def list_tasks(by_pri=True, filters: str = None, filterop=None, showcomplete=None,
-               showuid=None):
-    """list_tasks([by_pri, filters, filterop, showcomplete, showuid)
-    Displays a list of tasks.
-    :type by_pri: Boolean
-    :param by_pri: If true, sorts by priority, if false, sorts by order in file
-    :param filters: Words to filter the list
-    :param filterop: all or any (the functions, not strings
-    :param showcomplete: If true, shows completed tasks
-    :param showuid: If true, shows the Unique ID of the task.
-    :rtype: None
-    """
-    showuid = showuid or False
-    count = 0
-    shown_tasks = _sort_tasks(by_pri, filters, filterop, showcomplete)
-
-    for ext in config['Tasker']['hidden_extensions'].split(','):
-        if ext not in extension_hiders:
-            extension_hiders[ext] = re.compile(r"\s{%s:[^}]*}" % ext.strip())
-        
-    
-    if shown_tasks:
-        maxid = max([a for a, b in shown_tasks])
-        idlen = len(str(maxid))
-        for idx, task in shown_tasks:
-            if not showuid:
-                for ext in extension_hiders:
-                    task = extension_hiders[ext].sub("", task)
-            print(("{1:{0}d} {2}".format(idlen, idx, task)))
-            count += 1
-        print('-'*(idlen+1))
-    msg=("{:d} tasks shown".format(count))
-    print(msg)
-    return TASK_OK, msg
+#def _sort_tasks(by_pri=True, filters=None, filterop=None, showcomplete=None):
+#    """_sort_tasks([by_pri, filters, filteropp, showcomplete])
+#    Returns a list of (line, task) tuples.
+#    Default behavior sorts by priority.
+#    Default behavior does no filtering.-
+#    Default filter operation is all (all must match).
+#    Default behavior does not list completed tasks
+#    Default behavior does not look in the done.txt file.
+#    To filter, provide a list of strings to filter by.
+#    """
+#    # by_pri = by_pri or True # or logic doesn't work when default is true
+#    filters = filters or []
+#    filterop = filterop if filterop in (all, any) else all
+#    if filterop not in (any, all):
+#        return TASK_ERROR, "Filter Operation must by any or all"
+#    showcomplete = showcomplete or False
+#
+#    everything = [(key, val) for key, val in list(get_tasks(FILES['task-path']).items())
+#                  if (showcomplete or not val.startswith('x'))]
+#
+#    if filters:
+#        everything = [(key, val) for key, val in everything
+#                      if filterop([_ in val for _ in filters])]
+#
+#    # everything has all open tasks if showcomplete is false.
+#    # todo .. print completed tasks in revers Cron order? The priorities get wiped
+#    if by_pri:
+#        stuff = sorted(everything, key=second)
+#    else:
+#        stuff = sorted(everything, key=first)
+#    return stuff
+#
+#extension_hiders = {}
+#
+#def list_tasks(by_pri=True, filters: str = None, filterop=None, showcomplete=None,
+#               showuid=None):
+#    """list_tasks([by_pri, filters, filterop, showcomplete, showuid)
+#    Displays a list of tasks.
+#    :type by_pri: Boolean
+#    :param by_pri: If true, sorts by priority, if false, sorts by order in file
+#    :param filters: Words to filter the list
+#    :param filterop: all or any (the functions, not strings
+#    :param showcomplete: If true, shows completed tasks
+#    :param showuid: If true, shows the Unique ID of the task.
+#    :rtype: None
+#    """
+#    showuid = showuid or False
+#    count = 0
+#    shown_tasks = _sort_tasks(by_pri, filters, filterop, showcomplete)
+#
+#    for ext in config['Tasker']['hidden_extensions'].split(','):
+#        if ext not in extension_hiders:
+#            extension_hiders[ext] = re.compile(r"\s{%s:[^}]*}" % ext.strip())
+#        
+#    
+#    if shown_tasks:
+#        maxid = max([a for a, b in shown_tasks])
+#        idlen = len(str(maxid))
+#        for idx, task in shown_tasks:
+#            if not showuid:
+#                for ext in extension_hiders:
+#                    task = extension_hiders[ext].sub("", task)
+#            print(("{1:{0}d} {2}".format(idlen, idx, task)))
+#            count += 1
+#        print('-'*(idlen+1))
+#    msg=("{:d} tasks shown".format(count))
+#    print(msg)
+#    return TASK_OK, msg
 
 
 def filter_tasks(filterstring, filterop=None, showcomplete=None):
@@ -739,5 +1086,4 @@ if __name__ == '__main__':
     else:
         c.onecmd(' '.join(sys.argv[1:]))
 
-    with open(configpath,'w') as fp:
-        config.write(fp)
+    

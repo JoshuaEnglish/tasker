@@ -27,6 +27,7 @@ class BossCmd(cmd.Cmd):
     _log = logging.getLogger('bosscmd')
 
     prompt = 'Boss> '
+    doc_leader = "Help for BossCmd"
 
     def __init__(self, completekey='tab', stdin=None, stdout=None): 
         super().__init__(completekey, stdin, stdout)
@@ -45,7 +46,7 @@ class BossCmd(cmd.Cmd):
         #: dynamically applied to minions
         self.switchers = {}
 
-        self.doc_leader = "Help for BossCmd"
+        
 
     def preloop(self):
         self.inloop = True
@@ -154,6 +155,7 @@ class BossCmd(cmd.Cmd):
 
 class MinionCmd(cmd.Cmd):
     _log = logging.getLogger('minioncmd')
+    doc_leader = "Help for MinionCmd"
 
     def __init__(self, name, master=None, 
                  completekey='tab', stdin=None, stdout=None):
@@ -184,8 +186,8 @@ class MinionCmd(cmd.Cmd):
         self.stdout.write('*** Unknown %s syntax: %s\n'% (self.__class__.__name__, line))
 
 if __name__=='__main__':
-    logging.getLogger('bosscmd').setLevel(logging.DEBUG)
-    logging.getLogger('minioncmd').setLevel(logging.DEBUG)
+    #logging.getLogger('bosscmd').setLevel(logging.DEBUG)
+    #logging.getLogger('minioncmd').setLevel(logging.DEBUG)
     
     
     class SubmissionCmd(MinionCmd):

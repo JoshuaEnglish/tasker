@@ -4,21 +4,16 @@ Created on Mon Feb 29 11:51:14 2016
 
 @author: jenglish
 """
-import os
 import glob
-
-import logging
-import shlex
-
-from string import Template
-
-
+import os
 from configparser import ConfigParser
+from string import Template
 
 workflow_dir = os.path.join(os.path.dirname(__file__), 'workflows')
 
 import basetaskerplugin
-import minioncmd
+from tasker import minioncmd
+
 
 class WorkflowCLI(minioncmd.MinionCmd): # should be minioncmd
     prompt = "workflow> "
@@ -51,8 +46,6 @@ class WorkflowCLI(minioncmd.MinionCmd): # should be minioncmd
         :param str flow: name of the workflow to follow
         :param int/str stepnum: number of the step
         """
-        self._log.debug('Workflows.keys: %s', ','.join(self.workflows.keys()))
-        self._log.debug("Workflows type: %s", type(self.workflows))
         if flow not in self.workflows.keys():
             self._log.error("Missing workflow: %s", flow)
             return None
@@ -132,7 +125,14 @@ class WorkflowCLI(minioncmd.MinionCmd): # should be minioncmd
         for key, val in self.workflows[text]['Steps'].items():
             print(key, val, sep=": ")
         
-        
+    def do_instances(self, text):
+        """Prints a list of known instances"""
+        text = text.strip()
+        if text not in self.workflows:
+            print('No workflow "{}" found'.format(text))
+            return
+        for key, val in self.workflows[text]['Instances'].items():
+            print(key, val, sep=": ")
 
 class Workflow(basetaskerplugin.SubCommandPlugin):
     def activate(self):
@@ -143,9 +143,7 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
             self._log.debug("Setting Directory to default")
             self.setConfigOption('directory', workflow_dir)
         
-        if not self.hasConfigOption('public_methods'):
-            self.setConfigOption('public_methods', 'start_workflow, list_workflows')
-            
+        
         local_dir = self.getConfigOption('directory')
         
         self.cli_name = 'workflow'
@@ -161,18 +159,6 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
 #        
 #        workflow_commands.add_parser('list', help='lists known workflows')
         super().activate()
-        
-        
-#        def do_workflow(self, line):
-#            """Send a command to Workflow"""
-#            
-#            cli = WorkflowCLI()
-#            if line:
-#                cli.onecmd(line)
-#            else:
-#                cli.cmdloop()
-#        
-#        setattr(self.CLI, 'do_workflow', do_workflow)
                 
         
     def print_name(self):

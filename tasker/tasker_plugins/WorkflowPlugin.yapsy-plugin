@@ -1,5 +1,5 @@
 [Core]
-Name = Workflow Plugin
+Name = Workflow
 Module = WorkflowPlugin
 
 [Documentation]
