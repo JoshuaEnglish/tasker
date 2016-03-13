@@ -13,4 +13,5 @@ vocabulary = project, TM
 [Instances]
 1 = FourthProject,AllenM
 2 = Fifth,Allen,Malarkey
+3 = +HomeQuote,JeffZ
 

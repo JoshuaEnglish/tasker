@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Basic Usage &mdash; tasker 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="tasker 0.0.1 documentation" href="index.html" />
+    <link rel="prev" title="Welcome to Tasker’s documentation!" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="basic-usage">
+<h1>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h1>
+<p>Tasker is a text based task manager that runs at the command line or within
+Python. It is written in Python 3.5 but will most likely run in earlier
+versions.</p>
+<p>Tasker manager two files: <cite>todo.txt</cite> and <cite>done.txt</cite>.  Each task is saved on
+a single line in either file.</p>
+<div class="section" id="the-anatomy-of-a-task">
+<h2>The Anatomy of a Task<a class="headerlink" href="#the-anatomy-of-a-task" title="Permalink to this headline">¶</a></h2>
+<p>Tasks have the following:</p>
+<blockquote>
+<div><ul class="simple">
+<li>&#8216;x &#8216; if the task is completed</li>
+<li>&#8216;(p)&#8217; if the task has a priority. Priorities are A-W.</li>
+<li>&#8216;datetime stamp&#8217; for the start of the task (default to time task is created)</li>
+<li>&#8216;datetime stamp&#8217; for the time the task was completed (if completed)</li>
+<li>remaining text is the actual task</li>
+</ul>
+</div></blockquote>
+<p>Tasks are organized by projects (words that begin with &#8216;+&#8217;) and contexts (words
+that begin with &#8216;&#64;&#8217;). Tasks may also have extensions which are key:value pairs
+wrapped in braces.</p>
+<p>Here is an example of a pending task:</p>
+<div class="highlight-python"><div class="highlight"><pre>(A) 2016-03-08T09:51:38 Finish +TaskerDocumentation @code {note: It&#39;s getting late}
+</pre></div>
+</div>
+<p>This task has a priority. It has a project (TaskerDocumentation) and a context
+(code) and a note.</p>
+<p>Here is an example of a completed task:</p>
+<div class="highlight-python"><div class="highlight"><pre>x 2016-03-07T11:45:08 2016-03-08T21:35:12 Call mom @phone
+</pre></div>
+</div>
+<p>This task is complete and won&#8217;t appear in the task list unless requested.</p>
+</div>
+<div class="section" id="basic-commands">
+<h2>Basic Commands<a class="headerlink" href="#basic-commands" title="Permalink to this headline">¶</a></h2>
+<p>The three basic commands are <code class="docutils literal"><span class="pre">list</span></code>, <code class="docutils literal"><span class="pre">add</span></code>, and <code class="docutils literal"><span class="pre">do</span></code>. If no command is
+given, the program lists all open tasks:</p>
+<blockquote>
+<div><p>C:&gt;tasker
+1 2016-03-04T22:04:30 test from cli
+2 2015-03-06T19:37:12 test add
+&#8211;
+2 tasks shown</p>
+<p>C:&gt;tasker add go to bed
+&#8216;2016-04-08T22:11:12 go to bed {uid:221112080316}&#8217;</p>
+<p>C:&gt;tasker list
+1 2016-03-04T22:04:30 test from cli
+2 2015-03-06T19:37:12 test add
+5 2016-03-08T22:11:12 go to bed
+&#8211;
+3 tasks shown</p>
+<p>C:&gt;tasker do 1
+&#8216;x 2016-03-08T22:16:02 2016-03-08T22:16:01 test from cli {uid:220430040316}&#8217;</p>
+<p>C:&gt;tasker
+2 2016-03-06T19:27:12 test add
+5 2016-03-08T22:11:12 go to bed
+&#8211;
+2 tasks shown</p>
+</div></blockquote>
+<p>Tasker adds a <code class="docutils literal"><span class="pre">uid</span></code> extension to each task it creates</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Basic Usage</a><ul>
+<li><a class="reference internal" href="#the-anatomy-of-a-task">The Anatomy of a Task</a></li>
+<li><a class="reference internal" href="#basic-commands">Basic Commands</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to Tasker&#8217;s documentation!</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/basic_usage.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Joshua R English.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="_sources/basic_usage.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -17,7 +17,7 @@ from operator import itemgetter
 import basetaskerplugin
 import yapsy.ConfigurablePluginManager
 
-from tasker import minioncmd
+import minioncmd
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m%d %I:%M:%S %p')
 #logging.getLogger('yapsy').setLevel(logging.DEBUG)
@@ -46,6 +46,7 @@ FILES = config['Files']
 
 first = itemgetter(0)
 second = itemgetter(1)
+
 
 class TaskCmd(minioncmd.BossCmd):
     prompt = "tasker> "
@@ -111,7 +112,6 @@ class TaskCmd(minioncmd.BossCmd):
             task += " {uid:%s}" % edict['uid']
         return complete, priority, start, end, task, context, projects, edict
 
-
     def graft(self, complete, priority, start, end, text):
         """Return a single line of text representing the task.
         Does not append a line return
@@ -133,8 +133,7 @@ class TaskCmd(minioncmd.BossCmd):
             res.append(end.strftime(TIMEFMT))
         res.append(text.strip())
         return " ".join(res)
-    
-    
+
     def get_tasks(self, path):
         """Returns a dictionary of (line number (starting at 1), task text) pairs
         :rtype: dict
@@ -149,8 +148,7 @@ class TaskCmd(minioncmd.BossCmd):
                     res[idx] = line.strip()
                     idx += 1
         return res
-    
-    
+
     def write_tasks(self, task_dict, local_path):
         """write_tasks(task_dict, local_path)
         Writes the working task_dictionary to the appropriate file
@@ -160,8 +158,7 @@ class TaskCmd(minioncmd.BossCmd):
             for linenum in sorted(task_dict):
                 fp.write("{}{}".format(task_dict[linenum].strip(), os.linesep))
         return TASK_OK, "{:d} Tasks written".format(len(task_dict))
-    
-    
+
     def run_hooks(self, func_name, c, p, s, e, t, o, j, x):
         ok = TASK_OK
         msg = ""
@@ -172,8 +169,7 @@ class TaskCmd(minioncmd.BossCmd):
                 func = getattr(plugin.plugin_object, func_name)
                 ok, msg, c, p, s, e, t = func(c, p, s, e, t, o, j, x)
         return ok, msg, c, p, s, e, t
-    
-    
+
     def add_task(self, text):
         stuff = self.parse_task(text)
         c, p, s, e, t, o, j, x = stuff
@@ -190,7 +186,6 @@ class TaskCmd(minioncmd.BossCmd):
         with open(self.config['Files']['task-path'], 'a') as fp:
             fp.write('{}{}'.format(new_task.strip(), os.linesep))
         return TASK_OK, new_task
-    
 
     def add_done(self, text):
         """Adds a completed task. Uses the entry time as start and close
@@ -236,9 +231,6 @@ class TaskCmd(minioncmd.BossCmd):
         self.write_tasks(tasks, self.config['Files']['task-path'])
         return TASK_OK, tasks[tasknum]
         
-
-
-
     def _sort_tasks(self, by_pri=True, filters=None, filterop=None, showcomplete=None):
         """_sort_tasks([by_pri, filters, filteropp, showcomplete])
         Returns a list of (line, task) tuples.
@@ -271,8 +263,6 @@ class TaskCmd(minioncmd.BossCmd):
             stuff = sorted(everything, key=first)
         return stuff
 
-    
-    
     def list_tasks(self, by_pri=True, filters: str = None, filterop=None, showcomplete=None,
                    showuid=None):
         """list_tasks([by_pri, filters, filterop, showcomplete, showuid)
@@ -292,8 +282,7 @@ class TaskCmd(minioncmd.BossCmd):
         for ext in config['Tasker']['hidden_extensions'].split(','):
             if ext not in self.extension_hiders:
                 self.extension_hiders[ext] = re.compile(r"\s{%s:[^}]*}" % ext.strip())
-            
-        
+
         if shown_tasks:
             maxid = max([a for a, b in shown_tasks])
             idlen = len(str(maxid))
@@ -325,7 +314,6 @@ class TaskCmd(minioncmd.BossCmd):
         """Mark a task as complete"""
         args = do_parser.parse_args(line.split())
         print(self.complete_task(args.tasknum, " ".join(args.comment)))
-
 
 
 class PluginCmd(minioncmd.MinionCmd):
@@ -392,8 +380,6 @@ class PluginCmd(minioncmd.MinionCmd):
             print("Plugin activated. Will be active when program restarts.")
             
 
-    
-
 manager = yapsy.ConfigurablePluginManager.ConfigurablePluginManager(config, save_config)
 manager.setPluginPlaces(["tasker_plugins" ])
 manager.setCategoriesFilter({
@@ -422,6 +408,8 @@ for info in manager.getAllPlugins():
         print("DEBUG: %s" % methods)
         for method in methods:
             setattr(c.__class__, method, getattr(plugin, method))
+        # give NewCommand plugins access to the cli object
+        info.plugin_object.cli = c
             
 
 PluginCmd('plugins', c)
@@ -906,65 +894,65 @@ def do_after(tasknum, new_task_text):
     return add_task(graft(False, new_pri, *new_stuff[2:5]))
 
 
-def context_report():
-    """Print a list of contexts, noting number of open and closed tasks."""
-    contexts = {"NO CONTEXT": {'open': 0, 'closed': 0}}
-    tasks = get_tasks(FILES['task-path'])
-    for task in list(tasks.values()):
-        c, p, s, e, t, o, j, x = parse_task(task)
-        if not o:
-            if c:
-                contexts["NO CONTEXT"]['closed'] += 1
-            else:
-                contexts["NO CONTEXT"]['open'] += 1
-        for context in o:
-            if context not in contexts:
-                contexts[context] = {'open': 0, 'closed': 0}
-            if c:
-                contexts[context]['closed'] += 1
-            else:
-                contexts[context]['open'] += 1
-    print("Context, open, closed")
-    for context in sorted(contexts):
-        if contexts[context]['open']:
-            print((context, contexts[context]['open'], contexts[context]['closed']))
-
-
-def _get_project_counts():
-    """Generate a dictionary of dictionaries showing project counts"""
-    projects = {}
-    tasks = get_tasks(FILES['task-path'])
-    for task in list(tasks.values()):
-        c, p, s, e, t, o, j, x = parse_task(task)
-        for project in j:
-            if project not in projects:
-                projects[project] = {'open': 0, 'closed': 0}
-            if c:
-                projects[project]['closed'] += 1
-            else:
-                projects[project]['open'] += 1
-    return projects
-
-
-def project_report():
-    """Print a list of project, noting number of open and closed tasks."""
-
-    print("Project, open, closed")
-    projects = _get_project_counts()
-    for project in sorted(projects):
-        if projects[project]['open']:
-            print((project, projects[project]['open'], projects[project]['closed']))
-
-
-def closed_projects():
-    """Print a list of projects with no open tasks"""
-    print("Closed Projects")
-    projects = _get_project_counts()
-    for project in sorted(projects):
-        if projects[project]['open'] == 0:
-            print((project, projects[project]['closed']))
-    if not projects:
-        print("None")
+# def context_report():
+#     """Print a list of contexts, noting number of open and closed tasks."""
+#     contexts = {"NO CONTEXT": {'open': 0, 'closed': 0}}
+#     tasks = get_tasks(FILES['task-path'])
+#     for task in list(tasks.values()):
+#         c, p, s, e, t, o, j, x = parse_task(task)
+#         if not o:
+#             if c:
+#                 contexts["NO CONTEXT"]['closed'] += 1
+#             else:
+#                 contexts["NO CONTEXT"]['open'] += 1
+#         for context in o:
+#             if context not in contexts:
+#                 contexts[context] = {'open': 0, 'closed': 0}
+#             if c:
+#                 contexts[context]['closed'] += 1
+#             else:
+#                 contexts[context]['open'] += 1
+#     print("Context, open, closed")
+#     for context in sorted(contexts):
+#         if contexts[context]['open']:
+#             print((context, contexts[context]['open'], contexts[context]['closed']))
+#
+#
+# def _get_project_counts():
+#     """Generate a dictionary of dictionaries showing project counts"""
+#     projects = {}
+#     tasks = get_tasks(FILES['task-path'])
+#     for task in list(tasks.values()):
+#         c, p, s, e, t, o, j, x = parse_task(task)
+#         for project in j:
+#             if project not in projects:
+#                 projects[project] = {'open': 0, 'closed': 0}
+#             if c:
+#                 projects[project]['closed'] += 1
+#             else:
+#                 projects[project]['open'] += 1
+#     return projects
+#
+#
+# def project_report():
+#     """Print a list of project, noting number of open and closed tasks."""
+#
+#     print("Project, open, closed")
+#     projects = _get_project_counts()
+#     for project in sorted(projects):
+#         if projects[project]['open']:
+#             print((project, projects[project]['open'], projects[project]['closed']))
+#
+#
+# def closed_projects():
+#     """Print a list of projects with no open tasks"""
+#     print("Closed Projects")
+#     projects = _get_project_counts()
+#     for project in sorted(projects):
+#         if projects[project]['open'] == 0:
+#             print((project, projects[project]['closed']))
+#     if not projects:
+#         print("None")
 
 
 def archive_by_project(project):
