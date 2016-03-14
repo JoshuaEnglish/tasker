@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 """
+ReporterPlugin
+
+Provide Tasker with two commands: project and contexts
+
 Created on Wed Mar  9 15:12:07 2016
 
 @author: jenglish
@@ -10,7 +14,7 @@ import basetaskerplugin
 
 class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
     def activate(self):
-        self._log.debug('Activating Reports')
+        #self._log.debug('Activating Reports')
         self.setConfigOption('public_methods', 'do_projects,do_contexts')
         super().activate()
         
@@ -80,3 +84,4 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         for context in sorted(contexts):
             if contexts[context]['open']:
                 print((context, contexts[context]['open'], contexts[context]['closed']))
+

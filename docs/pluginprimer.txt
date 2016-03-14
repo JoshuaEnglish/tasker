@@ -1,0 +1,129 @@
+Plugin Primer
+=============
+
+Tasker uses two kinds of interfaces. The first interface is the command line
+that relies on argparse to check the line sent from the system. This line
+is then fed to the underlying cmd.Cmd object.
+
+Currenty the only command line actions that are supported are ``list``, ``do``,
+and ``add``. Enter the interpretive prompt to access all the features tasker
+offers.
+
+Quick Help
+----------
+
+To create new top-level commands at the interactive prompt
+    Create a NewCommand plugin
+
+To create new sub-programs with their own commands:
+    Create a SubCommand plugin
+
+To create new hooks
+
+Running ``tasker -i`` or ``tasker --interactive`` enters the interactive
+prompt.
+
+:class:`TaskerCmd` is built on top of :class:`BossCmd`, a tool that allows
+to add subprograms (called *minions*) that provide more functionality. Minions
+can be loaded through the plugin system.
+
+:class:`BossCmd` describes a top-level interactive prompt. :class:`MinionCmd`
+describes a subprogram at the interactive prompt. 
+
+There are two ways to link a Minion to a Boss::
+
+    Boss = BossCmd()
+
+    # long way to add minion to boss
+    Story = StoryCmd('story')
+    Boss.add_minion('story', Story)
+
+    # minions accept a boss
+    Sub = SubmissionCmd('submission', Boss)
+    Mark = MarketCmd('market', Boss)
+
+The interactive prompt can move in and out of subprograms, and subprograms
+can call eachother without stacking::
+
+    >>> Boss.cmdloop()
+    Boss> story
+    story> submission
+    submission> done
+    Boss> 
+
+All MinionCmd instances have a ``done`` command that exits the subpgram and
+returns to the parent BossCmd instance. MinionCmd instances also have a 
+``quit`` command that quits the program entirely.
+
+If a MinionCmd instance can be called with a command, which will be executed,
+then the program will return to the calling program::
+
+    Boss> story help
+    Help for StoryCmd
+    Documented commands (type help <topic>):
+    ========================================
+    done  help  market  quit  submission
+    
+    Boss> submission
+    submission> story help
+    Help for StoryCmd
+    Documented commands (type help <topic>):
+    ========================================
+    done  help  market  quit  submission
+    
+    submission>
+
+
+Adding Commands to Tasker
+-------------------------
+
+To create a new command for the interactive prompt, create two files in the
+``tasker_plugins`` directory:
+
+.. literalinclude:: ../tasker/tasker_plugins/ReportsPlugin.yapsy-plugin
+   :language: ini
+   :linenos:
+   :caption: ReportsPlugin.yapsy-plugin
+   :name: plugin-config-sample
+
+.. literalinclude:: ../tasker/tasker_plugins/ReportsPlugin.py
+   :language: python
+   :linenos:
+   :caption: ReportsPlugin.py
+   :name: plugin-code-sample
+
+The first file follows the rules set out by `YAPSY`_.
+
+The Python code subclasses :class:`basetaskemanager.NewCommandClass`. Tasker
+uses YAPSY's `ConfigurablePluginManager`_, which decorates plugin instances
+with the following methods to access the Manager's ConfigParser instance
+(which is same ConfigParser instance Tasker uses by default).
+
+.. method:: hasConfigOption(name)
+
+    Returns True if the config parser has the option for this plugin.
+
+.. method:: getConfigOption(name)
+
+    Returns the configuration entry
+
+.. method:: setConfigOption(name, value)
+
+    Sets the configuration entry
+
+Use these methods initially in the activate method. Setting a ``public_methods``
+configuration entry will cause the manager to copy the methods listed there
+to the main :class:`TaskCmd` instance. The plugin will be assigned the
+main TaskCmd instance through the ``.cli`` property
+
+The next step is to define the public methods that will copy over. In this
+example, the two methods call the plugin's private methods that are not
+transferred over.
+
+Finally, write the non ``do_`` methods, using ``self.cli`` to access TaskCmd.
+See the :class:`TaskCmd` page for details.
+
+
+.. _ConfigurablePluginManager: https://yapsy.readthedocs.org/en/latest/ConfigurablePluginManager.html
+.. _YAPSY:  https://yapsy.readthedocs.org/en/latest/PluginManager.html#plugin-info-file-format
+

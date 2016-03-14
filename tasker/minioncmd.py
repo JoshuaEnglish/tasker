@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-MinionCmd
 
 This module defines two subclasses of the cmd.Cmd class.
 
@@ -8,14 +7,14 @@ This module defines two subclasses of the cmd.Cmd class.
 :class:`MinionCmd` is for sub programs that have their own prompts and command
 structure. MinionCmd instances can transfer control to other instances, or
 return to the main BossCmd instance.
+
 """
 
 import cmd 
 import logging
 
 logging.basicConfig(format="%(asctime)s %(name)s %(levelname)s: %(message)s in %(module)s:%(funcName)s",
-                   datefmt="%Y-%m-%d %I:%M:%S %p")
-
+                    datefmt="%Y-%m-%d %I:%M:%S %p")
 
 
 class BossCmd(cmd.Cmd):
@@ -46,13 +45,14 @@ class BossCmd(cmd.Cmd):
         #: dynamically applied to minions
         self.switchers = {}
 
-        
 
     def preloop(self):
+        """Sets the instance ``inloop`` property to ``True``"""
         self.inloop = True
         super().preloop()
 
-    def postloop(self): 
+    def postloop(self):
+        """Sets the instance ``inloop`` property to ``Fales``"""
         self.inloop = False
         super().postloop()
         
@@ -154,6 +154,11 @@ class BossCmd(cmd.Cmd):
             self.stdout.write("Queued Command: {}\n".format(item))
 
 class MinionCmd(cmd.Cmd):
+    """MinionCmd
+
+    The MinionCmd object provides methods for connecting minions to the boss.
+
+    """
     _log = logging.getLogger('minioncmd')
     doc_leader = "Help for MinionCmd"
 

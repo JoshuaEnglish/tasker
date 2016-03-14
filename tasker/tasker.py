@@ -19,7 +19,8 @@ import yapsy.ConfigurablePluginManager
 
 import minioncmd
 
-logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m%d %I:%M:%S %p')
+logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
+                    datefmt='%Y-%m%d %I:%M:%S %p')
 #logging.getLogger('yapsy').setLevel(logging.DEBUG)
 
 config = configparser.ConfigParser()
@@ -152,6 +153,8 @@ class TaskCmd(minioncmd.BossCmd):
     def write_tasks(self, task_dict, local_path):
         """write_tasks(task_dict, local_path)
         Writes the working task_dictionary to the appropriate file
+        :param task_dict:
+        :return: results pair
         :type local_path: file path
         """
         with open(local_path, 'w') as fp:
@@ -405,7 +408,7 @@ for info in manager.getAllPlugins():
     if info.category == 'NewCommand':
         methods = plugin.getConfigOption('public_methods').split(',')
         methods = [m.strip() for m in methods]
-        print("DEBUG: %s" % methods)
+        #print("DEBUG: %s" % methods)
         for method in methods:
             setattr(c.__class__, method, getattr(plugin, method))
         # give NewCommand plugins access to the cli object
@@ -724,7 +727,6 @@ def add_note(tasknum, note):
 
     return TASK_OK, tasks[tasknum]
 
-
 def prioritize(tasknum, new_pri, note=None):
     tasks = get_tasks(FILES['task-path'])
     if tasknum not in tasks:
@@ -736,7 +738,6 @@ def prioritize(tasknum, new_pri, note=None):
     tasks[tasknum] = t
     write_tasks(tasks, FILES['task-path'])
     return TASK_OK, tasks[tasknum]
-
 
 def replace_string_in_task(tasknum, old, new):
     """tasknum - taks to be edited
@@ -752,7 +753,6 @@ def replace_string_in_task(tasknum, old, new):
     write_tasks(tasks, FILES['task-path'])
     return TASK_OK, tasks[tasknum]
 
-
 def delete_note(tasknum):
     """Delete the note extension
     :param tasknum: number of the task to delete the note extension
@@ -765,81 +765,6 @@ def delete_note(tasknum):
     tasks[tasknum] = graft(c, p, s, e, t)
     write_tasks(tasks, FILES['task-path'])
     return TASK_OK, tasks[tasknum]
-
-
-first = itemgetter(0)
-second = itemgetter(1)
-
-
-#def _sort_tasks(by_pri=True, filters=None, filterop=None, showcomplete=None):
-#    """_sort_tasks([by_pri, filters, filteropp, showcomplete])
-#    Returns a list of (line, task) tuples.
-#    Default behavior sorts by priority.
-#    Default behavior does no filtering.-
-#    Default filter operation is all (all must match).
-#    Default behavior does not list completed tasks
-#    Default behavior does not look in the done.txt file.
-#    To filter, provide a list of strings to filter by.
-#    """
-#    # by_pri = by_pri or True # or logic doesn't work when default is true
-#    filters = filters or []
-#    filterop = filterop if filterop in (all, any) else all
-#    if filterop not in (any, all):
-#        return TASK_ERROR, "Filter Operation must by any or all"
-#    showcomplete = showcomplete or False
-#
-#    everything = [(key, val) for key, val in list(get_tasks(FILES['task-path']).items())
-#                  if (showcomplete or not val.startswith('x'))]
-#
-#    if filters:
-#        everything = [(key, val) for key, val in everything
-#                      if filterop([_ in val for _ in filters])]
-#
-#    # everything has all open tasks if showcomplete is false.
-#    # todo .. print completed tasks in revers Cron order? The priorities get wiped
-#    if by_pri:
-#        stuff = sorted(everything, key=second)
-#    else:
-#        stuff = sorted(everything, key=first)
-#    return stuff
-#
-#extension_hiders = {}
-#
-#def list_tasks(by_pri=True, filters: str = None, filterop=None, showcomplete=None,
-#               showuid=None):
-#    """list_tasks([by_pri, filters, filterop, showcomplete, showuid)
-#    Displays a list of tasks.
-#    :type by_pri: Boolean
-#    :param by_pri: If true, sorts by priority, if false, sorts by order in file
-#    :param filters: Words to filter the list
-#    :param filterop: all or any (the functions, not strings
-#    :param showcomplete: If true, shows completed tasks
-#    :param showuid: If true, shows the Unique ID of the task.
-#    :rtype: None
-#    """
-#    showuid = showuid or False
-#    count = 0
-#    shown_tasks = _sort_tasks(by_pri, filters, filterop, showcomplete)
-#
-#    for ext in config['Tasker']['hidden_extensions'].split(','):
-#        if ext not in extension_hiders:
-#            extension_hiders[ext] = re.compile(r"\s{%s:[^}]*}" % ext.strip())
-#        
-#    
-#    if shown_tasks:
-#        maxid = max([a for a, b in shown_tasks])
-#        idlen = len(str(maxid))
-#        for idx, task in shown_tasks:
-#            if not showuid:
-#                for ext in extension_hiders:
-#                    task = extension_hiders[ext].sub("", task)
-#            print(("{1:{0}d} {2}".format(idlen, idx, task)))
-#            count += 1
-#        print('-'*(idlen+1))
-#    msg=("{:d} tasks shown".format(count))
-#    print(msg)
-#    return TASK_OK, msg
-
 
 def filter_tasks(filterstring, filterop=None, showcomplete=None):
     """filter_tasks(filterstring [, filterop, showcomplete])
@@ -893,66 +818,6 @@ def do_after(tasknum, new_task_text):
     # assigns new uid
     return add_task(graft(False, new_pri, *new_stuff[2:5]))
 
-
-# def context_report():
-#     """Print a list of contexts, noting number of open and closed tasks."""
-#     contexts = {"NO CONTEXT": {'open': 0, 'closed': 0}}
-#     tasks = get_tasks(FILES['task-path'])
-#     for task in list(tasks.values()):
-#         c, p, s, e, t, o, j, x = parse_task(task)
-#         if not o:
-#             if c:
-#                 contexts["NO CONTEXT"]['closed'] += 1
-#             else:
-#                 contexts["NO CONTEXT"]['open'] += 1
-#         for context in o:
-#             if context not in contexts:
-#                 contexts[context] = {'open': 0, 'closed': 0}
-#             if c:
-#                 contexts[context]['closed'] += 1
-#             else:
-#                 contexts[context]['open'] += 1
-#     print("Context, open, closed")
-#     for context in sorted(contexts):
-#         if contexts[context]['open']:
-#             print((context, contexts[context]['open'], contexts[context]['closed']))
-#
-#
-# def _get_project_counts():
-#     """Generate a dictionary of dictionaries showing project counts"""
-#     projects = {}
-#     tasks = get_tasks(FILES['task-path'])
-#     for task in list(tasks.values()):
-#         c, p, s, e, t, o, j, x = parse_task(task)
-#         for project in j:
-#             if project not in projects:
-#                 projects[project] = {'open': 0, 'closed': 0}
-#             if c:
-#                 projects[project]['closed'] += 1
-#             else:
-#                 projects[project]['open'] += 1
-#     return projects
-#
-#
-# def project_report():
-#     """Print a list of project, noting number of open and closed tasks."""
-#
-#     print("Project, open, closed")
-#     projects = _get_project_counts()
-#     for project in sorted(projects):
-#         if projects[project]['open']:
-#             print((project, projects[project]['open'], projects[project]['closed']))
-#
-#
-# def closed_projects():
-#     """Print a list of projects with no open tasks"""
-#     print("Closed Projects")
-#     projects = _get_project_counts()
-#     for project in sorted(projects):
-#         if projects[project]['open'] == 0:
-#             print((project, projects[project]['closed']))
-#     if not projects:
-#         print("None")
 
 
 def archive_by_project(project):

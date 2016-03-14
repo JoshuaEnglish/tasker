@@ -1,0 +1,136 @@
+Tasker
+======
+
+.. module :: tasker.tasker
+   :synopsis: Explanation of the main code
+
+This page describes the main code.
+
+The module-level object ``c`` is an instance of :class:`TaskCmd` which is
+a subclass of :class:`BossCmd`. Other tools exists as subclasses of
+:class:`MinionCmd`.
+
+The first thing the script does is create a ConfigParser object, set the
+defaults, and then read the local ``.ini`` file.
+
+.. class:: TaskCmd(completekey='tab', stdin=None, stdout=None,
+                   config=None, manager=None)
+
+    Main program object.
+
+    :param str completekey: key to complete commands in the interactive prompt
+    :param stream stdin: standard input
+    :param stream stdout: standard output
+    :param ConfigParser config: ConfigParser instance
+    :param PluginManager manager: YAPSY-based Plugin Manager instance
+
+Interactive Methods
+-------------------
+
+The following methods provide interactive commands
+
+.. method:: TaskCmd.do_list(text)
+
+    Lists the current tasks. Text is parsed by an argparse instance with
+    the following flags::
+
+      -n                    Prints task list in numerical order, otherwise orders
+                            by priority
+      -f [FILTERS [FILTERS ...]]
+                            Only lists tasks containing these words
+      -y                    Shows tasks matching any filter word. Default is to
+                            match all
+      -a                    Show completed (but not archived) tasks.
+      -u                    Shows the unique ID of each task
+
+.. method:: TaskCmd.do_add(text)
+
+    Adds a task
+
+.. method:: TaskCmd.do_do(text)
+
+    Completes a task. The text should be the task number and an optional
+    comment
+
+API
+---
+
+The following methods are available to plugins through the ``cli`` property
+(for NewCommand objects)
+or the ``self.master`` property (for MinionCmd objects attached to SubCommand
+plugins).
+
+.. method:: TaskCmd.parse_task(text)
+
+    Returns a tuple of the following values:
+
+        #. complete (boolean)
+        #. priority (single character)
+        #. start (datetime.datetime object)
+        #. end (datetime.datetime object or None)
+        #. task (string)
+        #. contexts (tuple of contexts - words beginning with ``@``)
+        #. projects (tuple of projects - words beginning with ``+``)
+        #. extensions (dictionary of extension: value pairs)
+
+    :meth:`parse_task` is a general utility function. The first five of these
+    can be fused into a single line of text using :meth:`graft`.
+
+.. method:: TaskCmd.graft(c, p, s, e, t)
+
+    Returns a single text representing the task
+
+    The parameters match the first five components returned by
+    :meth:`parse_task`.
+
+.. method:: TaskCmd.get_tasks(file_path)
+
+    Returns a dictionary of (line number, task text) pairs
+
+    :rtype: dict
+    :param path: path to the file to read
+    :return: dictionary of line number, text pairs
+
+    .. note:: The first line is assigned the key ``1`` instead of ``0``
+
+.. method:: TaskCmd.write_tasks(task_dict, file_path)
+
+    Writes the working task_dictionary to the appropriate file
+
+    :param dict task_dict: Dictionary of line-number: task pairs
+    :return: results pair
+    :type local_path: file path
+
+.. method:: TaskCmd.run_hooks(func_name, c, p, s, e, t, o, j, x)
+
+    Scans plugins for hooked features. Returns c, p, s, e, t.
+
+    This can allow for a plugin to write a listener method that adds something
+    to the command queue or even alter the text of the todo.
+
+    .. note:: The task text is not re-parsed, so this could lead to confusion
+              in the context and projects list and the extensions.
+
+.. method:: TaskCmd.add_task(text)
+
+    Appends a task directly to the file.
+
+    .. warning:
+
+        Calling add_task from a plugin may lose the task you are creating.
+        add_task appends the text file directly, which can be overwritten by
+        a subsequent call to write_tasks.
+
+
+.. method:: TaskCmd.add_done(text)
+
+    Adds a completed task to the list, allowing Tasker to serve as a log of
+    actions.
+
+    This method calls :meth:`TaskCmd.run_hooks` twice: once on creating the task
+    and the second on completing the task.
+
+
+.. method:: TaskCmd.complete_task(tasknum, comment):
+
+    This is the method that :meth:`do_do` calls.

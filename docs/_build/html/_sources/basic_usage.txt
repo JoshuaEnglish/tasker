@@ -41,7 +41,7 @@ Basic Commands
 --------------
 
 The three basic commands are ``list``, ``add``, and ``do``. If no command is
-given, the program lists all open tasks:
+given, the program lists all open tasks::
 
     C:\>tasker
     1 2016-03-04T22:04:30 test from cli
@@ -68,5 +68,29 @@ given, the program lists all open tasks:
     --
     2 tasks shown
 
-Tasker adds a ``uid`` extension to each task it creates
+Tasker adds a ``uid`` extension to each task it creates but does not list this
+when it prints the task list. The ``uid`` is used to chain tasks together.
+
+    .. note::
+
+        Tasker comes with a Windows batch file that runs the Python script
+        directly. It can be used so ``t`` is a shortcut to Tasker.py.
+
+Interactive Mode
+----------------
+
+You can also run tasker in an interactive prompt::
+
+    C:\>t -i
+    tasker> list
+    2 2016-03-06T19:27:12 test add
+    5 2016-03-08T22:11:12 go to bed
+    --
+    2 tasks shown
+
+
+
+
+
+
 
