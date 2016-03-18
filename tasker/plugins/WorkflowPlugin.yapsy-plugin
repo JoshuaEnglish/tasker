@@ -1,0 +1,12 @@
+[Core]
+Name = Workflow
+Module = WorkflowPlugin
+
+[Documentation]
+Author = Josh English
+Version = 0.1
+Website = http://joshuarenglish.com
+Description = Manages workflows and projects in tasker.
+
+[Workflows]
+directory = workflows

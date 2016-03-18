@@ -8,21 +8,39 @@ Created on Wed Mar  9 15:12:07 2016
 
 @author: jenglish
 """
-
+import argparse
 import basetaskerplugin
 
 
 class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
     def activate(self):
-        #self._log.debug('Activating Reports')
+        self._log.debug('Activating Reports')
         self.setConfigOption('public_methods', 'do_projects,do_contexts')
+
+        # this is a case where we need to add multiple commands to the main
+        # argument parser
+        project = argparse.ArgumentParser('projects')
+        project.add_argument('--closed', action='store_true',
+                             help="list closed projects")
+
+        context = argparse.ArgumentParser('contexts')
+        context.add_argument('text', nargs=argparse.REMAINDER)
+
+        self.parsers = {
+            project: "Project reports",
+            context: "Context reports"
+        }
+
         super().activate()
-        
+
     def do_projects(self, text):
         """Print a list of current projects with the number of
         open and closed tasks"""
-        self.project_report()
-        
+        if text == 'closed':
+            self.closed_projects()
+        else:
+            self.project_report()
+
     def do_contexts(self, text):
         """Print a list of current contexts with the number of
         open and closed tasks"""
@@ -31,9 +49,9 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
     def _get_project_counts(self):
         """Generate a dictionary of dictionaries showing project counts"""
         projects = {}
-        tasks = self.cli.get_tasks(self.cli.config['Files']['task-path'])
+        tasks = self.lib.get_tasks(self.lib.config['Files']['task-path'])
         for task in list(tasks.values()):
-            c, p, s, e, t, o, j, x = self.cli.parse_task(task)
+            c, p, s, e, t, o, j, x = self.lib.parse_task(task)
             for project in j:
                 if project not in projects:
                     projects[project] = {'open': 0, 'closed': 0}
@@ -50,7 +68,8 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         projects = self._get_project_counts()
         for project in sorted(projects):
             if projects[project]['open']:
-                print((project, projects[project]['open'], projects[project]['closed']))
+                print(project, projects[project]['open'],
+                      projects[project]['closed'])
 
     def closed_projects(self):
         """Print a list of projects with no open tasks"""
@@ -58,16 +77,16 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         projects = self._get_project_counts()
         for project in sorted(projects):
             if projects[project]['open'] == 0:
-                print((project, projects[project]['closed']))
+                print(project, projects[project]['closed'])
         if not projects:
             print("None")
 
     def context_report(self):
         """Print a list of contexts, noting number of open and closed tasks."""
         contexts = {"NO CONTEXT": {'open': 0, 'closed': 0}}
-        tasks = self.cli.get_tasks(self.cli.config['Files']['task-path'])
+        tasks = self.lib.get_tasks(self.lib.config['Files']['task-path'])
         for task in list(tasks.values()):
-            c, p, s, e, t, o, j, x = self.cli.parse_task(task)
+            c, p, s, e, t, o, j, x = self.lib.parse_task(task)
             if not o:
                 if c:
                     contexts["NO CONTEXT"]['closed'] += 1
@@ -83,5 +102,5 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         print("Context, open, closed")
         for context in sorted(contexts):
             if contexts[context]['open']:
-                print((context, contexts[context]['open'], contexts[context]['closed']))
-
+                print(context, contexts[context]['open'],
+                      contexts[context]['closed'])

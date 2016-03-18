@@ -73,6 +73,10 @@ class BossCmd(cmd.Cmd):
         can be called automatically when creating an instance of MinionCmd.
         """
         self._log.debug("Adding minion %s", name)
+        if not isinstance(cmder, MinionCmd):
+            self._log.error('Cannot add %s, not MinionCmd instance', name)
+            return None
+
         self.minions[name] = cmder
 
         if not hasattr(cmder, 'master'):

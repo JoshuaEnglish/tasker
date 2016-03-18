@@ -4,6 +4,7 @@ Generalized text-only to-do list
 Functions with regular names should return a code and a message
 Functions beginning with underlines should return task dictionaries
 """
+from __future__ import absolute_import
 
 import argparse
 import configparser
@@ -16,6 +17,7 @@ from operator import itemgetter
 
 import basetaskerplugin
 import yapsy.ConfigurablePluginManager
+import yapsy.PluginFileLocator
 
 import minioncmd
 
@@ -383,8 +385,11 @@ class PluginCmd(minioncmd.MinionCmd):
             print("Plugin activated. Will be active when program restarts.")
             
 
+locator = yapsy.PluginFileLocator.PluginFileLocator(
+        yapsy.PluginFileLocator.PluginFileAnalyzerMathingRegex
+)
 manager = yapsy.ConfigurablePluginManager.ConfigurablePluginManager(config, save_config)
-manager.setPluginPlaces(["tasker_plugins" ])
+manager.setPluginPlaces(["plugins" ])
 manager.setCategoriesFilter({
     "NewCommand": basetaskerplugin.NewCommandPlugin,
     "SubCommand": basetaskerplugin.SubCommandPlugin,
