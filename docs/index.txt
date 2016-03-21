@@ -27,6 +27,7 @@ Extending Tasker:
    :maxdepth: 2
 
    pluginprimer
+   pendplugin
 
 Modules:
 

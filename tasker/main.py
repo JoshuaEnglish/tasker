@@ -10,7 +10,7 @@ import argparse
 import logging
 
 from configparser import ConfigParser
-import yapsy.ConfigurablePluginManager
+import yapsy.ConfigurablePluginManager as CPM
 
 import basetaskerplugin
 import minioncmd
@@ -122,7 +122,8 @@ class TaskCmd(minioncmd.BossCmd):
         print(self.lib.prioritize_task(**vars(args)))
 
 
-manager = yapsy.ConfigurablePluginManager.ConfigurablePluginManager(config)
+manager = CPM.ConfigurablePluginManager(config,
+                                        config_change_trigger=save_config)
 manager.setPluginPlaces(['plugins'])
 manager.setCategoriesFilter({
     "NewCommand": basetaskerplugin.NewCommandPlugin,
@@ -133,6 +134,9 @@ manager.setCategoriesFilter({
 LIB = lib.TaskLib(config, manager)
 CLI = TaskCmd(config=config, lib=LIB)
 
+core.PluginCmd('plugins', CLI, manager)
+add_subparser(core.plugin_argparser, "Plugin manager")
+
 log.debug('Collecting Plugins...')
 manager.collectPlugins()
 
@@ -141,6 +145,8 @@ for info in manager.getAllPlugins():
         continue
     plugin = info.plugin_object
     plugin.lib = LIB
+    
+    plugin.CONFIG_SECTION_NAME = "%s Plugin: %s" % (info.category, info.name)
     if hasattr(plugin, 'parser'):
         log.debug("Adding command line parser for %s", info.name)
         add_subparser(plugin.parser, getattr(plugin, 'helpstr', None))
@@ -186,6 +192,8 @@ def main():
         CLI.onecmd('list')
     else:
         CLI.onecmd(' '.join(sys.argv[1:]))
+
+
 
 
 if __name__ == '__main__':

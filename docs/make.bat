@@ -5,9 +5,8 @@ REM Command file for Sphinx documentation
 if "%SPHINXBUILD%" == "" (
 	set SPHINXBUILD=sphinx-build
 )
-
 set BUILDDIR=_build
-set ALLSPHINXOPTS= -d %BUILDDIR%/doctrees %SPHINXOPTS% .
+set ALLSPHINXOPTS=-d %BUILDDIR%/doctrees %SPHINXOPTS% .
 set I18NSPHINXOPTS=%SPHINXOPTS% .
 if NOT "%PAPER%" == "" (
 	set ALLSPHINXOPTS=-D latex_paper_size=%PAPER% %ALLSPHINXOPTS%
@@ -50,7 +49,7 @@ if "%1" == "clean" (
 
 
 REM Check if sphinx-build is available and fallback to Python version if any
-%SPHINXBUILD% 2> nul
+%SPHINXBUILD% 1>NUL 2>NUL
 if errorlevel 9009 goto sphinx_python
 goto sphinx_ok
 

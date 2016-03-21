@@ -14,21 +14,21 @@ The Anatomy of a Task
 Tasks have the following:
 
     * 'x ' if the task is completed
-    * '(p)' if the task has a priority. Priorities are A-W.
+    * '(p)' if the task has a priority. Priorities are A-Z.
     * 'datetime stamp' for the start of the task (default to time task is created)
     * 'datetime stamp' for the time the task was completed (if completed)
     * remaining text is the actual task
 
 Tasks are organized by projects (words that begin with '+') and contexts (words
 that begin with '@'). Tasks may also have extensions which are key:value pairs
-wrapped in braces.
+wrapped in braces (for example ``{uid:221112080316}``).
 
 Here is an example of a pending task::
 
-    (A) 2016-03-08T09:51:38 Finish +TaskerDocumentation @code {note: It's getting late}
+    (A) 2016-03-08T09:51:38 Finish +TaskerDocumentation @code # It's getting late
 
 This task has a priority. It has a project (TaskerDocumentation) and a context
-(code) and a note.
+(code) and a comment.
 
 Here is an example of a completed task::
 

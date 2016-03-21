@@ -57,7 +57,49 @@ class TaskLib(object):
             if not os.path.exists(config['Files'][path]):
                 fd = open(config['Files'][path], 'w')
                 fd.close()
+    def get_extensions_to_hide(self):
+        """get_extensions_to_hide()
+        Compile a list of all extensions from the config file
+        """
+        ext_list = ','.join([self.config[d].get('hidden_extensions','')
+                             for d in self.config])
+        ext_list = [s.strip() for s in ext_list.split(',') if s]
+        return ext_list
 
+    def hide_extension(self, ext):
+        """hide_extension(ext)
+        Adds the extension to tasker's list of hidden extensions.
+        Hidden extensions will not appear in task lists.
+        """
+        if not self.config:
+            self.log.error('Cannot add hidden extension: No configuration')
+            return None
+        
+        extensions = self.config['Tasker']['hidden_extensions'].split(',')
+        extensions = [e.strip() for e in extensions]
+        ext = ext.strip()
+        if ext not in extensions:
+            extensions.append(ext)
+        
+        self.config['Tasker']['hidden_extensions'] = ','.join(extensions)
+    
+    def show_extension(self, ext):
+        """show_extension(ext)
+        Removes the extension from tasker's list of hidden extensions.
+        Does not issue an error if the extension is not in the list
+        """
+        if not self.config:
+            self.log.error('Cannot add hidden extension: No configuration')
+            return None
+        
+        extensions = self.config['Tasker']['hidden_extensions'].split(',')
+        extensions = [e.strip() for e in extensions]
+        ext = ext.strip()
+        if ext in extensions:
+            extensions.remove(ext)
+        
+        self.config['Tasker']['hidden_extensions'] = ','.join(extensions)
+        
     def parse_task(self, text):
         """Return a tuple of the following fields:
             complete - boolean 
@@ -68,8 +110,8 @@ class TaskLib(object):
             contexts - tuple of contexts (including '@')
             projects - tuple of projects (including '+')
             extensions - dictionary of extension values
-            :type text: str
-            :param text: text of a task.
+          
+            :param str text: text of a task.
         """
         text = text.strip()
         match = re_task.match(text)
@@ -215,6 +257,8 @@ class TaskLib(object):
             return TASK_ERROR, "Task number not in task list"
         if tasks[tasknum].startswith('x'):
             return TASK_ERROR, "Task already completed"
+            
+        self.tasks = tasks
         c, p, s, e, t, o, j, x = self.parse_task(tasks[tasknum])
         c = True
         e = datetime.datetime.now()
@@ -228,6 +272,7 @@ class TaskLib(object):
             return err, msg
         # End hooks
         self.write_tasks(tasks, self.config['Files']['task-path'])
+        del self.tasks
         return TASK_OK, tasks[tasknum]
         
 
@@ -276,14 +321,14 @@ class TaskLib(object):
         :param filters: Words to filter the list
         :param filterop: all or any (the functions, not strings
         :param showcomplete: If true, shows completed tasks
-        :param showuid: If true, shows the Unique ID of the task.
+        :param showext: If true, shows the normally hidden extensions of the task.
         :rtype: None
         """
         showext = showext or False
         count = 0
         shown_tasks = self.sort_tasks(by_pri, filters, filterop, showcomplete)
     
-        for ext in self.config['Tasker']['hidden_extensions'].split(','):
+        for ext in self.get_extensions_to_hide():
             if ext not in self.extension_hiders:
                 self.extension_hiders[ext] = re.compile(r"\s{%s:[^}]*}" % ext.strip())
             
@@ -306,7 +351,7 @@ class TaskLib(object):
         """prioritize_task(tasknum, new_pri [,note]
         
         Change the priority of a task. Will do nothing if task is closed.
-        New priority must be A-W.
+        New priority can be A-Z but should be A-W.
         
         :param int tasknum: Number of task to update
         :param str priority: New priority character
@@ -336,9 +381,9 @@ class TaskLib(object):
             return text
     
         np = priority.strip()
-        match = re.match(r'^[A-W]$', np)
+        match = re.match(r'^[A-Z]$', np)
         if not match:
-            self.log.error("New priority must be A-W")
+            self.log.error("New priority must be A-Z")
             return text
         
         c, p, s, e, t, o, j, x = self.parse_task(text)

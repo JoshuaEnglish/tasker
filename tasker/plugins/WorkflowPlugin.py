@@ -7,6 +7,8 @@ Created on Mon Feb 29 11:51:14 2016
 import glob
 import os
 import argparse
+import re
+
 from configparser import ConfigParser
 from string import Template
 
@@ -14,6 +16,8 @@ workflow_dir = os.path.join(os.path.dirname(__file__), 'workflows')
 
 import basetaskerplugin
 from tasker import minioncmd
+
+clean_vocab = re.compile(r"^[@+]")
 
 
 class WorkflowCLI(minioncmd.MinionCmd):
@@ -90,10 +94,14 @@ class WorkflowCLI(minioncmd.MinionCmd):
             self._log.error("Missing workflow: %s", flow)
             print("Missing workflow: {}".format(flow))
             return None
-            
+
+        # remove any '+' or '@' characters entered
+        words = [clean_vocab.sub('', w) for w in words]
+
         instances = self.workflows[flow]['Instances']
         self._log.debug("Instance IDs: %s", ','.join(instances.keys()))
         next_id = max([int(i) for i in instances.keys()], default=0) + 1
+
         instances[str(next_id)] = ','.join(words)
         self.add_workflow_task(flow, 1, next_id)
         with open(os.path.join(self._workflow_dir, "%s.workflow" % flow),'w') as fp:
@@ -136,11 +144,12 @@ class WorkflowCLI(minioncmd.MinionCmd):
 class Workflow(basetaskerplugin.SubCommandPlugin):
     def activate(self):
         self._log.debug("Activating Workflows")
-        if self.hasConfigOption('directory'):
-            self._log.debug("Directory set")
-        else:
+        if not self.hasConfigOption('directory'):
             self._log.debug("Setting Directory to default")
             self.setConfigOption('directory', workflow_dir)
+
+        if not self.hasConfigOption('hidden_extensions'):
+            self.setConfigOption('hidden_extensions', 'wid,ws,wn')
         
         
         local_dir = self.getConfigOption('directory')
@@ -155,9 +164,11 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
         workflow_commands = parser.add_subparsers(title='subcommands', dest='subcommand')
         start_workflow = workflow_commands.add_parser('start', help='start a workflow')
         start_workflow.add_argument('name', help="The name of the workflow to start")
-        start_workflow.add_argument('project', help="The project to attach to the workflow")
+        start_workflow.add_argument('vocabulary', nargs=argparse.REMAINDER,
+                                    help="The vocabulary for the workflow instance")
 #        
         workflow_commands.add_parser('list', help='lists known workflows')
+
         steps = workflow_commands.add_parser('steps',
                                      help='displays templated steps for a given workflow')
         steps.add_argument('text', nargs=argparse.REMAINDER)
@@ -165,6 +176,15 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
         instance = workflow_commands.add_parser('instances',
                                                 help='displays known instances of a workflow')
         instance.add_argument('text', nargs=argparse.REMAINDER)
+
+        info = workflow_commands.add_parser('info',
+                                            help="displays information about a workflow")
+        info.add_argument('workflow')
+
+        create = workflow_commands.add_parser('create',
+                                              help="creates a new workflow file")
+        create.add_argument('name', help="the name of the workflow to create")
+        create.add_argument('-edit', help="launch the editor automatically")
 
         super().activate()
                 
