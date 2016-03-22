@@ -15,7 +15,7 @@ from string import Template
 workflow_dir = os.path.join(os.path.dirname(__file__), 'workflows')
 
 import basetaskerplugin
-from tasker import minioncmd
+import minioncmd
 
 clean_vocab = re.compile(r"^[@+]")
 
@@ -56,9 +56,11 @@ class WorkflowCLI(minioncmd.MinionCmd):
         if flow_id not in self.workflows[flow]['Instances']:
             self._log.error("Missing %s workflow instance %s", flow, flow_id)
             print("Missing %s workflow instance %s" % (flow, flow_id))
-        
-        words = [word.strip() for word in 
-                 self.workflows[flow]['Instances'][flow_id].split(',')]
+            raise KeyError("Missing %s workflow instance %s" % (flow, flow_id))
+
+        words = [word.strip() for word in
+                self.workflows[flow]['Instances'][flow_id].split(',')]
+
         keys = [key.strip() for key in 
                 self.workflows[flow]['Workflow']['vocabulary'].split(',')]
                 
@@ -210,7 +212,10 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
                 return (0, None, c, p, s, e, t)
             next_step = str(int(x['ws'])+1)
             if next_step in steps:
-                self.cli.add_workflow_task(x['wn'], next_step, x['wid'])
+                try:
+                    self.cli.add_workflow_task(x['wn'], next_step, x['wid'])
+                except KeyError as E:
+                    return(2,E, c, p, s, e, t)
         return(0, None, c, p, s, e, t)
     
 

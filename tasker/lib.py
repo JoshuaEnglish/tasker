@@ -38,8 +38,7 @@ first = itemgetter(0)
 second = itemgetter(1)
         
 class TaskLib(object):
-    
-    
+
     def __init__(self, config=None, manager=None): 
         super().__init__()
         
@@ -57,6 +56,7 @@ class TaskLib(object):
             if not os.path.exists(config['Files'][path]):
                 fd = open(config['Files'][path], 'w')
                 fd.close()
+
     def get_extensions_to_hide(self):
         """get_extensions_to_hide()
         Compile a list of all extensions from the config file
@@ -194,7 +194,7 @@ class TaskLib(object):
         """
         with open(local_path, 'w') as fp:
             for linenum in sorted(task_dict):
-                fp.write("{}{}".format(task_dict[linenum].strip(), os.linesep))
+                fp.write("{}{}".format(task_dict[linenum].strip(), '\n'))
         return TASK_OK, "{:d} Tasks written".format(len(task_dict))
     
     
@@ -224,7 +224,8 @@ class TaskLib(object):
         new_task = self.graft(c, p, s, e, t)
     
         with open(self.config['Files']['task-path'], 'a') as fp:
-            fp.write('{}{}'.format(new_task.strip(), os.linesep))
+            fp.write('{}{}'.format(new_task.strip(), '\n'))
+        print(new_task)
         return TASK_OK, new_task
     
 
@@ -266,13 +267,14 @@ class TaskLib(object):
             t += " # {}".format(comment)
         tasks[tasknum] = self.graft(c, p, s, e, t)
         # run hooks - anything that should happen in response (grab next item in queue)
-        #tasks = _update_pending(tasks, x['uid']) # turn into plugin
+
         err, msg, c, p, s, e, t = self.run_hooks('complete_task', c, p, s, e, t, o, j, x)
         if err:
             return err, msg
         # End hooks
         self.write_tasks(tasks, self.config['Files']['task-path'])
         del self.tasks
+        print(tasks[tasknum])
         return TASK_OK, tasks[tasknum]
         
 
@@ -371,6 +373,7 @@ class TaskLib(object):
             t = '%s # %s' % (t, note.strip())
         tasks[tasknum] = t
         self.write_tasks(tasks, self.config['Files']['task-path'])
+        print(tasks[tasknum])
         return TASK_OK, tasks[tasknum]
         
     def reprioritize_text(self, text, priority):

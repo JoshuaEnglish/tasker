@@ -50,9 +50,13 @@ commands = parser.add_subparsers(title='commands',
                                  dest="command",
                                  help="supported commands",
                                  )
-parser.add_argument('-i', '--interactive', '-l', '--loop', dest="interact",
+parser.add_argument('-i', '--interactive', dest="interact",
                     action='store_true', default=False,
                     help='enter the interactive loop')
+parser.add_argument('--power', action='store_true', default=False,
+                    help=argparse.SUPPRESS)
+
+
 
 feedback = parser.add_mutually_exclusive_group()
 feedback.add_argument('-d', '--debug', action='store_const', const=2,
@@ -104,22 +108,22 @@ class TaskCmd(minioncmd.BossCmd):
     def do_list(self, line):
         "Lists tasks"
         args = commands.choices['list'].parse_args(line.split())
-        print(self.lib.list_tasks(**vars(args)))
+        self.lib.list_tasks(**vars(args))
 
     def do_add(self, line):
         """Add a task"""
         args = commands.choices['add'].parse_args(line.split())
-        print(self.lib.add_task(" ".join(args.text)))
+        self.lib.add_task(" ".join(args.text))
 
     def do_do(self, line):
         """Mark a task as complete"""
         args = commands.choices['do'].parse_args(line.split())
-        print(self.lib.complete_task(args.tasknum, " ".join(args.comment)))
+        self.lib.complete_task(args.tasknum, " ".join(args.comment))
 
     def do_pri(self, line):
         """Prioritize a task: NUM, PRI, (NOTE)"""
         args = commands.choices['pri'].parse_args(line.split())
-        print(self.lib.prioritize_task(**vars(args)))
+        self.lib.prioritize_task(**vars(args))
 
 
 manager = CPM.ConfigurablePluginManager(config,
@@ -178,11 +182,17 @@ def load_plugins():
                 setattr(CLI.__class__, method, getattr(plugin, method))
 
 
-
 def main():
     import sys
     args = parser.parse_args(sys.argv[1:])
-    print(args)
+
+    if args.power:
+        import powercmd
+        pcmd = powercmd.PowerCmd('poweruser', CLI, manager)
+        pcmd.config = config
+        args.interact = True
+        CLI.cmdqueue.append('poweruser')
+
     logging.root.setLevel(30 - (args.verbose - args.quiet) * 10)
     load_plugins()
 

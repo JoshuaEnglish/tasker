@@ -129,6 +129,8 @@ class BossCmd(cmd.Cmd):
                 self._log.debug('Adding do_%s to %s', switch, minion)
                 setattr(self.minions[minion].__class__, "do_{}".format(switch), self.switchers[switch])
 
+        return cmder
+
     def do_quit(self, line):
         "Quits the program"
         return True 
@@ -150,12 +152,7 @@ class BossCmd(cmd.Cmd):
             self.onecmd(text)
         return stop
 
-    def do_qlist(self, line):
-        """lists all items in the command queue"""
-        if not self.cmdqueue:
-            self.stdout.write("No Queued Commands\n")
-        for item in self.cmdqueue:
-            self.stdout.write("Queued Command: {}\n".format(item))
+
 
 class MinionCmd(cmd.Cmd):
     """MinionCmd

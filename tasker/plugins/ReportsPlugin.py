@@ -10,7 +10,7 @@ Created on Wed Mar  9 15:12:07 2016
 """
 import argparse
 import basetaskerplugin
-
+import lister
 
 class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
     def activate(self):
@@ -48,10 +48,15 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
 
     def _get_project_counts(self):
         """Generate a dictionary of dictionaries showing project counts"""
-        projects = {}
+        projects = {'NO PROJECT': {'open': 0, 'closed': 0}}
         tasks = self.lib.get_tasks(self.lib.config['Files']['task-path'])
         for task in list(tasks.values()):
             c, p, s, e, t, o, j, x = self.lib.parse_task(task)
+            if not j:
+                if c:
+                    projects['NO PROJECT']['closed'] += 1
+                else:
+                    projects['NO PROJECT']['open'] += 1
             for project in j:
                 if project not in projects:
                     projects[project] = {'open': 0, 'closed': 0}
@@ -64,12 +69,15 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
     def project_report(self):
         """Print a list of project, noting number of open and closed tasks."""
 
-        print("Project, open, closed")
+      
         projects = self._get_project_counts()
-        for project in sorted(projects):
-            if projects[project]['open']:
-                print(project, projects[project]['open'],
-                      projects[project]['closed'])
+        
+        lister.print_list([(proj, 
+                            str(projects[proj]['open']), 
+                            str(projects[proj]['closed']))
+                           for proj in projects
+                           if projects[proj]['open']],
+                          "Project Open Closed".split())
 
     def closed_projects(self):
         """Print a list of projects with no open tasks"""
