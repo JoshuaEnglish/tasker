@@ -350,18 +350,26 @@ class TaskLib(object):
             if ext not in self.extension_hiders:
                 self.extension_hiders[ext] = re.compile(r"\s{%s:[^}]*}" % ext.strip())
 
+        wrap_width = self.config['Tasker'].getint('wrap-width', 78)
         if not self._textwrapper:
-            self._textwrapper = textwrap.TextWrapper()
+            self._textwrapper = textwrap.TextWrapper(width=wrap_width)
+            
         if shown_tasks:
             maxid = max([a for a, b in shown_tasks])
             idlen = len(str(maxid))
             self._textwrapper.subsequent_indent = ' '*(idlen+5)
-            if self.config['Tasker'].get('wrap-behavior', 'wrap') == 'wrap':
+            wrap = self.config['Tasker'].get('wrap-behavior', 'none')
+            if wrap == 'wrap':
                 self.log.info("Wrapping long lines of each task")
                 wrapfunc = self._textwrapper.fill
-            else:
+            elif wrap == 'shorten':
                 self.log.info("Shortening each task")
-                wrapfunc = partial(textwrap.shorten, width=70, placeholder='...')
+                wrapfunc = partial(textwrap.shorten, width=wrap_width, 
+                                   placeholder='...')
+            elif wrap == 'none':
+                wrapfunc = str
+            else:
+                self.log.error("Unknown textwrap preference %s", wrap)
             for idx, task in shown_tasks:
                 if not showext:
                     for ext in self.extension_hiders:

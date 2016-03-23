@@ -29,7 +29,8 @@ config.read_dict(
                'done-path': "%(tasker-dir)s/done.txt",
                },
      'Tasker': {'hidden-extensions': 'uid',
-                'wrap-behavior': 'wrap'}
+                'wrap-behavior': 'wrap',
+                'wrap-width': '78'}
      })
 
 if hasattr(sys, "frozen"):
