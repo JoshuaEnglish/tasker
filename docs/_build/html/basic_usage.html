@@ -31,7 +31,7 @@
 
   
     <link rel="top" title="tasker 0.0.1 documentation" href="index.html"/>
-        <link rel="next" title="Plugin Primer" href="pluginprimer.html"/>
+        <link rel="next" title="Archiving Tasks" href="archiving_tasks.html"/>
         <link rel="prev" title="Welcome to Tasker’s documentation!" href="index.html"/> 
 
   
@@ -86,14 +86,18 @@
 <li class="toctree-l2"><a class="reference internal" href="#the-anatomy-of-a-task">The Anatomy of a Task</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#basic-commands">Basic Commands</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#interactive-mode">Interactive Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#listing-tasks">Listing Tasks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sorting-tasks">Sorting Tasks</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="archiving_tasks.html">Archiving Tasks</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="pluginprimer.html">Plugin Primer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pendplugin.html">Building the Pending Plugin</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="tasker.html">Taser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tasker.html">Tasker</a></li>
 <li class="toctree-l1"><a class="reference internal" href="minioncmd.html">MinionCmd</a></li>
 </ul>
 
@@ -144,15 +148,17 @@
 <p>Tasker is a text based task manager that runs at the command line or within
 Python. It is written in Python 3.5 but will most likely run in earlier
 versions.</p>
-<p>Tasker manager two files: <cite>todo.txt</cite> and <cite>done.txt</cite>.  Each task is saved on
-a single line in either file.</p>
+<p>Tasker manager manages two files: <code class="docutils literal"><span class="pre">todo.txt</span></code> and <code class="docutils literal"><span class="pre">done.txt</span></code>.  Each task is
+saved on a single line in either file. Tasker follows the task formatting rules
+set out by Gina Trapani&#8217;s <a class="reference external" href="http://github.com/ginatrapani/todo.txt-cli/wiki/The-Todo.txt-Format">Todo.txt format</a> with the addition of using
+full datetime stamps instead of just dates.</p>
 <div class="section" id="the-anatomy-of-a-task">
 <h2>The Anatomy of a Task<a class="headerlink" href="#the-anatomy-of-a-task" title="Permalink to this headline">¶</a></h2>
-<p>Tasks have the following:</p>
+<p>Tasks consist of a single line of text:</p>
 <blockquote>
 <div><ul class="simple">
 <li>&#8216;x &#8216; if the task is completed</li>
-<li>&#8216;(p)&#8217; if the task has a priority. Priorities are A-W.</li>
+<li>&#8216;(p)&#8217; if the task has a priority. Priorities are A-Z.</li>
 <li>&#8216;datetime stamp&#8217; for the start of the task (default to time task is created)</li>
 <li>&#8216;datetime stamp&#8217; for the time the task was completed (if completed)</li>
 <li>remaining text is the actual task</li>
@@ -160,18 +166,27 @@ a single line in either file.</p>
 </div></blockquote>
 <p>Tasks are organized by projects (words that begin with &#8216;+&#8217;) and contexts (words
 that begin with &#8216;&#64;&#8217;). Tasks may also have extensions which are key:value pairs
-wrapped in braces.</p>
+wrapped in braces (for example <code class="docutils literal"><span class="pre">{uid:221112080316}</span></code>).</p>
 <p>Here is an example of a pending task:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span>(A) 2016-03-08T09:51:38 Finish +TaskerDocumentation @code {note: It&#39;s getting late}
+<div class="highlight-python"><div class="highlight"><pre><span></span>(A) 2016-03-08T09:51:38 Finish +TaskerDocumentation @code # It&#39;s getting late
 </pre></div>
 </div>
 <p>This task has a priority. It has a project (TaskerDocumentation) and a context
-(code) and a note.</p>
+(code) and a comment.</p>
 <p>Here is an example of a completed task:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span>x 2016-03-07T11:45:08 2016-03-08T21:35:12 Call mom @phone
 </pre></div>
 </div>
 <p>This task is complete and won&#8217;t appear in the task list unless requested.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Samples in this document</p>
+<p>In the command line samples, only a simple prompt <code class="docutils literal"><span class="pre">&gt;</span></code> is presented for
+the command line.</p>
+<p>The interactive prompts include their name.</p>
+<p class="last"><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">t</span> <span class="pre">list</span></code> and <code class="docutils literal"><span class="pre">tasker&gt;</span> <span class="pre">list</span></code> are the same thing, the first from the
+command line and the second from the interactive prompt.</p>
+</div>
 </div>
 <div class="section" id="basic-commands">
 <h2>Basic Commands<a class="headerlink" href="#basic-commands" title="Permalink to this headline">¶</a></h2>
@@ -188,7 +203,7 @@ C:\&gt;tasker add go to bed
 
 C:\&gt;tasker list
 1 2016-03-04T22:04:30 test from cli
-2 2015-03-06T19:37:12 test add
+2 2016-03-06T19:37:12 test add
 5 2016-03-08T22:11:12 go to bed
 --
 3 tasks shown
@@ -205,13 +220,18 @@ C:\&gt;tasker
 </div>
 <p>Tasker adds a <code class="docutils literal"><span class="pre">uid</span></code> extension to each task it creates but does not list this
 when it prints the task list. The <code class="docutils literal"><span class="pre">uid</span></code> is used to chain tasks together.</p>
-<blockquote>
-<div><div class="admonition note">
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Task Numbers</p>
+<p>Task numbers are simply the line number in the current file. This provides
+a quick reference to tasks. Be warned that archiving tasks will renumber
+your files.</p>
+<div class="last admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Tasker comes with a Windows batch file that runs the Python script
 directly. It can be used so <code class="docutils literal"><span class="pre">t</span></code> is a shortcut to Tasker.py.</p>
 </div>
-</div></blockquote>
+</div>
 </div>
 <div class="section" id="interactive-mode">
 <h2>Interactive Mode<a class="headerlink" href="#interactive-mode" title="Permalink to this headline">¶</a></h2>
@@ -224,6 +244,49 @@ tasker&gt; list
 2 tasks shown
 </pre></div>
 </div>
+<p>For most commands, the interactive prompt uses the same input as the command
+line interface.</p>
+</div>
+<div class="section" id="listing-tasks">
+<h2>Listing Tasks<a class="headerlink" href="#listing-tasks" title="Permalink to this headline">¶</a></h2>
+<p>The simple <code class="docutils literal"><span class="pre">list</span></code> command will show only currently open tasks, but you can
+filter tasks by including search terms:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t
+13 (B) 2016-03-20T18:33:23 Get complete information for +HomeQuote @quote
+12 2016-03-17T22:54:20 redo +Documentation
+16 2016-03-21T20:57:51 third useless thing
+---
+3 tasks shown
+
+&gt; t list thing
+16 2016-03-21T20:57:51 third useless thing
+---
+1 tasks shown
+
+&gt; t list information
+13 (B) 2016-03-20T18:33:23 Get complete information for +HomeQuote @quote
+---
+1 tasks shown
+</pre></div>
+</div>
+<p>However, if you try to search for more than one keyword, tasker will only list
+open tasks that match all those keywords:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t list thing information
+0 tasks shown
+</pre></div>
+</div>
+<p>You can use the <code class="docutils literal"><span class="pre">-y</span></code> flag to search for any match:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t list -y thing information
+13 (B) 2016-03-20T18:33:23 Get complete information for +HomeQuote @quote
+16 2016-03-21T20:57:51 third useless thing
+---
+2 tasks shown
+</pre></div>
+</div>
+</div>
+<div class="section" id="sorting-tasks">
+<h2>Sorting Tasks<a class="headerlink" href="#sorting-tasks" title="Permalink to this headline">¶</a></h2>
+<p>The default behavior is to list tasks by priority.</p>
 </div>
 </div>
 
@@ -234,7 +297,7 @@ tasker&gt; list
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="pluginprimer.html" class="btn btn-neutral float-right" title="Plugin Primer" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="archiving_tasks.html" class="btn btn-neutral float-right" title="Archiving Tasks" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="index.html" class="btn btn-neutral" title="Welcome to Tasker’s documentation!" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>

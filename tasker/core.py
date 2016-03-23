@@ -19,8 +19,7 @@ def add_core_subparsers(commands):
     list_parser.add_argument('-n', action="store_false",
                              dest="by_pri", default=True,
                              help="Prints task list in numerical order, otherwise orders by priority")
-    list_parser.add_argument('-f', dest="filters", nargs="*",
-                             help="Only lists tasks containing these words")
+
     list_parser.add_argument('-y', dest="filterop", action="store_true",
                              default=False,
                              help="Shows tasks matching any filter word. Default is to match all")
@@ -30,6 +29,8 @@ def add_core_subparsers(commands):
     list_parser.add_argument('-x', dest="showext", action="store_true",
                              default=False,
                              help="Shows hidden text extensions")
+    list_parser.add_argument('filters', nargs=argparse.REMAINDER,
+                             help="Only lists tasks containing these words")
 
     add_parser = commands.add_parser('add', help="add a task")
     add_parser.add_argument('-d','--done', action="store_true",
@@ -77,6 +78,7 @@ create.add_argument('kind', choices=['new', 'sub', 'generic'],
 class_map = {'new': 'NewCommandPlugin',
              'sub': 'SubCommandPlugin',
              'generic': 'TaskerPlugin'}
+
 
 class PluginCmd(minioncmd.MinionCmd):
     """PluginCmd(name [,master, manager, completekey, stdin, stout])
@@ -168,7 +170,7 @@ class PluginCmd(minioncmd.MinionCmd):
                     self.manager.getPluginLocator().plugins_places[0])
         
         def_path = os.path.join(folder, 
-                                "{}Plugin.yapsy-plugin".format(args.name))
+                                "{}Plugin.tasker-plugin".format(args.name))
         with open(def_path, 'w') as fp:
             print(PLUGIN_DEFINITION.format(**vars(args)), file=fp, flush=True)
         
@@ -260,3 +262,34 @@ class {name}Plugin(basetaskerplugin.{cls}):
 
 '''
 
+archive_argparser = argparse.ArgumentParser('archive')
+archive_argparser.add_argument('--days', type=int, default=3, 
+                               help='minimum age of closed tasks to archive')
+archive_commands = archive_argparser.add_subparsers(title='commands',
+                                 dest="archivecommand",
+                                 metavar="")
+
+archive_project_parser = archive_commands.add_parser('project', 
+                                                     help='Archive by project')
+archive_project_parser.add_argument('projects', 
+                                    help="names of Projects to archive", 
+                                    nargs=argparse.REMAINDER)
+
+
+class ArchiveCmd(minioncmd.MinionCmd):
+    prompt = "archive> "
+    doc_leader = """Archive Help
+    
+    These commands archive tasks by project or number.
+    Tasks that are not old enough (set by --days) will not be archived.
+    """
+
+    def __init__(self, name, master=None,
+                 completekey='tab', stdin=None, stdout=None):
+        super().__init__(name, master, completekey, stdin, stdout)
+        
+    def do_project(self, text):
+        """Archive tasks in a given project"""
+        print("archive.do_project", text)
+        args = archive_project_parser.parse_args(text.split())
+        print(args)

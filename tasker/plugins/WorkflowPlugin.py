@@ -45,9 +45,10 @@ class WorkflowCLI(minioncmd.MinionCmd):
         """add_workflow_task(flow, stepnum, flow_id)
         
         Adds a new task to the task manager based on the workflow.
-        
+
         :param str flow: name of the workflow to follow
         :param int/str stepnum: number of the step
+        :param int flow_id: the instance Id for the workflow
         """
         if flow not in self.workflows.keys():
             self._log.error("Missing workflow: %s", flow)
@@ -150,8 +151,8 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
             self._log.debug("Setting Directory to default")
             self.setConfigOption('directory', workflow_dir)
 
-        if not self.hasConfigOption('hidden_extensions'):
-            self.setConfigOption('hidden_extensions', 'wid,ws,wn')
+        if not self.hasConfigOption('hidden-extensions'):
+            self.setConfigOption('hidden-extensions', 'wid,ws,wn')
         
         
         local_dir = self.getConfigOption('directory')
@@ -163,7 +164,9 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
        
         parser = self.parser = argparse.ArgumentParser('workflow')
         self.helpstr = 'Workflows commands (see `help workflow`)'
-        workflow_commands = parser.add_subparsers(title='subcommands', dest='subcommand')
+        workflow_commands = parser.add_subparsers(title='workflow commands', 
+                                                  dest='subcommand',
+                                                  metavar='')
         start_workflow = workflow_commands.add_parser('start', help='start a workflow')
         start_workflow.add_argument('name', help="The name of the workflow to start")
         start_workflow.add_argument('vocabulary', nargs=argparse.REMAINDER,
@@ -190,16 +193,8 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
 
         super().activate()
                 
-        
-    def print_name(self):
-        print("This is the workflow plugin")
-        
-#    def add_task(self, c, p, s, e, t, o, j, x):
-#        #print("Adding task: {}".format(t))
-#        return (0, None, c, p, s, e, t)
-        
+
     def complete_task(self, c, p, s, e, t, o, j, x):
-        #print("Compliting task: {}".format(t))
         self._log.debug('Workflow checking completed task %s', 
                         x.get('uid', 'NO ID'))
         if 'wn' in x:

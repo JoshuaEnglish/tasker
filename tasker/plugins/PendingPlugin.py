@@ -11,6 +11,8 @@ import basetaskerplugin
 
 re_pend = re.compile(r"\s{pend:([^}]*)}")
 
+
+# noinspection PyIncorrectDocstring,PyIncorrectDocstring
 class PendingPlugin(basetaskerplugin.NewCommandPlugin):
     def activate(self):
         self._log.debug('Activating Pending')
@@ -37,7 +39,8 @@ class PendingPlugin(basetaskerplugin.NewCommandPlugin):
     def show_pend_extension(self):
         self.setConfigOption('hide_pend_ext', 'false')
         self.lib.show_extension('show')
-        
+
+    # noinspection PyIncorrectDocstring,PyIncorrectDocstring
     def do_after(self, line):
         """Create a new task to be done after a current task is completed"""
         args = self.after_parser.parse_args(line.split())

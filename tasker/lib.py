@@ -8,8 +8,12 @@ import os
 import re
 import datetime
 import logging
+import textwrap
 
 from operator import itemgetter
+from collections import defaultdict, Counter
+from functools import partial
+
 
 TIMEFMT = '%Y-%m-%dT%H:%M:%S'
 IDFMT = '%H%M%S%d%m%y'
@@ -27,7 +31,6 @@ re_project = re.compile("\s([+][-\w]+)")
 
 re_ext = re.compile(r"\s{\w+:[^}]*}")
 re_uid = re.compile(r"\s{uid:[^}]*}")
-#re_pend = re.compile(r"\s{pend:([^}]*)}")
 re_note = re.compile('\s#\s.*$')
 
 TASK_OK = 0
@@ -36,22 +39,25 @@ TASK_EXTENSION_ERROR = 2
 
 first = itemgetter(0)
 second = itemgetter(1)
-        
+
+
 class TaskLib(object):
 
-    def __init__(self, config=None, manager=None): 
+    def __init__(self, config=None, manager=None):
         super().__init__()
-        
+
         self.config = config
         self.manager = manager
-        
+
         self.extension_hiders = {}
-        
+
         self.log = logging.getLogger('tasklib')
-        
+
+        self._textwrapper = None
+
         if not os.path.exists(config['Files']['tasker-dir']):
             os.mkdir(config['Files']['tasker-dir'])
-        
+
         for path in ['task-path', 'done-path']:
             if not os.path.exists(config['Files'][path]):
                 fd = open(config['Files'][path], 'w')
@@ -61,7 +67,7 @@ class TaskLib(object):
         """get_extensions_to_hide()
         Compile a list of all extensions from the config file
         """
-        ext_list = ','.join([self.config[d].get('hidden_extensions','')
+        ext_list = ','.join([self.config[d].get('hidden-extensions','')
                              for d in self.config])
         ext_list = [s.strip() for s in ext_list.split(',') if s]
         return ext_list
@@ -74,15 +80,15 @@ class TaskLib(object):
         if not self.config:
             self.log.error('Cannot add hidden extension: No configuration')
             return None
-        
+
         extensions = self.config['Tasker']['hidden_extensions'].split(',')
         extensions = [e.strip() for e in extensions]
         ext = ext.strip()
         if ext not in extensions:
             extensions.append(ext)
-        
+
         self.config['Tasker']['hidden_extensions'] = ','.join(extensions)
-    
+
     def show_extension(self, ext):
         """show_extension(ext)
         Removes the extension from tasker's list of hidden extensions.
@@ -91,15 +97,15 @@ class TaskLib(object):
         if not self.config:
             self.log.error('Cannot add hidden extension: No configuration')
             return None
-        
+
         extensions = self.config['Tasker']['hidden_extensions'].split(',')
         extensions = [e.strip() for e in extensions]
         ext = ext.strip()
         if ext in extensions:
             extensions.remove(ext)
-        
+
         self.config['Tasker']['hidden_extensions'] = ','.join(extensions)
-        
+
     def parse_task(self, text):
         """Return a tuple of the following fields:
             complete - boolean 
@@ -125,14 +131,14 @@ class TaskLib(object):
             start = datetime.datetime.strptime(match.group('start').strip(), TIMEFMT)
         else:
             start = datetime.datetime.now()
-    
+
         if match.group('end'):
             end = datetime.datetime.strptime(match.group('end').strip(), TIMEFMT)
         else:
             end = None
-    
+
         task = match.group('text').strip()
-    
+
         context = [t.strip() for t in re_context.findall(text)]
         projects = [t.strip() for t in re_project.findall(text)]
         extensions = re_ext.findall(text)
@@ -169,8 +175,8 @@ class TaskLib(object):
             res.append(end.strftime(TIMEFMT))
         res.append(text.strip())
         return " ".join(res)
-    
-    
+
+
     def get_tasks(self, path):
         """Returns a dictionary of (line number (starting at 1), task text) pairs
         :rtype: dict
@@ -185,19 +191,21 @@ class TaskLib(object):
                     res[idx] = line.strip()
                     idx += 1
         return res
-    
-    
+
+
     def write_tasks(self, task_dict, local_path):
         """write_tasks(task_dict, local_path)
         Writes the working task_dictionary to the appropriate file
-        :type local_path: file path
+        :param dict task_dict: dictionary of (line: task) pairs
+        :param filepath local_path: file path to write to
         """
+        self.log.info('Writing tasks to %s', local_path)
         with open(local_path, 'w') as fp:
             for linenum in sorted(task_dict):
                 fp.write("{}{}".format(task_dict[linenum].strip(), '\n'))
         return TASK_OK, "{:d} Tasks written".format(len(task_dict))
-    
-    
+
+
     def run_hooks(self, func_name, c, p, s, e, t, o, j, x):
         ok = TASK_OK
         msg = ""
@@ -209,56 +217,65 @@ class TaskLib(object):
                 func = getattr(plugin.plugin_object, func_name)
                 ok, msg, c, p, s, e, t = func(c, p, s, e, t, o, j, x)
         return ok, msg, c, p, s, e, t
-    
-    
+
+
     def add_task(self, text):
+
         stuff = self.parse_task(text)
         c, p, s, e, t, o, j, x = stuff
-        if c and not e:
+
+        if c  and not e:
             e = datetime.datetime.now()
+
         # run hooks, say, if there is a pend extension, check that the pend id is a valid ID
         err, msg, c, p, s, e, t = self.run_hooks('add_task', c, p, s, e, t, o, j, x)
         if err:
+            self.log.error(msg)
             return err, msg
-    
+
         new_task = self.graft(c, p, s, e, t)
-    
+
         with open(self.config['Files']['task-path'], 'a') as fp:
             fp.write('{}{}'.format(new_task.strip(), '\n'))
         print(new_task)
         return TASK_OK, new_task
-    
+
 
     def add_done(self, text):
         """Adds a completed task. Uses the entry time as start and close
         :param text: Text of the completed task
         """
+        self.tasks = self.get_tasks(self.config['Files']['task-path'])
         c, p, s, e, t, o, j, x = self.parse_task(text)
         if not e:
             e = datetime.datetime.now()
         err, msg, c, p, s, e, t = self.run_hooks('add_task', c, p, s, e, t, o, j, x)
         if err:
+            self.log.error(msg)
             return err, msg
-    
+
         c = True
-    
+
         err, msg, c, p, s, e, t = self.run_hooks('complete_task', c, p, s, e, t, o, j, x)
-        if not err:
+        if err:
+            self.log.error(msg)
             return err, msg
-    
+
         done = self.graft(c, p, s, e, t)
         with open(self.config['Files']['task-path'], 'a') as fp:
-            fp.write('{}{}'.format(done.strip(), os.linesep))
-        return TASK_OK, done    
-    
-    
+            fp.write('{}{}'.format(done.strip(), '\n'))
+        del self.tasks
+        print(done)
+        return TASK_OK, done
+
+
     def complete_task(self, tasknum, comment=None):
         tasks = self.get_tasks(self.config['Files']['task-path'])
         if tasknum not in tasks:
             return TASK_ERROR, "Task number not in task list"
         if tasks[tasknum].startswith('x'):
             return TASK_ERROR, "Task already completed"
-            
+
         self.tasks = tasks
         c, p, s, e, t, o, j, x = self.parse_task(tasks[tasknum])
         c = True
@@ -270,14 +287,13 @@ class TaskLib(object):
 
         err, msg, c, p, s, e, t = self.run_hooks('complete_task', c, p, s, e, t, o, j, x)
         if err:
+            self.log.error(msg)
             return err, msg
         # End hooks
         self.write_tasks(tasks, self.config['Files']['task-path'])
         del self.tasks
         print(tasks[tasknum])
         return TASK_OK, tasks[tasknum]
-        
-
 
 
     def sort_tasks(self, by_pri=True, filters=None, filterop=None, showcomplete=None):
@@ -290,21 +306,20 @@ class TaskLib(object):
         Default behavior does not look in the done.txt file.
         To filter, provide a list of strings to filter by.
         """
-        # by_pri = by_pri or True # or logic doesn't work when default is true
+
         filters = filters or []
         filterop = filterop if filterop in (all, any) else all
         if filterop not in (any, all):
             return TASK_ERROR, "Filter Operation must by any or all"
         showcomplete = showcomplete or False
-    
+
         everything = [(key, val) for key, val in list(self.get_tasks(self.config['Files']['task-path']).items())
                       if (showcomplete or not val.startswith('x'))]
-    
+
         if filters:
             everything = [(key, val) for key, val in everything
                           if filterop([_ in val for _ in filters])]
-    
-        # everything has all open tasks if showcomplete is false.
+
         # todo .. print completed tasks in revers Cron order? The priorities get wiped
         if by_pri:
             stuff = sorted(everything, key=second)
@@ -312,8 +327,6 @@ class TaskLib(object):
             stuff = sorted(everything, key=first)
         return stuff
 
-    
-    
     def list_tasks(self, by_pri=True, filters: str = None, filterop=None, showcomplete=None,
                    showext=None):
         """list_tasks([by_pri, filters, filterop, showcomplete, showuid)
@@ -329,26 +342,38 @@ class TaskLib(object):
         showext = showext or False
         count = 0
         shown_tasks = self.sort_tasks(by_pri, filters, filterop, showcomplete)
-    
+        self.log.info('Listing %s tasks %s',
+                      'all' if showcomplete else 'open',
+                      'by priority' if by_pri else 'by number')
+
         for ext in self.get_extensions_to_hide():
             if ext not in self.extension_hiders:
                 self.extension_hiders[ext] = re.compile(r"\s{%s:[^}]*}" % ext.strip())
-            
-        
+
+        if not self._textwrapper:
+            self._textwrapper = textwrap.TextWrapper()
         if shown_tasks:
             maxid = max([a for a, b in shown_tasks])
             idlen = len(str(maxid))
+            self._textwrapper.subsequent_indent = ' '*(idlen+5)
+            if self.config['Tasker'].get('wrap-behavior', 'wrap') == 'wrap':
+                self.log.info("Wrapping long lines of each task")
+                wrapfunc = self._textwrapper.fill
+            else:
+                self.log.info("Shortening each task")
+                wrapfunc = partial(textwrap.shorten, width=70, placeholder='...')
             for idx, task in shown_tasks:
                 if not showext:
                     for ext in self.extension_hiders:
                         task = self.extension_hiders[ext].sub("", task)
-                print(("{1:{0}d} {2}".format(idlen, idx, task)))
+                print(("{1:{0}d} {2}".format(idlen, idx,
+                                             wrapfunc(task))))
                 count += 1
             print('-'*(idlen+1))
-        msg=("{:d} tasks shown".format(count))
+        msg=("{:d} task{:s} shown".format(count, '' if count==1 else 's'))
         print(msg)
         return TASK_OK, msg
-        
+
     def prioritize_task(self, tasknum, priority, note=None):
         """prioritize_task(tasknum, new_pri [,note]
         
@@ -366,7 +391,7 @@ class TaskLib(object):
         if tasks[tasknum].startswith('x '):
             self.log.error('Task %s already completed', tasknum)
             return TASK_ERROR, "Task already completed"
-        
+
         t = self.reprioritize_text(tasks[tasknum], priority)  # reprioritize grafts result
         if note:
             t = re_note.sub('', t)
@@ -375,22 +400,83 @@ class TaskLib(object):
         self.write_tasks(tasks, self.config['Files']['task-path'])
         print(tasks[tasknum])
         return TASK_OK, tasks[tasknum]
-        
+
     def reprioritize_text(self, text, priority):
         """reprioritize(text, new_priority)
         """
         if text.startswith('x '):
             self.log.warn("Cannot reprioritize completed task")
             return text
-    
+
         np = priority.strip()
         match = re.match(r'^[A-Z]$', np)
         if not match:
             self.log.error("New priority must be A-Z")
             return text
-        
+
         c, p, s, e, t, o, j, x = self.parse_task(text)
         newtext = self.graft(c, match.group(), s, e, t)
         self.log.info("Reprioritized task: %s", newtext)
-    
+
         return newtext
+
+    def build_task_dict(self, include_archive=False, only_archive=False):
+        """build_task_dict(include_archive, only_archive)
+        Builds a dictionary of tasks, much like :meth:`get_tasks` but will
+        read either file, or both.
+        """
+        if only_archive:
+            tasks = self.get_tasks(self.config['Files']['done-path'])
+        else:
+            tasks = self.get_tasks(self.config['Files']['task-path'])
+            if include_archive:
+                done = self.get_tasks(self.config['Files']['done-path'])
+                for key, val in done.items():
+                    tasks['x%d' % key]=val
+
+        return tasks
+
+
+    def get_counts(self, kind, include_archive=False, only_archive=False):
+        """get_counts(kind, include_archive, only_archive)
+        Returns a dictionary of :class:`collections.Counter` objects.
+        
+        
+        :param str kind: 'project' or 'context'
+        :param bool include_archive: passed to :meth:`build_task_dict`
+        :param bool only_archive: passet to :meth:`build_task_dict`
+        
+        The resulting dictionary looks like::
+            
+            {'+SomeProject': Counter({'open': 2, 'closed': 1})}
+        
+        
+        """
+        kind = kind.upper()
+
+        if kind == 'PROJECT':
+            idx = 6
+        elif kind == 'CONTEXT':
+            idx = 5
+        else:
+            raise ValueError("Should pass 'project' or 'context' to get_counts")
+        res = defaultdict(Counter)
+        nothing = 'NO {}'.format(kind)
+
+        tasks=self.build_task_dict(include_archive, only_archive)
+
+        for task in tasks.values():
+            stuff = self.parse_task(task)
+            items = stuff[idx] # projects and contexts are lists
+            closed = stuff[0]
+            key = 'closed' if closed else 'open'
+
+            if not items:
+                res[nothing][key] += 1
+
+            for item in items:
+                res[item][key] += 1
+
+        return res
+
+

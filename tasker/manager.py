@@ -40,6 +40,7 @@ class SingleFileAnalyzer(yapsy.PluginFileLocator.PluginFileAnalyzerMathingRegex)
         """
         Returns the extracted plugin informations as a dictionary.
         This function ensures that "name" and "path" are provided.
+        :param dirpath:
         """
         # use the filename alone to extract minimal informations.
         # do not import the file, but it okay to read

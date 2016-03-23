@@ -1,0 +1,4 @@
+Archiving Tasks
+===============
+
+Tasker's default behavior is to only list open tasks, but it is possible

@@ -13,9 +13,6 @@ return to the main BossCmd instance.
 import cmd 
 import logging
 
-logging.basicConfig(format="%(asctime)s %(name)s %(levelname)s: %(message)s in %(module)s:%(funcName)s",
-                    datefmt="%Y-%m-%d %I:%M:%S %p")
-
 
 class BossCmd(cmd.Cmd):
     """BossCmd

@@ -20,6 +20,7 @@ Using Tasker:
    :maxdepth: 2
 
    basic_usage
+   archiving_tasks
 
 Extending Tasker:
 

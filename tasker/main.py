@@ -17,7 +17,7 @@ import minioncmd
 import core
 import lib
 
-logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
+logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s (%(name)s)',
                     datefmt='%Y-%m%d %H:%M:%S')
 
 log = logging.getLogger('main')
@@ -28,7 +28,9 @@ config.read_dict(
                'task-path': "%(tasker-dir)s/todo.txt",
                'done-path': "%(tasker-dir)s/done.txt",
                },
-     'Tasker': {'hidden_extensions': 'uid'}})
+     'Tasker': {'hidden-extensions': 'uid',
+                'wrap-behavior': 'wrap'}
+     })
 
 if hasattr(sys, "frozen"):
     configdir = os.path.dirname(sys.executable)
@@ -45,15 +47,22 @@ def save_config():
         config.write(fp)
 
 
-parser = argparse.ArgumentParser('t', description="Todo Manager")
-commands = parser.add_subparsers(title='commands',
+parser = argparse.ArgumentParser('t',
+                                 description="Todo Manager",
+                                 #usage='t [main options] command [command options] [command arguments]',
+                                 epilog='For more information use the --manual flag')
+
+commands = parser.add_subparsers(title='supported commands',
                                  dest="command",
-                                 help="supported commands",
+                                 metavar=''
                                  )
 parser.add_argument('-i', '--interactive', dest="interact",
                     action='store_true', default=False,
                     help='enter the interactive loop')
+
 parser.add_argument('--power', action='store_true', default=False,
+                    help=argparse.SUPPRESS)
+parser.add_argument('--manual', action='store_true', default=False,
                     help=argparse.SUPPRESS)
 
 
@@ -72,6 +81,9 @@ core.add_core_subparsers(commands)
 def add_subparser(subparser, helpstr=None):
     """add_subparser(subparser [,helpstr])
     Adds an argparse.ArgumentParser instance to the main parser.
+
+    :param argparse.ArgumentParser subparser: Instance to add
+    :param str helpstr: public help string
     """
 
     if not isinstance(subparser, argparse.ArgumentParser):
@@ -89,10 +101,6 @@ def add_subparser(subparser, helpstr=None):
     commands._choices_actions.append(choice_action)
 
 
-# assume report_parser is defined elsewhere and imported
-report_parser = argparse.ArgumentParser('report')
-report_parser.add_argument('text', nargs=argparse.REMAINDER)
-
 
 class TaskCmd(minioncmd.BossCmd):
     prompt = "tasker> "
@@ -108,12 +116,16 @@ class TaskCmd(minioncmd.BossCmd):
     def do_list(self, line):
         "Lists tasks"
         args = commands.choices['list'].parse_args(line.split())
+        args.filterop = any if args.filterop else all
         self.lib.list_tasks(**vars(args))
 
     def do_add(self, line):
         """Add a task"""
         args = commands.choices['add'].parse_args(line.split())
-        self.lib.add_task(" ".join(args.text))
+        if args.done:
+            self.lib.add_done(" ".join(args.text))
+        else:
+            self.lib.add_task(" ".join(args.text))
 
     def do_do(self, line):
         """Mark a task as complete"""
@@ -125,9 +137,13 @@ class TaskCmd(minioncmd.BossCmd):
         args = commands.choices['pri'].parse_args(line.split())
         self.lib.prioritize_task(**vars(args))
 
+    def save_config(self):
+        save_config()
+
 
 manager = CPM.ConfigurablePluginManager(config,
-                                        config_change_trigger=save_config)
+                                        config_change_trigger=save_config,
+                                        plugin_info_ext="tasker-plugin")
 manager.setPluginPlaces(['plugins'])
 manager.setCategoriesFilter({
     "NewCommand": basetaskerplugin.NewCommandPlugin,
@@ -136,10 +152,14 @@ manager.setCategoriesFilter({
 })
 
 LIB = lib.TaskLib(config, manager)
+LIB.commands = commands
 CLI = TaskCmd(config=config, lib=LIB)
 
 core.PluginCmd('plugins', CLI, manager)
+core.ArchiveCmd('archive', CLI)
+
 add_subparser(core.plugin_argparser, "Plugin manager")
+add_subparser(core.archive_argparser, "Archive commands")
 
 log.debug('Collecting Plugins...')
 manager.collectPlugins()
@@ -193,7 +213,9 @@ def main():
         args.interact = True
         CLI.cmdqueue.append('poweruser')
 
+
     logging.root.setLevel(30 - (args.verbose - args.quiet) * 10)
+    log.debug(args)
     load_plugins()
 
     if args.interact:
@@ -201,9 +223,8 @@ def main():
     elif not args.command:
         CLI.onecmd('list')
     else:
-        CLI.onecmd(' '.join(sys.argv[1:]))
 
-
+        CLI.onecmd(' '.join(sys.argv[sys.argv.index(args.command):]))
 
 
 if __name__ == '__main__':
