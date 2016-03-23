@@ -8,6 +8,7 @@ import os
 
 import argparse
 import datetime
+import logging
 
 import minioncmd
 import lister
@@ -88,6 +89,7 @@ class PluginCmd(minioncmd.MinionCmd):
 
     prompt = "plugins> "
     doc_leader = "Plugins Help"
+    _log = logging.getLogger('plugin')
 
     def __init__(self, name, master=None, manager=None,
                  completekey='tab', stdin=None, stdout=None):
@@ -263,14 +265,19 @@ class {name}Plugin(basetaskerplugin.{cls}):
 '''
 
 archive_argparser = argparse.ArgumentParser('archive')
-archive_argparser.add_argument('--days', type=int, default=3, 
-                               help='minimum age of closed tasks to archive')
+
 archive_commands = archive_argparser.add_subparsers(title='commands',
                                  dest="archivecommand",
                                  metavar="")
 
+archive_parent =argparse.ArgumentParser(add_help=False)
+archive_parent.add_argument('--days', type=int, default=3, 
+                               help='minimum age of closed tasks to archive')
+
 archive_project_parser = archive_commands.add_parser('project', 
-                                                     help='Archive by project')
+                                                     help='Archive by project',
+                                    parents=[archive_parent])
+
 archive_project_parser.add_argument('projects', 
                                     help="names of Projects to archive", 
                                     nargs=argparse.REMAINDER)
@@ -283,13 +290,85 @@ class ArchiveCmd(minioncmd.MinionCmd):
     These commands archive tasks by project or number.
     Tasks that are not old enough (set by --days) will not be archived.
     """
+    
+    _log = logging.getLogger('archive')
 
     def __init__(self, name, master=None,
                  completekey='tab', stdin=None, stdout=None):
         super().__init__(name, master, completekey, stdin, stdout)
         
     def do_project(self, text):
-        """Archive tasks in a given project"""
-        print("archive.do_project", text)
+        """Archive tasks in a given project if all tasks are closed"""
+        lib = self.master.lib
         args = archive_project_parser.parse_args(text.split())
-        print(args)
+        tasks = lib.sort_tasks(filters=args.projects,
+                               filterop=any,
+                               showcomplete=True)
+        # tasks is a list of tuples
+        self._log.info('Found %d candidates to archive', len(tasks))
+        
+        # create a dictionary of projects, last_date
+        end_dates = {}
+        open_projects = set()
+                
+        for num, task in tasks:
+            stuff = lib.parse_task(task)
+            self._log.debug('Projects: %s', stuff[6])
+        
+            for proj in stuff[6]:
+                if stuff[3] is None:
+                    open_projects.add(proj)
+                    continue
+                if proj not in end_dates:
+                    end_dates[proj] = stuff[3]
+                else:
+                    end_dates[proj] = max(stuff[3], 
+                                          end_dates[proj])
+        for proj in open_projects:
+            self._log.warn('Project %s is still open. Not archived.')
+            if proj in end_dates:
+                del end_dates[proj]
+        
+        if not end_dates:
+            self._log.info("No projects to archive")
+            return None
+    
+        self._log.debug('end dates: %s', end_dates)
+        
+        projects_to_archive = []
+        tasks_to_archive = set()
+        
+        now = datetime.datetime.now()
+        for proj in end_dates:
+            delta = now - end_dates[proj]
+            if delta.days >= args.days:
+                projects_to_archive.append(proj)
+            else:
+                self._log.warn('Project %s is not old enough to archive', proj)
+        
+        if not projects_to_archive:
+            self._log.info("No projects to archive")
+            return None
+            
+        for num, task in tasks:
+            for proj in projects_to_archive:
+                if proj in task:
+                    tasks_to_archive.add(num)
+                    
+        tasks = lib.get_tasks(lib.config['Files']['task-path'])
+        done = lib.get_tasks(lib.config['Files']['done-path'])
+        
+        try:
+            next_done = max(done) + 1
+        except ValueError:
+            next_done = 1
+        
+        for key in tasks_to_archive:
+            done[next_done] = tasks[key]
+            next_done += 1
+            tasks.pop(key)
+        
+        self._log.info("Archived %d tasks", len(tasks_to_archive))
+        lib.write_tasks(tasks, lib.config['Files']['task-path'])
+        lib.write_tasks(done, lib.config['Files']['done-path'])
+                

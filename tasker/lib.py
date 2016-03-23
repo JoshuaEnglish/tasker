@@ -313,7 +313,9 @@ class TaskLib(object):
             return TASK_ERROR, "Filter Operation must by any or all"
         showcomplete = showcomplete or False
 
-        everything = [(key, val) for key, val in list(self.get_tasks(self.config['Files']['task-path']).items())
+        everything = [(key, val) 
+                      for key, val in list(self.get_tasks(
+                          self.config['Files']['task-path']).items())
                       if (showcomplete or not val.startswith('x'))]
 
         if filters:
