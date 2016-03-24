@@ -1,0 +1,5 @@
+The Reports Plugin
+==================
+
+This plugin provides the ``projects`` and ``contexts`` commands that are 
+described in :doc:`basic_usage`.
