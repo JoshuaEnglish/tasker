@@ -31,21 +31,20 @@ The following methods provide interactive commands
 
 .. method:: TaskCmd.do_list(text)
 
-    Lists the current tasks. Text is parsed by an argparse instance with
-    the following flags::
+    List current tasks. The input should be ``[OPTIONS] [FILTERS ...]``.
 
-      -n                    Prints task list in numerical order, otherwise orders
-                            by priority
-      -f [FILTERS [FILTERS ...]]
-                            Only lists tasks containing these words
-      -y                    Shows tasks matching any filter word. Default is to
-                            match all
-      -a                    Show completed (but not archived) tasks.
-      -u                    Shows the unique ID of each task
+    Options can be::
+
+      -n         Prints task list in numerical order, otherwise orders
+                 by priority
+      -y         Shows tasks matching any filter word. Default is to
+                 match all
+      -a         Show completed (but not archived) tasks.
+      -u         Shows the unique ID of each task
 
 .. method:: TaskCmd.do_add(text)
 
-    Adds a task
+    Adds a task.
 
 .. method:: TaskCmd.do_do(text)
 

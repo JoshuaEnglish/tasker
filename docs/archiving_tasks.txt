@@ -1,4 +1,64 @@
 Archiving Tasks
 ===============
 
-Tasker's default behavior is to only list open tasks, but it is possible
+Tasker reads your todo file every time it runs, and it enumerates your tasks
+and after a few weeks of heavy use you may end up with::
+
+    >t 
+    134 Call that guy about +ThatThing
+    150 Hide the @evidence +ThatThing
+    ---
+    2 tasks shown
+
+In order to keep your task list small and fast and low-indexed, it is useful
+to archive tasks. The ``archive`` command can take care of this. By default,
+tasks that were recently completed will not be archived::
+
+    > t list -a TestProject
+    37 x 2016-03-24T14:26:12 2016-03-24T14:26:30 This is a +TestProject thing
+    ---
+    1 task shown
+    
+    > t archive project TestProject
+    2016-0324 14:59:28 WARNING: Project +TestProject is not old enough to archive (archive)
+
+However, if the last task in the project is old enough, they will be archived::
+
+    > t list -a FourthProject
+    4 x 2016-03-09T14:09:13 2016-03-08T14:00:16 Log request for +FourthProject
+          @quote # No comment
+    6 x 2016-03-09T14:19:51 2016-03-09T14:16:20 Get complete information for
+          +FourthProject @quote
+    7 x 2016-03-09T14:47:00 2016-03-09T14:19:51 Submit approval for +FourthProject
+          @quote
+    8 x 2016-03-09T14:47:00 2016-03-09T14:54:54 Check for approval for
+          +FourthProject @quote
+    9 x 2016-03-09T14:54:54 2016-03-10T10:05:06 Send views to AllenM for
+          +FourthProject @quote
+    --
+    5 tasks shown
+    
+    > t archive project FourthProject
+    Archived 5 tasks
+    
+    > t list -a FourthProject
+    0 tasks shown
+
+And this renumbers the task file::
+
+    > t list -a TestProject
+    32 x 2016-03-24T14:26:12 2016-03-24T14:26:30 This is a +TestProject thing
+    ---
+    1 task shown
+
+The task number when from 37 to 32. Again, these numbers are meaningless except
+as temporary identifiers.
+
+You can also adjust the threshold for archiving tasks. The default is three
+days, but you can ajust this::
+
+    > t archive project --days 0 TestProject
+    Archived 1 tasks
+
+You can also list several projects. Only those old enough will be archived.
+

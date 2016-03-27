@@ -1,9 +1,0 @@
-[Core]
-Name = Reports
-Module = ReportsPlugin
-
-[Documentation]
-Author = Josh English
-Version = 0.1
-Website = http://joshuarenglish.com
-Description = Provides reports in the interactive prompt.

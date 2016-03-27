@@ -49,6 +49,9 @@ code, pre, .pre, .class, .method {
     font-size: 90%;
 }
 
+code.literal {
+    background-color: #ccc;
+}
 div.document {
 /*    background-color: #1c4e63;*/
 }

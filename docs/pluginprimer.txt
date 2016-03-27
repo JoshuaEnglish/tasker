@@ -80,13 +80,13 @@ Adding Commands to Tasker
 To create a new command for the interactive prompt, create two files in the
 ``tasker_plugins`` directory:
 
-.. literalinclude:: ../tasker/tasker_plugins/ReportsPlugin.yapsy-plugin
+.. literalinclude:: ../tasker/plugins/ReportsPlugin.tasker-plugin
    :language: ini
    :linenos:
    :caption: ReportsPlugin.yapsy-plugin
    :name: plugin-config-sample
 
-.. literalinclude:: ../tasker/tasker_plugins/ReportsPlugin.py
+.. literalinclude:: ../tasker/plugins/ReportsPlugin.py
    :language: python
    :linenos:
    :caption: ReportsPlugin.py

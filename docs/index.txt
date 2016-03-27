@@ -14,15 +14,30 @@ Tasker is extensible, allowing users to write their own commands and
 subprograms.
 
 
-Using Tasker:
+Using Tasker
+------------
 
 .. toctree::
    :maxdepth: 2
 
    basic_usage
    archiving_tasks
+   managing_plugins
 
-Extending Tasker:
+Standard Plugins
+----------------
+
+The following pages describe the plugins that come included with Tasker.
+
+.. toctree::
+    :maxdepth: 2
+
+    reports_plugin
+    pending_plugin
+    workflow_plugin
+
+Extending Tasker
+----------------
 
 .. toctree::
    :maxdepth: 2
@@ -30,7 +45,8 @@ Extending Tasker:
    pluginprimer
    pendplugin
 
-Modules:
+Under the Hood
+--------------
 
 .. toctree::
    :maxdepth: 1

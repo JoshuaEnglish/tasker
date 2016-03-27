@@ -32,7 +32,7 @@ a single command to the main program with no sub commands.
 
 First create the plugin description file.
 
-.. literalinclude:: ..\tasker\plugins\PendingPluign.yapsy-plugin
+.. literalinclude:: ..\tasker\plugins\PendingPlugin.tasker-plugin
 
 Then create the basic plugin file::
 

@@ -23,7 +23,7 @@ Tasks consist of a single line of text:
 
 Tasks are organized by projects (words that begin with '+') and contexts (words
 that begin with '@'). Tasks may also have extensions which are key:value pairs
-wrapped in braces (for example ``{uid:221112080316}``).
+wrapped in brackets (for example ``{uid:221112080316}``).
 
 Here is an example of a pending task::
 
@@ -99,7 +99,7 @@ Interactive Mode
 
 You can also run tasker in an interactive prompt::
 
-    C:\>t -i
+    >t -i
     tasker> list
     2 2016-03-06T19:27:12 test add
     5 2016-03-08T22:11:12 go to bed
@@ -114,7 +114,7 @@ Listing Tasks
 
 The simple ``list`` command will show only currently open tasks, but you can
 filter tasks by including search terms::
-
+    
     > t
     13 (B) 2016-03-20T18:33:23 Get complete information for +HomeQuote @quote
     12 2016-03-17T22:54:20 redo +Documentation
@@ -138,7 +138,7 @@ open tasks that match all those keywords::
     > t list thing information
     0 tasks shown
 
-You can use the ``-y`` flag to search for any match::
+You can use the ``-y`` flag to match any filter keyword::
 
     > t list -y thing information
     13 (B) 2016-03-20T18:33:23 Get complete information for +HomeQuote @quote
@@ -146,8 +146,9 @@ You can use the ``-y`` flag to search for any match::
     ---
     2 tasks shown
 
+
 Sorting Tasks
--------------
+^^^^^^^^^^^^^
 
 The default behavior is to list tasks by priority. Using the ``-n`` switch will
 display tasks in numerical order::
@@ -159,8 +160,9 @@ display tasks in numerical order::
     ---
     3 tasks shown
 
+
 Showing Completed Tasks
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 The default behavior is to only list open tasks, but you can see completed
 tasks with the ``-x`` switch::
@@ -174,8 +176,9 @@ tasks with the ``-x`` switch::
     ---
     16 tasks shown
 
+
 Showing Extensions
-------------------
+^^^^^^^^^^^^^^^^^^
 
 The default behavior is to hide extensions that are used by the program to
 relate tasks to each other. You can show these extensions with the ``-x``
@@ -190,7 +193,7 @@ switch::
     3 tasks shown
 
 
-.. note:: The ``list`` command uses text wrap to a default of 70 characters.
+.. note:: The ``list`` command uses text wrap to a default of 78 characters.
 
 
 Adding Tasks
@@ -214,11 +217,95 @@ is the first character of the new task, it will be created as a closed task::
     ---
     1 tasks shown
 
+Marking tasks as Complete
+-------------------------
+
+You can close a task with the ``do`` command. The input string should be 
+the TASK NUMBER and any EXTRA COMMENT.
+
+    > t
+    32 2016-03-24T15:30:19 unprioritized task # This should be done soon
+    ---
+    1 task shown
+    
+    > t do 32 This is now done
+    x 2016-03-24T15:30:19 2016-03-24T15:43:52 unprioritized task {uid:153019240316} # This should be done soon # This is now done
+    
+    > t
+    0 tasks shown
 
 
+List Projects and Contexts
+---------------------------
 
+It is also possible to list your open and closed projects::
+
+    > t projects
+    No open projects.
+    
+    > t projects --closed
+    Project             Open Closed 
+    ------------------- ---- ------
+    +BogusQuote         0    5      
+    +BookingsAdjustment 0    1      
+    ...     
+    +SaratogaEval       0    1      
+    +TMQuotes           0    1      
+    NO PROJECT          0    14  
+
+    > t contexts
+    No open contexts.
+    
+    > t contexts --closed
+    Context    Open Closed 
+    ---------- ---- ------
+    @bookings  0    1      
+    @orders    0    1      
+    @quote     0    19     
+    @test      0    2      
+    NO CONTEXT 0    13 
+
+
+Changing Task Priorities
+------------------------
+
+You can change the priority of a task by using the ``pri`` command::
+
+    > t
+    32 2016-03-24T15:30:19 unprioritized task
+    ---
+    1 task shown
+    
+    > t pri 32 A This should be done soon
+    (A) 2016-03-24T15:30:19 unprioritized task {uid:153019240316} # This should be done soon
+    
+    > t
+    32 (A) 2016-03-24T15:30:19 unprioritized task # This should be done soon
+    ---
+    1 task shown
+
+You can remove the proirity on a task using an underscore::
+
+    > t pri 32 _
+     2016-03-24T15:30:19 unprioritized task {uid:153019240316} # This should be done soon
+
+
+Getting Details on the Process
+------------------------------
+
+You can get more information about what Tasker is doing using the ``-v`` flag
+on the command line. You can use ``-vv`` to get debugging information as well.
+
+If you use these flags to enter the interactive prompt, they will be in effect
+for the length of your session.
+
+You can get less information by using the ``-q`` flag, and even less information
+about errors with ``-qq``.
 
 .. _Todo.txt format: http://github.com/ginatrapani/todo.txt-cli/wiki/The-Todo.txt-Format
 
 
+.. argparse::
+   :ref: tasker.main.parser
+   :prog: t
 
