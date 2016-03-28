@@ -1,147 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-<!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>Basic Usage &mdash; tasker 0.0.1 documentation</title>
-  
-
-  
-  
-
-  
-
-  
-  
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-
-  
-
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-    <link rel="top" title="tasker 0.0.1 documentation" href="index.html"/>
-        <link rel="next" title="Archiving Tasks" href="archiving_tasks.html"/>
-        <link rel="prev" title="Welcome to Tasker’s documentation!" href="index.html"/> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
-</head>
-
-<body class="wy-body-for-nav" role="document">
-
-  <div class="wy-grid-for-nav">
-
+    <title>Basic Usage &mdash; Tasker 1.0.0.2016.03.26 documentation</title>
     
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
-          
+    <link rel="stylesheet" href="_static/butterick.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0.2016.03.26',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Tasker 1.0.0.2016.03.26 documentation" href="index.html" />
+    <link rel="next" title="Archiving Tasks" href="archiving_tasks.html" />
+    <link rel="prev" title="Welcome to Tasker’s documentation!" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="archiving_tasks.html" title="Archiving Tasks"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Tasker’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.0.0.2016.03.26 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
 
-          
-            <a href="index.html" class="icon icon-home"> tasker
-          
-
-          
-          </a>
-
-          
-            
-            
-              <div class="version">
-                0.0.1
-              </div>
-            
-          
-
-          
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-
-          
-        </div>
-
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-                <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">Basic Usage</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#the-anatomy-of-a-task">The Anatomy of a Task</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#basic-commands">Basic Commands</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#interactive-mode">Interactive Mode</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#listing-tasks">Listing Tasks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#sorting-tasks">Sorting Tasks</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="archiving_tasks.html">Archiving Tasks</a></li>
-</ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="pluginprimer.html">Plugin Primer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pendplugin.html">Building the Pending Plugin</a></li>
-</ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="tasker.html">Tasker</a></li>
-<li class="toctree-l1"><a class="reference internal" href="minioncmd.html">MinionCmd</a></li>
-</ul>
-
-            
-          
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">tasker</a>
-      </nav>
-
-
-      
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          
-
- 
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-  <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
-    <li>Basic Usage</li>
-      <li class="wy-breadcrumbs-aside">
-        
-          
-            <a href="_sources/basic_usage.txt" rel="nofollow"> View page source</a>
-          
-        
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body" role="main">
             
   <div class="section" id="basic-usage">
 <h1>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h1>
@@ -166,7 +74,7 @@ full datetime stamps instead of just dates.</p>
 </div></blockquote>
 <p>Tasks are organized by projects (words that begin with &#8216;+&#8217;) and contexts (words
 that begin with &#8216;&#64;&#8217;). Tasks may also have extensions which are key:value pairs
-wrapped in braces (for example <code class="docutils literal"><span class="pre">{uid:221112080316}</span></code>).</p>
+wrapped in brackets (for example <code class="docutils literal"><span class="pre">{uid:221112080316}</span></code>).</p>
 <p>Here is an example of a pending task:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span>(A) 2016-03-08T09:51:38 Finish +TaskerDocumentation @code # It&#39;s getting late
 </pre></div>
@@ -192,26 +100,26 @@ command line and the second from the interactive prompt.</p>
 <h2>Basic Commands<a class="headerlink" href="#basic-commands" title="Permalink to this headline">¶</a></h2>
 <p>The three basic commands are <code class="docutils literal"><span class="pre">list</span></code>, <code class="docutils literal"><span class="pre">add</span></code>, and <code class="docutils literal"><span class="pre">do</span></code>. If no command is
 given, the program lists all open tasks:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span>C:\&gt;tasker
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; tasker
 1 2016-03-04T22:04:30 test from cli
 2 2015-03-06T19:37:12 test add
 --
 2 tasks shown
 
-C:\&gt;tasker add go to bed
+&gt; tasker add go to bed
 &#39;2016-04-08T22:11:12 go to bed {uid:221112080316}&#39;
 
-C:\&gt;tasker list
+&gt; tasker list
 1 2016-03-04T22:04:30 test from cli
 2 2016-03-06T19:37:12 test add
 5 2016-03-08T22:11:12 go to bed
 --
 3 tasks shown
 
-C:\&gt;tasker do 1
+&gt; tasker do 1
 &#39;x 2016-03-08T22:16:02 2016-03-08T22:16:01 test from cli {uid:220430040316}&#39;
 
-C:\&gt;tasker
+&gt; tasker
 2 2016-03-06T19:27:12 test add
 5 2016-03-08T22:11:12 go to bed
 --
@@ -223,20 +131,20 @@ when it prints the task list. The <code class="docutils literal"><span class="pr
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p>Task Numbers</p>
-<p>Task numbers are simply the line number in the current file. This provides
+<p class="last">Task numbers are simply the line number in the current file. This provides
 a quick reference to tasks. Be warned that archiving tasks will renumber
 your files.</p>
-<div class="last admonition note">
+</div>
+<div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Tasker comes with a Windows batch file that runs the Python script
 directly. It can be used so <code class="docutils literal"><span class="pre">t</span></code> is a shortcut to Tasker.py.</p>
 </div>
 </div>
-</div>
 <div class="section" id="interactive-mode">
 <h2>Interactive Mode<a class="headerlink" href="#interactive-mode" title="Permalink to this headline">¶</a></h2>
 <p>You can also run tasker in an interactive prompt:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span>C:\&gt;t -i
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt;t -i
 tasker&gt; list
 2 2016-03-06T19:27:12 test add
 5 2016-03-08T22:11:12 go to bed
@@ -275,7 +183,7 @@ open tasks that match all those keywords:</p>
 0 tasks shown
 </pre></div>
 </div>
-<p>You can use the <code class="docutils literal"><span class="pre">-y</span></code> flag to search for any match:</p>
+<p>You can use the <code class="docutils literal"><span class="pre">-y</span></code> flag to match any filter keyword:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t list -y thing information
 13 (B) 2016-03-20T18:33:23 Get complete information for +HomeQuote @quote
 16 2016-03-21T20:57:51 third useless thing
@@ -283,79 +191,465 @@ open tasks that match all those keywords:</p>
 2 tasks shown
 </pre></div>
 </div>
-</div>
 <div class="section" id="sorting-tasks">
-<h2>Sorting Tasks<a class="headerlink" href="#sorting-tasks" title="Permalink to this headline">¶</a></h2>
-<p>The default behavior is to list tasks by priority.</p>
+<h3>Sorting Tasks<a class="headerlink" href="#sorting-tasks" title="Permalink to this headline">¶</a></h3>
+<p>The default behavior is to list tasks by priority. Using the <code class="docutils literal"><span class="pre">-n</span></code> switch will
+display tasks in numerical order:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t list -n
+12 2016-03-17T22:54:20 redo +Documentation
+13 (B) 2016-03-20T18:33:23 Get complete information for +HomeQuote @quote
+16 2016-03-21T20:57:51 third useless thing
+---
+3 tasks shown
+</pre></div>
+</div>
+</div>
+<div class="section" id="showing-completed-tasks">
+<h3>Showing Completed Tasks<a class="headerlink" href="#showing-completed-tasks" title="Permalink to this headline">¶</a></h3>
+<p>The default behavior is to only list open tasks, but you can see completed
+tasks with the <code class="docutils literal"><span class="pre">-x</span></code> switch:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t list -a
+13 (B) 2016-03-20T18:33:23 Get complete information for +HomeQuote @quote
+12 2016-03-17T22:54:20 redo +Documentation
+16 2016-03-21T20:57:51 third useless thing
+ 2 x 2016-03-06T19:27:12 2016-03-21T20:52:25 test add # test complete
+...
+---
+16 tasks shown
+</pre></div>
+</div>
+</div>
+<div class="section" id="showing-extensions">
+<h3>Showing Extensions<a class="headerlink" href="#showing-extensions" title="Permalink to this headline">¶</a></h3>
+<p>The default behavior is to hide extensions that are used by the program to
+relate tasks to each other. You can show these extensions with the <code class="docutils literal"><span class="pre">-x</span></code>
+switch:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t list -x
+13 (B) 2016-03-20T18:33:23 Get complete information for +HomeQuote @quote
+       {wn:quote} {ws:2} {wid:5} {uid:183323200316}
+12 2016-03-17T22:54:20 redo +Documentation {uid:225420170316}
+16 2016-03-21T20:57:51 third useless thing {uid:205751210316}
+---
+3 tasks shown
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The <code class="docutils literal"><span class="pre">list</span></code> command uses text wrap to a default of 78 characters.</p>
+</div>
+</div>
+</div>
+<div class="section" id="adding-tasks">
+<h2>Adding Tasks<a class="headerlink" href="#adding-tasks" title="Permalink to this headline">¶</a></h2>
+<p>The default behavior is to add whatever text you include. However, if <code class="docutils literal"><span class="pre">x</span></code>
+is the first character of the new task, it will be created as a closed task:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t add x is this complete?
+x 2016-03-22T21:39:42 2016-03-22T21:39:42 is this complete? {uid:213942220316}
+
+&gt; t
+13 (B) 2016-03-20T18:33:23 Get complete information for +HomeQuote @quote
+12 2016-03-17T22:54:20 redo +Documentation
+16 2016-03-21T20:57:51 third useless thing
+---
+3 tasks shown
+
+&gt; t list -a complete
+17 x 2016-03-22T21:39:42 2016-03-22T21:39:42 is this complete?
+---
+1 tasks shown
+</pre></div>
+</div>
+</div>
+<div class="section" id="marking-tasks-as-complete">
+<h2>Marking tasks as Complete<a class="headerlink" href="#marking-tasks-as-complete" title="Permalink to this headline">¶</a></h2>
+<p>You can close a task with the <code class="docutils literal"><span class="pre">do</span></code> command. The input string should be
+the TASK NUMBER and any EXTRA COMMENT.</p>
+<blockquote>
+<div><p>&gt; t
+32 2016-03-24T15:30:19 unprioritized task # This should be done soon
+&#8212;
+1 task shown</p>
+<p>&gt; t do 32 This is now done
+x 2016-03-24T15:30:19 2016-03-24T15:43:52 unprioritized task {uid:153019240316} # This should be done soon # This is now done</p>
+<p>&gt; t
+0 tasks shown</p>
+</div></blockquote>
+</div>
+<div class="section" id="list-projects-and-contexts">
+<h2>List Projects and Contexts<a class="headerlink" href="#list-projects-and-contexts" title="Permalink to this headline">¶</a></h2>
+<p>It is also possible to list your open and closed projects:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t projects
+No open projects.
+
+&gt; t projects --closed
+Project             Open Closed
+------------------- ---- ------
++BogusQuote         0    5
++BookingsAdjustment 0    1
+...
++SaratogaEval       0    1
++TMQuotes           0    1
+NO PROJECT          0    14
+
+&gt; t contexts
+No open contexts.
+
+&gt; t contexts --closed
+Context    Open Closed
+---------- ---- ------
+@bookings  0    1
+@orders    0    1
+@quote     0    19
+@test      0    2
+NO CONTEXT 0    13
+</pre></div>
+</div>
+</div>
+<div class="section" id="changing-task-priorities">
+<h2>Changing Task Priorities<a class="headerlink" href="#changing-task-priorities" title="Permalink to this headline">¶</a></h2>
+<p>You can change the priority of a task by using the <code class="docutils literal"><span class="pre">pri</span></code> command:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t
+32 2016-03-24T15:30:19 unprioritized task
+---
+1 task shown
+
+&gt; t pri 32 A This should be done soon
+(A) 2016-03-24T15:30:19 unprioritized task {uid:153019240316} # This should be done soon
+
+&gt; t
+32 (A) 2016-03-24T15:30:19 unprioritized task # This should be done soon
+---
+1 task shown
+</pre></div>
+</div>
+<p>You can remove the proirity on a task using an underscore:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t pri 32 _
+ 2016-03-24T15:30:19 unprioritized task {uid:153019240316} # This should be done soon
+</pre></div>
+</div>
+</div>
+<div class="section" id="getting-details-on-the-process">
+<h2>Getting Details on the Process<a class="headerlink" href="#getting-details-on-the-process" title="Permalink to this headline">¶</a></h2>
+<p>You can get more information about what Tasker is doing using the <code class="docutils literal"><span class="pre">-v</span></code> flag
+on the command line. You can use <code class="docutils literal"><span class="pre">-vv</span></code> to get debugging information as well.</p>
+<p>If you use these flags to enter the interactive prompt, they will be in effect
+for the length of your session.</p>
+<p>You can get less information by using the <code class="docutils literal"><span class="pre">-q</span></code> flag, and even less information
+about errors with <code class="docutils literal"><span class="pre">-qq</span></code>.</p>
+<p>Todo Manager</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t [-h] [-i] [-d | -v | -q]  ...
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-i=False</span>, <span class="option">--interactive=False</span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>enter the interactive loop</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-d=0</span>, <span class="option">--debug=0</span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>show all debug messages</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-v=0</span>, <span class="option">--verbose=0</span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>show more process details (can repeat)</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-q=0</span>, <span class="option">--quiet=0</span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>show fewer process details (can repeat)</td></tr>
+</tbody>
+</table>
+</dd>
+<dt>Sub-commands:</dt>
+<dd><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first">list tasks</p>
+<p>Tool for listing tasks</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t list [-h] [-n] [-y] [-a] [-x] ...
+</pre></div>
+</div>
+<dl class="last docutils">
+<dt>Positional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>filters</kbd></td>
+<td>Only lists tasks containing these words</td></tr>
+</tbody>
+</table>
+</dd>
+<dt>Options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-n=True</span></kbd></td>
+<td>Prints task list in numerical order, otherwise orders by priority</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-y=False</span></kbd></td>
+<td>Shows tasks matching any filter word. Default is to match all</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-a=False</span></kbd></td>
+<td>Show completed (but not archived) tasks.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-x=False</span></kbd></td>
+<td>Shows hidden text extensions</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</dd>
+<dt><strong>add</strong></dt>
+<dd><p class="first">add a task</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t add [-h] [-d] text [text ...]
+</pre></div>
+</div>
+<dl class="last docutils">
+<dt>Positional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>text</kbd></td>
+<td>text of the new task</td></tr>
+</tbody>
+</table>
+</dd>
+<dt>Options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-d=False</span>, <span class="option">--done=False</span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>Adds task as completed</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</dd>
+<dt><strong>do</strong></dt>
+<dd><p class="first">mark a task as complete</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t do [-h] tasknum ...
+</pre></div>
+</div>
+<dl class="last docutils">
+<dt>Positional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>tasknum</kbd></td>
+<td>number of the task to complete</td></tr>
+<tr><td class="option-group">
+<kbd>comment</kbd></td>
+<td>comment to add to the completed task</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</dd>
+<dt><strong>pri</strong></dt>
+<dd><p class="first">prioritize a task</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t pri [-h] tasknum priority ...
+</pre></div>
+</div>
+<dl class="last docutils">
+<dt>Positional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>tasknum</kbd></td>
+<td>number of the task to prioritize</td></tr>
+<tr><td class="option-group">
+<kbd>priority</kbd></td>
+<td>letter of new priority or _ to clear</td></tr>
+<tr><td class="option-group">
+<kbd>note</kbd></td>
+<td>optional note to attach to task</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</dd>
+<dt><strong>plugins</strong></dt>
+<dd><p class="first">Plugin manager</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t plugins [-h] {list,activate,deactivate,categories,create} ...
+</pre></div>
+</div>
+<dl class="last docutils">
+<dt>Sub-commands:</dt>
+<dd><dl class="first last docutils">
+<dt><strong>list</strong></dt>
+<dd><p class="first">List the known plugins</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t plugins list [-h]
+</pre></div>
+</div>
+<dl class="last docutils">
+</dl>
+</dd>
+<dt><strong>activate</strong></dt>
+<dd><p class="first">Activate plugins by name</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t plugins activate [-h] name
+</pre></div>
+</div>
+<dl class="last docutils">
+<dt>Positional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>name</kbd></td>
+<td>name of the plugin to activate</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</dd>
+<dt><strong>deactivate</strong></dt>
+<dd><p class="first">Deactivate plugin by name</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t plugins deactivate [-h] name
+</pre></div>
+</div>
+<dl class="last docutils">
+<dt>Positional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>name</kbd></td>
+<td>name of the plugin to deactivate</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</dd>
+<dt><strong>categories</strong></dt>
+<dd><p class="first">list current plugin categories</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t plugins categories [-h]
+</pre></div>
+</div>
+<dl class="last docutils">
+</dl>
+</dd>
+<dt><strong>create</strong></dt>
+<dd><p class="first">Create a new plugin</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t plugins create [-h] name {new,sub,generic}
+</pre></div>
+</div>
+<dl class="last docutils">
+<dt>Positional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>name</kbd></td>
+<td>name of the plugin to template</td></tr>
+<tr><td class="option-group">
+<kbd>kind</kbd></td>
+<td><p class="first">The kind of plugin to template</p>
+<p class="last">Possible choices: new, sub, generic</p>
+</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt><strong>archive</strong></dt>
+<dd><p class="first">Archive commands</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t archive [-h]  ...
+</pre></div>
+</div>
+<dl class="last docutils">
+<dt>Sub-commands:</dt>
+<dd><dl class="first last docutils">
+<dt><strong>project</strong></dt>
+<dd><p class="first">Archive by project</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t archive project [-h] [--days DAYS] ...
+</pre></div>
+</div>
+<dl class="last docutils">
+<dt>Positional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>projects</kbd></td>
+<td>names of Projects to archive</td></tr>
+</tbody>
+</table>
+</dd>
+<dt>Options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">--days=3</span></kbd></td>
+<td>minimum age of closed tasks to archive</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>For more information use the &#8211;manual flag</p>
 </div>
 </div>
 
 
-           </div>
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="archiving_tasks.html" class="btn btn-neutral float-right" title="Archiving Tasks" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="index.html" class="btn btn-neutral" title="Welcome to Tasker’s documentation!" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
-    </div>
-  
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>
-        &copy; Copyright 2016, Joshua R English.
-
-    </p>
-  </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
-
-</footer>
-
-        </div>
       </div>
-
-    </section>
-
-  </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.0.1',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
-      });
-  </script>
-   
-
-</body>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="archiving_tasks.html" title="Archiving Tasks"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Tasker’s documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.0.0.2016.03.26 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Joshua R English.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+    </div>
+  </body>
 </html>

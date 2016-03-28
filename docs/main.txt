@@ -1,28 +1,34 @@
-Tasker
-======
+tasker.main
+===========
 
-.. module :: tasker.tasker
+.. module :: tasker.main
    :synopsis: Explanation of the main code
 
-This page describes the main code.
+This page describes the main module that runs the show.
 
-The module-level object ``c`` is an instance of :class:`TaskCmd` which is
+The module-level object ``CLI`` is an instance of :class:`TaskCmd` which is
 a subclass of :class:`BossCmd`. Other tools exists as subclasses of
 :class:`MinionCmd`.
 
 The first thing the script does is create a ConfigParser object, set the
 defaults, and then read the local ``.ini`` file.
 
-.. class:: TaskCmd(completekey='tab', stdin=None, stdout=None,
-                   config=None, manager=None)
+.. data:: parser
 
-    Main program object.
+    An instance of argparse.ArgumentParser that is called in both the command
+    line and by the interactive prompt.
 
-    :param str completekey: key to complete commands in the interactive prompt
-    :param stream stdin: standard input
-    :param stream stdout: standard output
-    :param ConfigParser config: ConfigParser instance
-    :param PluginManager manager: YAPSY-based Plugin Manager instance
+.. autofunction:: add_subparser
+
+
+.. autoclass:: TaskCmd
+
+
+.. data:: CLI
+
+    This is a module-singleton instance of :class:`TaskCmd`
+
+
 
 Interactive Methods
 -------------------
@@ -46,10 +52,23 @@ The following methods provide interactive commands
 
     Adds a task.
 
+    The parser does accept a --done flag to create closed tasks, but creating
+    the task with an `x` as the first character does the same thing.
+
 .. method:: TaskCmd.do_do(text)
 
     Completes a task. The text should be the task number and an optional
     comment
+
+.. data:: LIB
+
+    This is an instance of :class:`TaskLib`.
+
+.. data:: manager
+
+    This is an instance of a Yapsy ConfigurablePluginManager and is passed to
+    the :data:`CLI`.
+
 
 API
 ---

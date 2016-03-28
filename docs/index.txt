@@ -51,7 +51,8 @@ Under the Hood
 .. toctree::
    :maxdepth: 1
 
-   tasker
+   main
+   lib
    minioncmd
 
 
