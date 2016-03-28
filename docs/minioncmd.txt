@@ -1,6 +1,7 @@
 MinionCmd
 =========
 
+.. currentmodule:: tasker.minioncmd
 
 .. automodule:: tasker.minioncmd
 

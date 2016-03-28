@@ -116,6 +116,7 @@ class WorkflowCLI(minioncmd.MinionCmd):
         print("Workflow list:", file=self.stdout)
         for idx, flow in enumerate(self.workflows, start=1):
             print(idx, flow, file=self.stdout)
+        print()
             
     def do_info(self, text):
         """Print the details of a given workflow"""
@@ -125,6 +126,7 @@ class WorkflowCLI(minioncmd.MinionCmd):
             return
         for key, val in self.workflows[text]['Workflow'].items():
             print(key, val, sep=": ")
+        print()
             
     def do_steps(self, text):
         """Print the step templates of a given workflow"""
@@ -134,6 +136,7 @@ class WorkflowCLI(minioncmd.MinionCmd):
             return
         for key, val in self.workflows[text]['Steps'].items():
             print(key, val, sep=": ")
+        print()
         
     def do_instances(self, text):
         """Prints a list of known instances"""
@@ -143,6 +146,71 @@ class WorkflowCLI(minioncmd.MinionCmd):
             return
         for key, val in self.workflows[text]['Instances'].items():
             print(key, val, sep=": ")
+        print()
+        
+    def do_create(self, text):
+        """Create a new workflow: create NAME"""
+        newname = text.strip().split()
+        
+        if len(newname) == 0:
+            self._log.error("No name specified")
+            print("Please provide a single-word-name for the new workflow")
+            return None
+        
+        if len(newname) > 1:
+            self._log.error("Too many names given for workflow")
+            print("Please provide a single-word name for the workflow")
+            return None
+        
+        newname = newname[0]
+        if newname in self.workflows:
+            self._log.error('Workflow %s already exists', newname)
+            print("Workflow %s already existis" % newname)
+            return None
+            
+        keep_going = True
+        desc = input("Please enter a description for this workflow: ")
+        steps = []
+        vocabulary = []
+        print("When entering steps, use $<word> to define the vocabulary for this workflow.")
+        print("Enter a blank line to complete this process.")
+        while keep_going:
+            step = input("Describe step number %d: " % (len(steps)+1))
+        
+            if step:
+                steps.append(step)
+                words = step.split()
+                for word in words:
+                    if word.startswith('$'):
+                        candidate = word[1:]
+                        if candidate not in vocabulary:
+                            vocabulary.append(candidate)
+            else:
+                keep_going = False
+        print("Vocabulary: %s" % ', '.join(vocabulary))
+        
+        cp = ConfigParser()
+        cp.add_section('Workflow')
+        cp.set('Workflow', 'name', newname.title())
+        cp.set('Workflow', 'description', desc)
+        cp.set('Workflow', 'vocabulary', ','.join(vocabulary))
+        
+        cp.add_section('Steps')
+        for idx, step in enumerate(steps, 1):
+            cp.set('Steps', str(idx), step)
+        
+        cp.add_section('Instances')
+        
+        fname = "%s.workflow" % newname.lower()
+        fpath = os.path.join(self._workflow_dir, fname)
+        with open(fpath, 'w') as fp:
+            cp.write(fp)
+            
+        cp.write(self.stdout)
+        self.workflows[newname] = cp
+        print()
+        print("Created new workflow in", fpath)
+        
 
 class Workflow(basetaskerplugin.SubCommandPlugin):
     def activate(self):
@@ -180,7 +248,7 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
 
         instance = workflow_commands.add_parser('instances',
                                                 help='displays known instances of a workflow')
-        instance.add_argument('text', nargs=argparse.REMAINDER)
+        instance.add_argument('workflow')
 
         info = workflow_commands.add_parser('info',
                                             help="displays information about a workflow")
@@ -189,7 +257,7 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
         create = workflow_commands.add_parser('create',
                                               help="creates a new workflow file")
         create.add_argument('name', help="the name of the workflow to create")
-        create.add_argument('-edit', help="launch the editor automatically")
+        create.add_argument('--edit', help="launch the editor automatically")
 
         super().activate()
                 

@@ -17,9 +17,7 @@ class PendingPlugin(basetaskerplugin.NewCommandPlugin):
     def activate(self):
         self._log.debug('Activating Pending')
         self.setConfigOption('public_methods', 'do_after')
-        if not self.hasConfigOption('hide_pend_ext'):
-            self.setConfigOption('hide_pend_ext', 'true')
-        
+                
        
         self.after_parser = after = argparse.ArgumentParser('after')
         after.add_argument('tasknum', type=int,
@@ -32,13 +30,6 @@ class PendingPlugin(basetaskerplugin.NewCommandPlugin):
 
         super().activate()
     
-    def hide_pend_extension(self):
-        self.lib.config.set(self.CONFIG_SECTION_NAME, 'hide_pend_ext', 'true')
-        self.lib.hide_extension('pend')
-        
-    def show_pend_extension(self):
-        self.setConfigOption('hide_pend_ext', 'false')
-        self.lib.show_extension('show')
 
     # noinspection PyIncorrectDocstring,PyIncorrectDocstring
     def do_after(self, line):

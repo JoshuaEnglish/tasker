@@ -196,6 +196,7 @@ class TaskLib(object):
     def write_tasks(self, task_dict, local_path):
         """write_tasks(task_dict, local_path)
         Writes the working task_dictionary to the appropriate file
+
         :param dict task_dict: dictionary of (line: task) pairs
         :param filepath local_path: file path to write to
         """

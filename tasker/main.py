@@ -4,6 +4,8 @@ Created on Wed Mar 16 14:04:54 2016
 
 @author: jenglish
 """
+from __future__ import absolute_import
+
 import sys
 import os
 import argparse
@@ -12,10 +14,10 @@ import logging
 from configparser import ConfigParser
 import yapsy.ConfigurablePluginManager as CPM
 
-import basetaskerplugin
-import minioncmd
-import core
-import lib
+from . import basetaskerplugin
+from . import minioncmd
+from . import core
+from . import lib
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s (%(name)s)',
                     datefmt='%Y-%m%d %H:%M:%S')
@@ -104,6 +106,15 @@ def add_subparser(subparser, helpstr=None):
 
 
 class TaskCmd(minioncmd.BossCmd):
+    """
+    Main program interactive prompt. All command line arguments are passed
+    to this object eventually.
+
+    :param str completekey: key to complete commands in the interactive prompt
+    :param stream stdin: standard input
+    :param stream stdout: standard output
+    :param ConfigParser config: ConfigParser instance
+    :param PluginManager manager: YAPSY-based Plugin Manager instance"""
     prompt = "tasker> "
     doc_leader = "Tasker Help"
 
@@ -115,13 +126,13 @@ class TaskCmd(minioncmd.BossCmd):
         self.lib = lib
 
     def do_list(self, line):
-        "Lists tasks"
+        "Lists tasks: [OPTIONS] [FILTERS ...]"
         args = commands.choices['list'].parse_args(line.split())
         args.filterop = any if args.filterop else all
         self.lib.list_tasks(**vars(args))
 
     def do_add(self, line):
-        """Add a task"""
+        """Add a task: [NEW TASK]"""
         args = commands.choices['add'].parse_args(line.split())
         if args.done:
             self.lib.add_done(" ".join(args.text))
@@ -129,16 +140,17 @@ class TaskCmd(minioncmd.BossCmd):
             self.lib.add_task(" ".join(args.text))
 
     def do_do(self, line):
-        """Mark a task as complete"""
+        """Mark a task as complete: TASKNUM [COMMENT...]"""
         args = commands.choices['do'].parse_args(line.split())
         self.lib.complete_task(args.tasknum, " ".join(args.comment))
 
     def do_pri(self, line):
-        """Prioritize a task: NUM, PRI, (NOTE)"""
+        """Prioritize a task: NUM PRI [COMMENT...]"""
         args = commands.choices['pri'].parse_args(line.split())
         self.lib.prioritize_task(**vars(args))
 
     def save_config(self):
+        """Saves the program options"""
         save_config()
 
 

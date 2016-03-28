@@ -78,12 +78,19 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         """
 
         show_closed = any((include_closed, include_archive, only_archive))
-        counts = self.lib.get_counts(name.lower(), include_archive, only_archive)
-        headers = "{} Open Closed".format(name.title()).split()
-        s = lambda k: (str(k), str(counts[k]['open']), str(counts[k]['closed']))
-        lister.print_list([s(count) for count in sorted(counts)
-                           if (counts[count]['open'] or show_closed)],
-                          headers)
-    
+        counts = self.lib.get_counts(name.lower(), 
+                                     include_archive, 
+                                     only_archive)
+        show_list = any((k['open'] for k in counts.values()))
+        if show_list or show_closed:
+            headers = "{} Open Closed".format(name.title()).split()
+            s = lambda k: (str(k), 
+                           str(counts[k]['open']), 
+                           str(counts[k]['closed']))
+            lister.print_list([s(count) for count in sorted(counts)
+                               if (counts[count]['open'] or show_closed)],
+                              headers)
+        else:
+            print("No open {}s.".format(name))
 
 
