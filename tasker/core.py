@@ -4,16 +4,14 @@ Created on Thu Mar 17 10:29:54 2016
 
 @author: jenglish
 """
-from __future__ import absolute_import
-
 import os
 
 import argparse
 import datetime
 import logging
 
-from . import minioncmd
-from . import lister
+import minioncmd
+import lister
 
 def add_core_subparsers(commands):
     list_parser = commands.add_parser('list', help='list tasks',

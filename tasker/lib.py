@@ -196,7 +196,6 @@ class TaskLib(object):
     def write_tasks(self, task_dict, local_path):
         """write_tasks(task_dict, local_path)
         Writes the working task_dictionary to the appropriate file
-
         :param dict task_dict: dictionary of (line: task) pairs
         :param filepath local_path: file path to write to
         """
@@ -311,6 +310,7 @@ class TaskLib(object):
         filters = filters or []
         filterop = filterop if filterop in (all, any) else all
         if filterop not in (any, all):
+            self.log.error('Bad filterop parameter in sort_tasks')
             return TASK_ERROR, "Filter Operation must by any or all"
         showcomplete = showcomplete or False
 
@@ -320,12 +320,41 @@ class TaskLib(object):
                       if (showcomplete or not val.startswith('x'))]
 
         if filters:
+            self.log.info('Filtering tasks by keywords')
             everything = [(key, val) for key, val in everything
                           if filterop([_ in val for _ in filters])]
+        
+        if not self.config['Tasker'].getboolean('show-priority-z', True):
+            self.log.info("Hiding priority Z tasks")
+            everything = [(key, val) for key,val in everything
+                          if self.parse_task(val)[1] != "Z"]
 
         # todo .. print completed tasks in revers Cron order? The priorities get wiped
         if by_pri:
-            stuff = sorted(everything, key=second)
+            # break up list into three lists: prioritized, unprioritized, and Z
+            plist, zlist, ulist = [],[],[]
+            for key,val in everything:
+                pri = self.parse_task(val)[1]
+                if pri and pri != 'Z':
+                    plist.append((key, val))
+                elif not pri:
+                    ulist.append((key, val))
+                else:
+                    zlist.append((key, val))
+
+            self.log.debug('plist keys: %s', ','.join(str(a) for a,b in plist))
+            self.log.debug('zlist keys: %s', ','.join(str(a) for a,b in zlist))
+            self.log.debug('ulist keys: %s', ','.join(str(a) for a,b in ulist))
+            
+            if self.config['Tasker'].getboolean('priority-z-last', True):
+                stuff = (sorted(plist, key=second) + 
+                         sorted(ulist, key=second) + 
+                         sorted(zlist, key=second))
+            else:
+                stuff = (sorted(plist, key=second) +
+                         sorted(zlist, key=second) +
+                         sorted(ulist, key=second))
+            
         else:
             stuff = sorted(everything, key=first)
         return stuff

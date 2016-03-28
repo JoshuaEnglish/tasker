@@ -22,6 +22,7 @@ Using Tasker
 
    basic_usage
    archiving_tasks
+   configuration
    managing_plugins
 
 Standard Plugins

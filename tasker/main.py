@@ -4,8 +4,6 @@ Created on Wed Mar 16 14:04:54 2016
 
 @author: jenglish
 """
-from __future__ import absolute_import
-
 import sys
 import os
 import argparse
@@ -14,10 +12,10 @@ import logging
 from configparser import ConfigParser
 import yapsy.ConfigurablePluginManager as CPM
 
-from . import basetaskerplugin
-from . import minioncmd
-from . import core
-from . import lib
+import basetaskerplugin
+import minioncmd
+import core
+import lib
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s (%(name)s)',
                     datefmt='%Y-%m%d %H:%M:%S')
@@ -32,7 +30,9 @@ config.read_dict(
                },
      'Tasker': {'hidden-extensions': 'uid',
                 'wrap-behavior': 'wrap',
-                'wrap-width': '78'}
+                'wrap-width': '78',
+                'priority-z-last': 'True',
+                'show-priority-z': 'True'}
      })
 
 if hasattr(sys, "frozen"):
@@ -68,6 +68,16 @@ parser.add_argument('--power', action='store_true', default=False,
 parser.add_argument('--manual', action='store_true', default=False,
                     help=argparse.SUPPRESS)
 
+parser.add_argument('--wrap', choices=['wrap','shorten','none'], 
+                    default='wrap')
+parser.add_argument('--width', type=int, default=78,
+                    help="Width to wrap or shorten text when printing")
+
+parser.add_argument('-z', action='store_false', default=True,
+                    dest='showz', help='Hides Z-priority tasks')
+parser.add_argument('-l', action='store_false', default=True,
+                    dest='integrate', 
+                    help='Shows Z-priority tasks before unprioritized tasks')
 
 
 feedback = parser.add_mutually_exclusive_group()
@@ -106,15 +116,6 @@ def add_subparser(subparser, helpstr=None):
 
 
 class TaskCmd(minioncmd.BossCmd):
-    """
-    Main program interactive prompt. All command line arguments are passed
-    to this object eventually.
-
-    :param str completekey: key to complete commands in the interactive prompt
-    :param stream stdin: standard input
-    :param stream stdout: standard output
-    :param ConfigParser config: ConfigParser instance
-    :param PluginManager manager: YAPSY-based Plugin Manager instance"""
     prompt = "tasker> "
     doc_leader = "Tasker Help"
 
@@ -126,13 +127,13 @@ class TaskCmd(minioncmd.BossCmd):
         self.lib = lib
 
     def do_list(self, line):
-        "Lists tasks: [OPTIONS] [FILTERS ...]"
+        "Lists tasks"
         args = commands.choices['list'].parse_args(line.split())
         args.filterop = any if args.filterop else all
         self.lib.list_tasks(**vars(args))
 
     def do_add(self, line):
-        """Add a task: [NEW TASK]"""
+        """Add a task"""
         args = commands.choices['add'].parse_args(line.split())
         if args.done:
             self.lib.add_done(" ".join(args.text))
@@ -140,18 +141,35 @@ class TaskCmd(minioncmd.BossCmd):
             self.lib.add_task(" ".join(args.text))
 
     def do_do(self, line):
-        """Mark a task as complete: TASKNUM [COMMENT...]"""
+        """Mark a task as complete"""
         args = commands.choices['do'].parse_args(line.split())
         self.lib.complete_task(args.tasknum, " ".join(args.comment))
 
     def do_pri(self, line):
-        """Prioritize a task: NUM PRI [COMMENT...]"""
+        """Prioritize a task: NUM, PRI, (NOTE)"""
         args = commands.choices['pri'].parse_args(line.split())
         self.lib.prioritize_task(**vars(args))
 
     def save_config(self):
-        """Saves the program options"""
         save_config()
+        
+    def help_wrap(self):
+        """Tasker supports three options for wrapping text:
+            
+        wrap : will wrap text leaving an indent to clear task numbers
+               and priorities.
+              
+        shorten: will cut off the text of each task.
+        
+        none: will not do any text wrapping and let your interface print
+              tasks
+    
+        These options can be set at the command line for one time use using
+        t --wrap [wrap, shorten, none] 
+        """
+           
+        print(TaskCmd.help_wrap.__doc__)
+        
 
 
 manager = CPM.ConfigurablePluginManager(config,
@@ -225,7 +243,12 @@ def main():
         pcmd.config = config
         args.interact = True
         CLI.cmdqueue.append('poweruser')
-
+    
+    config.set('Tasker', 'wrap-behavior', args.wrap)
+    config.set('Tasker', 'wrap-width', str(args.width))
+    
+    config.set('Tasker', 'show-priority-z', str(args.showz))
+    config.set('Tasker', 'priority-z-last', str(args.integrate))
 
     logging.root.setLevel(30 - (args.verbose - args.quiet) * 10)
     log.debug(args)

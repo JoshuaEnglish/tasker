@@ -4,6 +4,7 @@ Created on Fri Mar 18 12:39:22 2016
 
 @author: jenglish
 """
+from __future__ import print_function
 
 def print_list(things, headers):
     headers = [h.strip() for h in headers]
