@@ -1,9 +1,0 @@
-[Core]
-Name = Pending
-Module = PendingPlugin
-
-[Documentation]
-Author = Josh English
-Version = 0.1
-Website = http://joshuarenglish.com
-Description = Adds the 'after' command to the program
