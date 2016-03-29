@@ -10,10 +10,12 @@ It is a minioncmd with no argument parser.
 
 Access by typing tasker.py --power. This will begin the interactive prompt.
 """
+from __future__ import absolute_import
+
 import os
 import logging
 
-import minioncmd
+from . import minioncmd
 
 
 # noinspection PyIncorrectDocstring
@@ -67,3 +69,9 @@ class PowerCmd(minioncmd.MinionCmd):
     def do_openfolder(self, line):
         """Opens the tasker file directory"""
         os.startfile(self.config['Files']['tasker-dir'])
+        
+    def do_plugin(self, line):
+        locator = self.master.lib.manager.getPluginLocator()
+        print(locator)
+    
+    

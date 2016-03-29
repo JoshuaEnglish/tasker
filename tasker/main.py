@@ -4,6 +4,8 @@ Created on Wed Mar 16 14:04:54 2016
 
 @author: jenglish
 """
+from __future__ import absolute_import
+
 import sys
 import os
 import argparse
@@ -238,7 +240,7 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     if args.power:
-        import powercmd
+        from . import powercmd
         pcmd = powercmd.PowerCmd('poweruser', CLI, manager)
         pcmd.config = config
         args.interact = True

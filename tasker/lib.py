@@ -55,8 +55,18 @@ class TaskLib(object):
 
         self._textwrapper = None
 
+        
         if not os.path.exists(config['Files']['tasker-dir']):
-            os.mkdir(config['Files']['tasker-dir'])
+            try:
+                os.mkdir(config['Files']['tasker-dir'])
+            except FileNotFoundError:
+                self.log.error("Default file not found, resetting")
+                config['Files']['tasker-dir'] = os.path.join(
+                                                  os.environ['APPDATA'], 
+                                                  'tasker')
+                if not os.path.exists(config['Files']['tasker-dir']):
+                    os.mkdir(config['Files']['tasker-dir'])
+                
 
         for path in ['task-path', 'done-path']:
             if not os.path.exists(config['Files'][path]):
