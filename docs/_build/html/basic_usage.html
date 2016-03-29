@@ -337,7 +337,9 @@ for the length of your session.</p>
 <p>You can get less information by using the <code class="docutils literal"><span class="pre">-q</span></code> flag, and even less information
 about errors with <code class="docutils literal"><span class="pre">-qq</span></code>.</p>
 <p>Todo Manager</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t [-h] [-i] [-d | -v | -q]  ...
+<div class="highlight-python"><div class="highlight"><pre><span></span>usage: t [-h] [-i] [--wrap {wrap,shorten,none}] [--width WIDTH] [-z] [-l]
+         [-d | -v | -q]
+         ...
 </pre></div>
 </div>
 <dl class="docutils">
@@ -350,6 +352,20 @@ about errors with <code class="docutils literal"><span class="pre">-qq</span></c
 <kbd><span class="option">-i=False</span>, <span class="option">--interactive=False</span></kbd></td>
 </tr>
 <tr><td>&nbsp;</td><td>enter the interactive loop</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--wrap=wrap</span></kbd></td>
+<td><p class="first">Undocumented</p>
+<p class="last">Possible choices: wrap, shorten, none</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--width=78</span></kbd></td>
+<td>Width to wrap or shorten text when printing</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-z=True</span></kbd></td>
+<td>Hides Z-priority tasks</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-l=True</span></kbd></td>
+<td>Shows Z-priority tasks before unprioritized tasks</td></tr>
 <tr><td class="option-group" colspan="2">
 <kbd><span class="option">-d=0</span>, <span class="option">--debug=0</span></kbd></td>
 </tr>

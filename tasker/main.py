@@ -12,10 +12,10 @@ import logging
 from configparser import ConfigParser
 import yapsy.ConfigurablePluginManager as CPM
 
-import basetaskerplugin
-import minioncmd
-import core
-import lib
+from . import basetaskerplugin
+from . import minioncmd
+from . import core
+from . import lib
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s (%(name)s)',
                     datefmt='%Y-%m%d %H:%M:%S')
