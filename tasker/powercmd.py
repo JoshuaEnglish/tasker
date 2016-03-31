@@ -13,7 +13,10 @@ Access by typing tasker.py --power. This will begin the interactive prompt.
 from __future__ import absolute_import
 
 import os
+import sys
 import logging
+import code
+
 
 from . import minioncmd
 
@@ -74,4 +77,14 @@ class PowerCmd(minioncmd.MinionCmd):
         locator = self.master.lib.manager.getPluginLocator()
         print(locator)
     
-    
+    def do_python(self, line):
+        """Jump into Python"""
+        namespace = {}
+        namespace['boss'] = self.master
+        namespace['config'] = self.master.config
+        namespace['lib'] = self.master.lib
+        namespace['manager'] = self.master.lib.manager
+
+        code.interact("Tasker Python Session", local=namespace)
+        return None
+        
