@@ -15,4 +15,10 @@ vocabulary = project, TM
 2 = Fifth,Allen,Malarkey
 3 = HomeQuote,JeffZ
 4 = CascadiaRefresh
+5 = LOLRefresh,JustinHadler
+6 = FairviewHealth,JustinHadler
+7 = 3M,JustinHadler
+8 = SandridgeClearpass,TomKnight
+9 = EdmondPS,TomKnight
+10 = OUOutdoor,SethStemple
 

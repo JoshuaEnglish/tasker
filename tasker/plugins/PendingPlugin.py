@@ -7,7 +7,7 @@ Created on Fri Mar 18 13:28:58 2016
 import re
 import argparse
  
-import basetaskerplugin
+from tasker import basetaskerplugin
 
 re_pend = re.compile(r"\s{pend:([^}]*)}")
 

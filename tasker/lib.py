@@ -280,13 +280,21 @@ class TaskLib(object):
 
 
     def complete_task(self, tasknum, comment=None):
-        tasks = self.get_tasks(self.config['Files']['task-path'])
+        """Completes an open task if task is not already closed.
+        """
+        # Check if self.tasks has been established
+        if not hasattr(self, 'tasks') or self.tasks is None:
+            tasks = self.tasks = self.get_tasks(self.config['Files']['task-path'])
+        else:
+            tasks = self.tasks
         if tasknum not in tasks:
+            del self.tasks
             return TASK_ERROR, "Task number not in task list"
         if tasks[tasknum].startswith('x'):
+            del self.tasks
             return TASK_ERROR, "Task already completed"
 
-        self.tasks = tasks
+        
         c, p, s, e, t, o, j, x = self.parse_task(tasks[tasknum])
         c = True
         e = datetime.datetime.now()

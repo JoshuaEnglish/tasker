@@ -206,9 +206,15 @@ if __name__=='__main__':
 
         def do_hello(self, line):
             print("Hello to '{}' from Market".format(line))
-            self.master.cmdqueue.append('qlist')
+            self.master.cmdqueue.append('push hello from Market!')
 
-    Boss = BossCmd()
+    class LocalBully(BossCmd):
+        doc_leader = "Help for the Bully"
+        
+        def do_push(self, line):
+            print("BullyBoy pushes:", line)
+            
+    Boss = LocalBully()
 
     # long way to add minion to boss
     Story = StoryCmd('story')

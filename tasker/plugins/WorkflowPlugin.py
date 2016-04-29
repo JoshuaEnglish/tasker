@@ -14,8 +14,9 @@ from string import Template
 
 workflow_dir = os.path.join(os.path.dirname(__file__), 'workflows')
 
-import basetaskerplugin
-import minioncmd
+from tasker import basetaskerplugin
+
+from tasker import minioncmd
 
 clean_vocab = re.compile(r"^[@+]")
 
@@ -82,6 +83,9 @@ class WorkflowCLI(minioncmd.MinionCmd):
         if hasattr(self, 'master'):
             self.master.cmdqueue.append('add {}'.format(new_task))
             self._log.info("Adding task: %s", new_task)
+        else:
+            self._log.error("No BossCmd instance to add task with")
+            
         
     def do_start(self, text):
         """Adds the first step of a workflow to the task list.
@@ -210,6 +214,46 @@ class WorkflowCLI(minioncmd.MinionCmd):
         self.workflows[newname] = cp
         print()
         print("Created new workflow in", fpath)
+    
+    def do_abandon(self, text):
+        """Abandons an established workflow"""
+        # if ask for workflow name and ID, need to identify the tasknum
+        # should expect the tasknum
+        # get the worflow name and id
+        # determine the last step of the workflow
+        # set the task ws extension to the last step
+        # add a note to the item stating it is abandoned.
+        # use self.master.cmdqueue
+        if not hasattr(self, 'master'):
+            self._log.error("No BossCmd Instance to handle request")
+            return True
+        tasknum, reason = re.match("(\d+)\s+(.*)", text).groups()
+        tasknum = int(tasknum)
+        
+        tasks = self.master.lib.build_task_dict()
+       
+        selected_victim = tasks[tasknum]
+        if not tasknum in tasks.keys():
+            self._log.error("Task does not exist")
+            print("Task does not exist")
+            return True
+        
+        c, p, s, e, t, c, j, x = self.master.lib.parse_task(selected_victim) 
+        flow_name = x['wn']
+        
+        steps = self.workflows[flow_name]['Steps']
+        last_step = max(steps)
+        
+        new_version = re.sub("{ws:\d+}","{ws:%s}" % last_step, selected_victim)
+        
+        tasks[tasknum] = new_version
+        self.master.lib.tasks = tasks
+        self.master.cmdqueue.append("do {} Abandoned: {}".format(tasknum, reason))
+        return True
+        
+            
+        
+        
         
 
 class Workflow(basetaskerplugin.SubCommandPlugin):

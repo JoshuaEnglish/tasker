@@ -24,6 +24,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s (%(name)s)',
 
 log = logging.getLogger('main')
 
+
 config = ConfigParser()
 config.read_dict(
     {'Files': {'tasker-dir': os.path.join(os.environ['APPDATA'], 'tasker'),
@@ -177,7 +178,7 @@ class TaskCmd(minioncmd.BossCmd):
 manager = CPM.ConfigurablePluginManager(config,
                                         config_change_trigger=save_config,
                                         plugin_info_ext="tasker-plugin")
-manager.setPluginPlaces(['plugins'])
+manager.setPluginPlaces([os.path.join(configdir, 'plugins')])
 manager.setCategoriesFilter({
     "NewCommand": basetaskerplugin.NewCommandPlugin,
     "SubCommand": basetaskerplugin.SubCommandPlugin,
@@ -194,7 +195,7 @@ core.ArchiveCmd('archive', CLI)
 add_subparser(core.plugin_argparser, "Plugin manager")
 add_subparser(core.archive_argparser, "Archive commands")
 
-log.debug('Collecting Plugins...')
+log.debug('Collecting Plugins from %s', manager.getPluginLocator().plugins_places)
 manager.collectPlugins()
 
 for info in manager.getAllPlugins():

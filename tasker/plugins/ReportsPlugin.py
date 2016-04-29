@@ -8,9 +8,11 @@ Created on Wed Mar  9 15:12:07 2016
 
 @author: jenglish
 """
+
+
 import argparse
-import basetaskerplugin
-import lister
+from tasker import basetaskerplugin
+from tasker import lister
 
 todo = """
 Create a timed report
