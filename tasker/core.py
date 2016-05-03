@@ -231,7 +231,7 @@ Created on {date}
 @author: {user}
 """
 import argparse
-import basetaskerplugin
+from tasker import basetaskerplugin
 
 {clicode}
 class {name}Plugin(basetaskerplugin.{cls}):

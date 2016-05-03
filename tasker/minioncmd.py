@@ -143,11 +143,18 @@ class BossCmd(cmd.Cmd):
         :rtype: boolean
         """
         stop = super().onecmd( line)
+        self.process_queue()
+#        while len(self.cmdqueue):
+#            text = self.cmdqueue.pop(0)
+#            self._log.debug("Processing queued command: %s", text)
+#            self.onecmd(text)
+        return stop
+
+    def process_queue(self):
         while len(self.cmdqueue):
             text = self.cmdqueue.pop(0)
             self._log.debug("Processing queued command: %s", text)
             self.onecmd(text)
-        return stop
 
 
 
@@ -187,7 +194,19 @@ class MinionCmd(cmd.Cmd):
 
         """
         self.stdout.write('*** Unknown %s syntax: %s\n'% (self.__class__.__name__, line))
-
+ 
+    def onecmd(self, line):
+        """Process a single command and process the cmdqueue
+        :rtype: boolean
+        """
+        stop = super().onecmd( line)
+        self.master.process_queue()
+#        while len(self.cmdqueue):
+#            text = self.cmdqueue.pop(0)
+#            self._log.debug("Processing queued command: %s", text)
+#            self.onecmd(text)
+        return stop
+        
 if __name__=='__main__':
     #logging.getLogger('bosscmd').setLevel(logging.DEBUG)
     #logging.getLogger('minioncmd').setLevel(logging.DEBUG)
@@ -224,4 +243,4 @@ if __name__=='__main__':
     Sub = SubmissionCmd('submission', Boss)
     Mark = MarketCmd('market', Boss)
 
-    Boss.onecmd('story market hello from onecmd')
+    Boss.onecmd('story market hello onecmd')
