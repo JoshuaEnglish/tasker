@@ -11,7 +11,7 @@ import os
 import argparse
 import logging
 
-from configparser import ConfigParser
+from configparser import ConfigParser, ExtendedInterpolation
 
 import colorama
 import yapsy.ConfigurablePluginManager as CPM
@@ -21,7 +21,7 @@ import minioncmd
 import core
 import lib
 
-logging.basicConfig(datefmt='%Y-%m%d %H:%M:%S')
+
 
 log = logging.getLogger('main')
 
@@ -29,35 +29,40 @@ screen_handler = logging.StreamHandler()
 
 error_handler = logging.FileHandler('error.txt')
 error_handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s (%(name)s)')
+formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s (%(name)s)',
+                               datefmt='%Y-%m%d %H:%M:%S')
+                                
 screen_handler.setFormatter(formatter)
 error_handler.setFormatter(formatter)
 log.addHandler(error_handler)
 log.addHandler(screen_handler)
 
 config = ConfigParser()
-config.read_dict(
-    {'Files': {'tasker-dir': os.path.join(os.environ['APPDATA'], 'tasker'),
-               'task-path': "%(tasker-dir)s/todo.txt",
-               'done-path': "%(tasker-dir)s/done.txt",
-               },
-     'Tasker': {'hidden-extensions': 'uid',
-                'wrap-behavior': 'wrap',
-                'wrap-width': '78',
-                'priority-z-last': 'True',
-                'show-priority-z': 'True'}
-     })
+#config.read_dict(
+#    {'Files': {#'tasker-dir': os.path.join(os.environ['APPDATA'], 'tasker'),
+#               'task-path': "%(tasker-dir)s/todo.txt",
+#               'done-path': "%(tasker-dir)s/done.txt",
+#               },
+#     'Tasker': {'hidden-extensions': 'uid',
+#                'wrap-behavior': 'wrap',
+#                'wrap-width': '78',
+#                'priority-z-last': 'True',
+#                'show-priority-z': 'True'}
+#     })
 
 if hasattr(sys, "frozen"):
-    configdir = os.path.dirname(sys.executable)
+    INSTALL_DIR = os.path.dirname(sys.executable)
 else:
-    configdir = os.path.dirname(__file__)
+    INSTALL_DIR = os.path.dirname(__file__)
 
-sys.path.insert(0, os.path.abspath(configdir))
+sys.path.insert(0, os.path.abspath(INSTALL_DIR))
     
-configpath = os.path.join(configdir, 'tasker.ini')
+configpath = os.path.join(INSTALL_DIR, 'tasker.ini')
 
-config.read(configpath)
+config.read([
+    os.path.join(INSTALL_DIR, 'defaults.ini'), 
+    configpath
+])
 
 
 def save_config():
@@ -160,7 +165,10 @@ class TaskCmd(minioncmd.BossCmd):
     def do_do(self, line):
         """Mark a task as complete"""
         args = commands.choices['do'].parse_args(line.split())
-        self.lib.complete_task(args.tasknum, " ".join(args.comment))
+        err, msg = self.lib.complete_task(args.tasknum, " ".join(args.comment))
+        if err:
+            log.error(msg)
+            sys.exit(err)
 
     def do_pri(self, line):
         """Prioritize a task: NUM, PRI, (NOTE)"""
@@ -192,7 +200,7 @@ class TaskCmd(minioncmd.BossCmd):
 manager = CPM.ConfigurablePluginManager(config,
                                         config_change_trigger=save_config,
                                         plugin_info_ext="tasker-plugin")
-manager.setPluginPlaces([os.path.join(configdir, 'plugins')])
+manager.setPluginPlaces([os.path.join(INSTALL_DIR, 'plugins')])
 manager.setCategoriesFilter({
     "NewCommand": basetaskerplugin.NewCommandPlugin,
     "SubCommand": basetaskerplugin.SubCommandPlugin,
@@ -282,6 +290,7 @@ def main():
 
         CLI.onecmd(' '.join(sys.argv[sys.argv.index(args.command):]))
 
+    return 0
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

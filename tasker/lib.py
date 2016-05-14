@@ -312,7 +312,6 @@ class TaskLib(object):
 
         err, msg, c, p, s, e, t = self.run_hooks('complete_task', c, p, s, e, t, o, j, x)
         if err:
-            self.log.error(msg)
             return err, msg
         # End hooks
         self.write_tasks(tasks, self.config['Files']['task-path'])

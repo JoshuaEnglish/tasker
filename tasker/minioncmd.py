@@ -49,7 +49,7 @@ class BossCmd(cmd.Cmd):
         super().preloop()
 
     def postloop(self):
-        """Sets the instance ``inloop`` property to ``Fales``"""
+        """Sets the instance ``inloop`` property to ``False``"""
         self.inloop = False
         super().postloop()
         
