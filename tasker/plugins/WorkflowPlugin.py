@@ -14,9 +14,9 @@ from string import Template
 
 workflow_dir = os.path.join(os.path.dirname(__file__), 'workflows')
 
-from tasker import basetaskerplugin
+from tasker import basetaskerplugin, minioncmd
 
-from tasker import minioncmd
+
 
 clean_vocab = re.compile(r"^[@+]")
 

@@ -14,6 +14,8 @@ from operator import itemgetter
 from collections import defaultdict, Counter
 from functools import partial
 
+import colorama
+
 
 TIMEFMT = '%Y-%m-%dT%H:%M:%S'
 IDFMT = '%H%M%S%d%m%y'
@@ -73,6 +75,11 @@ class TaskLib(object):
                 fd = open(config['Files'][path], 'w')
                 fd.close()
 
+        self.theme = {
+            "A" : colorama.Fore.RED,
+            "B" : colorama.Fore.YELLOW,
+            "C" : colorama.Fore.GREEN,
+            }
     def get_extensions_to_hide(self):
         """get_extensions_to_hide()
         Compile a list of all extensions from the config file
@@ -391,6 +398,7 @@ class TaskLib(object):
         """
         showext = showext or False
         count = 0
+        colorize = self.config['Tasker'].getboolean('use-color', True)
         shown_tasks = self.sort_tasks(by_pri, filters, filterop, showcomplete)
         self.log.info('Listing %s tasks %s',
                       'all' if showcomplete else 'open',
@@ -421,17 +429,22 @@ class TaskLib(object):
             else:
                 self.log.error("Unknown textwrap preference %s", wrap)
             for idx, task in shown_tasks:
+                pri = self.parse_task(task)[1]
+            
                 if not showext:
                     for ext in self.extension_hiders:
                         task = self.extension_hiders[ext].sub("", task)
-                print(("{1:{0}d} {2}".format(idlen, idx,
-                                             wrapfunc(task))))
+                print(("{3}{1:{0}d} {2}".format(idlen, idx,
+                                                wrapfunc(task),self.get_color(pri))))
                 count += 1
             print('-'*(idlen+1))
         msg=("{:d} task{:s} shown".format(count, '' if count==1 else 's'))
         print(msg)
         return TASK_OK, msg
 
+    def get_color(self, pri):
+        return self.theme.get(pri, colorama.Fore.RESET)
+        
     def prioritize_task(self, tasknum, priority, note=None):
         """prioritize_task(tasknum, new_pri [,note]
         

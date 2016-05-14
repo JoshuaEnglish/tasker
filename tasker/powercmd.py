@@ -18,7 +18,7 @@ import logging
 import code
 
 
-from . import minioncmd
+import minioncmd
 
 
 # noinspection PyIncorrectDocstring

@@ -11,8 +11,8 @@ Created on Wed Mar  9 15:12:07 2016
 
 
 import argparse
-from tasker import basetaskerplugin
-from tasker import lister
+from tasker import basetaskerplugin, lister
+
 
 todo = """
 Create a timed report

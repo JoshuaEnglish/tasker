@@ -4,7 +4,7 @@ Created on Wed Mar 16 14:04:54 2016
 
 @author: jenglish
 """
-from __future__ import absolute_import
+
 
 import sys
 import os
@@ -12,18 +12,28 @@ import argparse
 import logging
 
 from configparser import ConfigParser
+
+import colorama
 import yapsy.ConfigurablePluginManager as CPM
 
-from . import basetaskerplugin
-from . import minioncmd
-from . import core
-from . import lib
+import basetaskerplugin
+import minioncmd
+import core
+import lib
 
-logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s (%(name)s)',
-                    datefmt='%Y-%m%d %H:%M:%S')
+logging.basicConfig(datefmt='%Y-%m%d %H:%M:%S')
 
 log = logging.getLogger('main')
 
+screen_handler = logging.StreamHandler()
+
+error_handler = logging.FileHandler('error.txt')
+error_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s (%(name)s)')
+screen_handler.setFormatter(formatter)
+error_handler.setFormatter(formatter)
+log.addHandler(error_handler)
+log.addHandler(screen_handler)
 
 config = ConfigParser()
 config.read_dict(
@@ -43,6 +53,8 @@ if hasattr(sys, "frozen"):
 else:
     configdir = os.path.dirname(__file__)
 
+sys.path.insert(0, os.path.abspath(configdir))
+    
 configpath = os.path.join(configdir, 'tasker.ini')
 
 config.read(configpath)
@@ -82,6 +94,8 @@ parser.add_argument('-l', action='store_false', default=True,
                     dest='integrate', 
                     help='Shows Z-priority tasks before unprioritized tasks')
 
+parser.add_argument('-n', '--no-color', action='store_false', dest='colorize',
+                    default=True, help="Colorizes output")
 
 feedback = parser.add_mutually_exclusive_group()
 feedback.add_argument('-d', '--debug', action='store_const', const=2,
@@ -196,7 +210,7 @@ add_subparser(core.plugin_argparser, "Plugin manager")
 add_subparser(core.archive_argparser, "Archive commands")
 
 log.debug('Collecting Plugins from %s', manager.getPluginLocator().plugins_places)
-manager.collectPlugins()
+#manager.collectPlugins()
 
 for info in manager.getAllPlugins():
     if not info.is_activated:
@@ -237,11 +251,11 @@ def load_plugins():
 
 
 def main():
-    import sys
+    
     args = parser.parse_args(sys.argv[1:])
 
     if args.power:
-        from . import powercmd
+        import powercmd
         pcmd = powercmd.PowerCmd('poweruser', CLI, manager)
         pcmd.config = config
         args.interact = True
@@ -252,8 +266,11 @@ def main():
     
     config.set('Tasker', 'show-priority-z', str(args.showz))
     config.set('Tasker', 'priority-z-last', str(args.integrate))
-
-    logging.root.setLevel(30 - (args.verbose - args.quiet) * 10)
+    
+    config.set('Tasker', 'use-color', str(args.colorize))
+    if args.colorize:
+        colorama.init(strip=True)
+    screen_handler.setLevel(30 - (args.verbose - args.quiet) * 10)
     log.debug(args)
     load_plugins()
 

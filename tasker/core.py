@@ -12,8 +12,8 @@ import argparse
 import datetime
 import logging
 
-from . import minioncmd
-from . import lister
+import minioncmd
+import lister
 
 def add_core_subparsers(commands):
     list_parser = commands.add_parser('list', help='list tasks',
