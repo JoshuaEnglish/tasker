@@ -6,7 +6,7 @@ Created on Mon Feb 29 11:51:14 2016
 """
 
 
-from tasker import basetaskerplugin
+import basetaskerplugin
 
 class Logging(basetaskerplugin.TaskerPlugin):
     def activate(self):

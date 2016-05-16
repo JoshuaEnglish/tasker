@@ -14,7 +14,7 @@ from string import Template
 
 workflow_dir = os.path.join(os.path.dirname(__file__), 'workflows')
 
-from tasker import basetaskerplugin, minioncmd
+import basetaskerplugin, minioncmd
 
 
 
