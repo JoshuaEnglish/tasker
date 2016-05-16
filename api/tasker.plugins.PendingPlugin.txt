@@ -1,0 +1,7 @@
+tasker.plugins.PendingPlugin module
+===================================
+
+.. automodule:: tasker.plugins.PendingPlugin
+    :members:
+    :undoc-members:
+    :show-inheritance:

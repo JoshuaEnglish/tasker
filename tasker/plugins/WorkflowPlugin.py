@@ -12,39 +12,39 @@ import re
 from configparser import ConfigParser
 from string import Template
 
-workflow_dir = os.path.join(os.path.dirname(__file__), 'workflows')
+import basetaskerplugin
+import minioncmd
 
-import basetaskerplugin, minioncmd
+WORKFLOWS = os.path.join(os.path.dirname(__file__), 'workflows')
 
 
-
-clean_vocab = re.compile(r"^[@+]")
+CLEAN_VOCABULARY = re.compile(r"^[@+]")
 
 
 class WorkflowCLI(minioncmd.MinionCmd):
     prompt = "workflow> "
 
-    def __init__(self, completekey='tab', stdin=None, stdout=None, 
+    def __init__(self, completekey='tab', stdin=None, stdout=None,
                  workflow_dir=None):
-        super().__init__('workflow', 
-                         completekey=completekey, 
-                         stdin=stdin, 
+        super().__init__('workflow',
+                         completekey=completekey,
+                         stdin=stdin,
                          stdout=stdout)
         self.workflows = {}
         self._log.debug("Workflows type: %s", type(self.workflows))
-        local_dir = workflow_dir or os.path.join(os.path.dirname(__file__), 'workflows')
+        local_dir = workflow_dir or WORKFLOWS
         for fname in glob.glob(os.path.join(local_dir, "*.workflow")):
-            cp = ConfigParser()
-            cp.read(fname)
+            flow_prefs = ConfigParser()
+            flow_prefs.read(fname)
             name = os.path.splitext(os.path.split(fname)[1])[0]
-            self.workflows[name] = cp
-            
+            self.workflows[name] = flow_prefs
+
         self._workflow_dir = local_dir
-        
+
 
     def add_workflow_task(self, flow, stepnum, flow_id):
         """add_workflow_task(flow, stepnum, flow_id)
-        
+
         Adds a new task to the task manager based on the workflow.
 
         :param str flow: name of the workflow to follow
@@ -61,36 +61,36 @@ class WorkflowCLI(minioncmd.MinionCmd):
             raise KeyError("Missing %s workflow instance %s" % (flow, flow_id))
 
         words = [word.strip() for word in
-                self.workflows[flow]['Instances'][flow_id].split(',')]
+                 self.workflows[flow]['Instances'][flow_id].split(',')]
 
-        keys = [key.strip() for key in 
+        keys = [key.strip() for key in
                 self.workflows[flow]['Workflow']['vocabulary'].split(',')]
-                
-        d = dict(zip(keys, words))
-        
+
+        subs = dict(zip(keys, words))
+
         steps = self.workflows[flow]['Steps']
         if str(stepnum) not in steps:
             return None
-            
+
         step = self.workflows[flow]['Steps'][str(stepnum)]
         step += " {wn:$flow} {ws:$step} {wid:$wid}"
-        d['flow'] = flow
-        d['step'] = stepnum
-        d['wid'] = flow_id
-        
-        new_task = Template(step).safe_substitute(d)
-        
+        subs['flow'] = flow
+        subs['step'] = stepnum
+        subs['wid'] = flow_id
+
+        new_task = Template(step).safe_substitute(subs)
+
         if hasattr(self, 'master'):
             self.master.cmdqueue.append('add {}'.format(new_task))
             self._log.info("Adding task: %s", new_task)
         else:
             self._log.error("No BossCmd instance to add task with")
-            
-        
+
+
     def do_start(self, text):
         """Adds the first step of a workflow to the task list.
         The first word in text should be the name of the workflow.
-        Subsequent words are paired with the workflow's vocabulary to 
+        Subsequent words are paired with the workflow's vocabulary to
         fill out the step template.
         """
 
@@ -103,7 +103,7 @@ class WorkflowCLI(minioncmd.MinionCmd):
             return None
 
         # remove any '+' or '@' characters entered
-        words = [clean_vocab.sub('', w) for w in words]
+        words = [CLEAN_VOCABULARY.sub('', w) for w in words]
 
         instances = self.workflows[flow]['Instances']
         self._log.debug("Instance IDs: %s", ','.join(instances.keys()))
@@ -111,17 +111,17 @@ class WorkflowCLI(minioncmd.MinionCmd):
 
         instances[str(next_id)] = ','.join(words)
         self.add_workflow_task(flow, 1, next_id)
-        with open(os.path.join(self._workflow_dir, "%s.workflow" % flow),'w') as fp:
+        with open(os.path.join(self._workflow_dir, "%s.workflow" % flow), 'w') as fp:
             self.workflows[flow].write(fp)
         return None
-           
+
     def do_list(self, text):
         """list current workflows"""
         print("Workflow list:", file=self.stdout)
         for idx, flow in enumerate(self.workflows, start=1):
             print(idx, flow, file=self.stdout)
         print()
-            
+
     def do_info(self, text):
         """Print the details of a given workflow"""
         text = text.strip()
@@ -131,7 +131,7 @@ class WorkflowCLI(minioncmd.MinionCmd):
         for key, val in self.workflows[text]['Workflow'].items():
             print(key, val, sep=": ")
         print()
-            
+
     def do_steps(self, text):
         """Print the step templates of a given workflow"""
         text = text.strip()
@@ -141,7 +141,7 @@ class WorkflowCLI(minioncmd.MinionCmd):
         for key, val in self.workflows[text]['Steps'].items():
             print(key, val, sep=": ")
         print()
-        
+
     def do_instances(self, text):
         """Prints a list of known instances"""
         text = text.strip()
@@ -151,27 +151,27 @@ class WorkflowCLI(minioncmd.MinionCmd):
         for key, val in self.workflows[text]['Instances'].items():
             print(key, val, sep=": ")
         print()
-        
+
     def do_create(self, text):
         """Create a new workflow: create NAME"""
         newname = text.strip().split()
-        
+
         if len(newname) == 0:
             self._log.error("No name specified")
             print("Please provide a single-word-name for the new workflow")
             return None
-        
+
         if len(newname) > 1:
             self._log.error("Too many names given for workflow")
             print("Please provide a single-word name for the workflow")
             return None
-        
+
         newname = newname[0]
         if newname in self.workflows:
             self._log.error('Workflow %s already exists', newname)
             print("Workflow %s already existis" % newname)
             return None
-            
+
         keep_going = True
         desc = input("Please enter a description for this workflow: ")
         steps = []
@@ -180,7 +180,7 @@ class WorkflowCLI(minioncmd.MinionCmd):
         print("Enter a blank line to complete this process.")
         while keep_going:
             step = input("Describe step number %d: " % (len(steps)+1))
-        
+
             if step:
                 steps.append(step)
                 words = step.split()
@@ -192,29 +192,29 @@ class WorkflowCLI(minioncmd.MinionCmd):
             else:
                 keep_going = False
         print("Vocabulary: %s" % ', '.join(vocabulary))
-        
+
         cp = ConfigParser()
         cp.add_section('Workflow')
         cp.set('Workflow', 'name', newname.title())
         cp.set('Workflow', 'description', desc)
         cp.set('Workflow', 'vocabulary', ','.join(vocabulary))
-        
+
         cp.add_section('Steps')
         for idx, step in enumerate(steps, 1):
             cp.set('Steps', str(idx), step)
-        
+
         cp.add_section('Instances')
-        
+
         fname = "%s.workflow" % newname.lower()
         fpath = os.path.join(self._workflow_dir, fname)
         with open(fpath, 'w') as fp:
             cp.write(fp)
-            
+
         cp.write(self.stdout)
         self.workflows[newname] = cp
         print()
         print("Created new workflow in", fpath)
-    
+
     def do_abandon(self, text):
         """Abandons an established workflow"""
         # if ask for workflow name and ID, need to identify the tasknum
@@ -227,67 +227,60 @@ class WorkflowCLI(minioncmd.MinionCmd):
         if not hasattr(self, 'master'):
             self._log.error("No BossCmd Instance to handle request")
             return True
-        tasknum, reason = re.match("(\d+)\s+(.*)", text).groups()
+        tasknum, reason = re.match(r"(\d+)\s+(.*)", text).groups()
         tasknum = int(tasknum)
-        
+
         tasks = self.master.lib.build_task_dict()
-       
+
         selected_victim = tasks[tasknum]
-        if not tasknum in tasks.keys():
+        if tasknum not in tasks.keys():
             self._log.error("Task does not exist")
             print("Task does not exist")
             return True
-        
-        c, p, s, e, t, c, j, x = self.master.lib.parse_task(selected_victim) 
+
+        c, p, s, e, t, c, j, x = self.master.lib.parse_task(selected_victim)
         flow_name = x['wn']
-        
+
         steps = self.workflows[flow_name]['Steps']
         last_step = max(steps)
-        
-        new_version = re.sub("{ws:\d+}","{ws:%s}" % last_step, selected_victim)
-        
+
+        new_version = re.sub(r"{ws:\d+}", "{ws:%s}" % last_step, selected_victim)
+
         tasks[tasknum] = new_version
         self.master.lib.tasks = tasks
         self.master.cmdqueue.append("do {} Abandoned: {}".format(tasknum, reason))
         return True
-        
-            
-        
-        
-        
+
 
 class Workflow(basetaskerplugin.SubCommandPlugin):
     def activate(self):
         self._log.debug("Activating Workflows")
         if not self.hasConfigOption('directory'):
             self._log.debug("Setting Directory to default")
-            self.setConfigOption('directory', workflow_dir)
+            self.setConfigOption('directory', WORKFLOWS)
 
         if not self.hasConfigOption('hidden-extensions'):
             self.setConfigOption('hidden-extensions', 'wid,ws,wn')
-        
-        
-        local_dir = self.getConfigOption('directory')
-        
+
         self.cli_name = 'workflow'
         self.cli = WorkflowCLI() # needs to be an instance
-        
+
 #        self._log.debug("Adding workflow commands")
-       
+
         parser = self.parser = argparse.ArgumentParser('workflow')
         self.helpstr = 'Workflows commands (see `help workflow`)'
-        workflow_commands = parser.add_subparsers(title='workflow commands', 
+        workflow_commands = parser.add_subparsers(title='workflow commands',
                                                   dest='subcommand',
                                                   metavar='')
         start_workflow = workflow_commands.add_parser('start', help='start a workflow')
         start_workflow.add_argument('name', help="The name of the workflow to start")
         start_workflow.add_argument('vocabulary', nargs=argparse.REMAINDER,
                                     help="The vocabulary for the workflow instance")
-#        
+#
         workflow_commands.add_parser('list', help='lists known workflows')
 
         steps = workflow_commands.add_parser('steps',
-                                     help='displays templated steps for a given workflow')
+                                             help='displays templated steps for a given workflow')
         steps.add_argument('text', nargs=argparse.REMAINDER)
 
         instance = workflow_commands.add_parser('instances',
@@ -304,10 +297,10 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
         create.add_argument('--edit', help="launch the editor automatically")
 
         super().activate()
-                
+
 
     def complete_task(self, c, p, s, e, t, o, j, x):
-        self._log.debug('Workflow checking completed task %s', 
+        self._log.debug('Workflow checking completed task %s',
                         x.get('uid', 'NO ID'))
         if 'wn' in x:
             flow = self.cli.workflows[x['wn']]
@@ -322,11 +315,7 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
                 try:
                     self.cli.add_workflow_task(x['wn'], next_step, x['wid'])
                 except KeyError as E:
-                    return(2,E, c, p, s, e, t)
+                    return(2, E, c, p, s, e, t)
         return(0, None, c, p, s, e, t)
-    
 
 
-if __name__=='__main__':
-    w =WorkflowCLI()
-    w.cmdloop()

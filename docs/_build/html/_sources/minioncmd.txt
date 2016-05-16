@@ -1,0 +1,64 @@
+MinionCmd
+=========
+
+.. currentmodule:: tasker.minioncmd
+
+.. automodule:: tasker.minioncmd
+
+Example::
+
+    class SubmissionCmd(MinionCmd):
+        doc_leader = "Help for SubmissionCmd"
+
+
+    class StoryCmd(MinionCmd):
+        doc_leader = "Help for StoryCmd"
+
+
+    class MarketCmd(MinionCmd):
+        doc_leader = "Help for MarketCmd"
+
+        def do_hello(self, line):
+            print("Hello to '{}' from Market".format(line))
+            self.master.cmdqueue.append('qlist')
+
+    Boss = BossCmd()
+
+    # long way to add minion to boss
+    Story = StoryCmd('story')
+    Boss.add_minion('story', Story)
+
+    # minions accept a boss
+    Sub = SubmissionCmd('submission', Boss)
+    Mark = MarketCmd('market', Boss)
+
+Here is the code in action::
+
+    >>> Boss.onecmd('story market hello from onecmd')
+    Hello to 'from onecmd' from Market
+    No Queued Commands
+    >>> Boss.cmdloop()
+    Boss>  help
+    Help for BossCmd
+    Documented commands (type help <topic>):
+    ========================================
+    help  market  qlist  quit  story  submission
+
+    Boss> story
+    story> help
+    Help for StoryCmd
+    Documented commands (type help <topic>):
+    ========================================
+    done  help  market  quit  submission
+
+    story> submission
+    submission> done
+    Boss> market
+    market> quit
+
+
+.. autoclass:: BossCmd
+   :members:
+
+.. autoclass:: MinionCmd
+   :members:

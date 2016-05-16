@@ -1,0 +1,282 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tasker.main &mdash; Tasker 1.0.0.2016.03.26 documentation</title>
+    
+    <link rel="stylesheet" href="_static/butterick.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0.2016.03.26',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Tasker 1.0.0.2016.03.26 documentation" href="index.html" />
+    <link rel="next" title="tasker.lib" href="lib.html" />
+    <link rel="prev" title="Building the Pending Plugin" href="pendplugin.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="lib.html" title="tasker.lib"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pendplugin.html" title="Building the Pending Plugin"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.0.0.2016.03.26 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tasker.main">
+<span id="tasker-main"></span><h1>tasker.main<a class="headerlink" href="#module-tasker.main" title="Permalink to this headline">¶</a></h1>
+<p>This page describes the main module that runs the show.</p>
+<p>The module-level object <code class="docutils literal"><span class="pre">CLI</span></code> is an instance of <a class="reference internal" href="#tasker.main.TaskCmd" title="tasker.main.TaskCmd"><code class="xref py py-class docutils literal"><span class="pre">TaskCmd</span></code></a> which is
+a subclass of <code class="xref py py-class docutils literal"><span class="pre">BossCmd</span></code>. Other tools exists as subclasses of
+<code class="xref py py-class docutils literal"><span class="pre">MinionCmd</span></code>.</p>
+<p>The first thing the script does is create a ConfigParser object, set the
+defaults, and then read the local <code class="docutils literal"><span class="pre">.ini</span></code> file.</p>
+<dl class="data">
+<dt id="tasker.main.parser">
+<code class="descclassname">tasker.main.</code><code class="descname">parser</code><a class="headerlink" href="#tasker.main.parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>An instance of argparse.ArgumentParser that is called in both the command
+line and by the interactive prompt.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tasker.main.add_subparser">
+<code class="descclassname">tasker.main.</code><code class="descname">add_subparser</code><span class="sig-paren">(</span><em>subparser</em><span class="optional">[</span>, <em>helpstr</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/main.html#add_subparser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.main.add_subparser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an argparse.ArgumentParser instance to the main parser.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>subparser</strong> (<em>argparse.ArgumentParser</em>) &#8211; Instance to add</li>
+<li><strong>helpstr</strong> (<em>str</em>) &#8211; public help string</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="tasker.main.TaskCmd">
+<em class="property">class </em><code class="descclassname">tasker.main.</code><code class="descname">TaskCmd</code><span class="sig-paren">(</span><em>completekey='tab'</em>, <em>stdin=None</em>, <em>stdout=None</em>, <em>config=None</em>, <em>lib=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/main.html#TaskCmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.main.TaskCmd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="data">
+<dt id="tasker.main.CLI">
+<code class="descclassname">tasker.main.</code><code class="descname">CLI</code><a class="headerlink" href="#tasker.main.CLI" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a module-singleton instance of <a class="reference internal" href="#tasker.main.TaskCmd" title="tasker.main.TaskCmd"><code class="xref py py-class docutils literal"><span class="pre">TaskCmd</span></code></a></p>
+</dd></dl>
+
+<div class="section" id="interactive-methods">
+<h2>Interactive Methods<a class="headerlink" href="#interactive-methods" title="Permalink to this headline">¶</a></h2>
+<p>The following methods provide interactive commands</p>
+<dl class="method">
+<dt id="tasker.main.TaskCmd.do_list">
+<code class="descclassname">TaskCmd.</code><code class="descname">do_list</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/main.html#TaskCmd.do_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.main.TaskCmd.do_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>List current tasks. The input should be <code class="docutils literal"><span class="pre">[OPTIONS]</span> <span class="pre">[FILTERS</span> <span class="pre">...]</span></code>.</p>
+<p>Options can be:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>-n         Prints task list in numerical order, otherwise orders
+           by priority
+-y         Shows tasks matching any filter word. Default is to
+           match all
+-a         Show completed (but not archived) tasks.
+-u         Shows the unique ID of each task
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.main.TaskCmd.do_add">
+<code class="descclassname">TaskCmd.</code><code class="descname">do_add</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/main.html#TaskCmd.do_add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.main.TaskCmd.do_add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a task.</p>
+<p>The parser does accept a &#8211;done flag to create closed tasks, but creating
+the task with an <cite>x</cite> as the first character does the same thing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.main.TaskCmd.do_do">
+<code class="descclassname">TaskCmd.</code><code class="descname">do_do</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/main.html#TaskCmd.do_do"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.main.TaskCmd.do_do" title="Permalink to this definition">¶</a></dt>
+<dd><p>Completes a task. The text should be the task number and an optional
+comment</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="tasker.main.LIB">
+<code class="descclassname">tasker.main.</code><code class="descname">LIB</code><a class="headerlink" href="#tasker.main.LIB" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is an instance of <code class="xref py py-class docutils literal"><span class="pre">TaskLib</span></code>.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="tasker.main.manager">
+<code class="descclassname">tasker.main.</code><code class="descname">manager</code><a class="headerlink" href="#tasker.main.manager" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is an instance of a Yapsy ConfigurablePluginManager and is passed to
+the <a class="reference internal" href="#tasker.main.CLI" title="tasker.main.CLI"><code class="xref py py-data docutils literal"><span class="pre">CLI</span></code></a>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<p>The following methods are available to plugins through the <code class="docutils literal"><span class="pre">cli</span></code> property
+(for NewCommand objects)
+or the <code class="docutils literal"><span class="pre">self.master</span></code> property (for MinionCmd objects attached to SubCommand
+plugins).</p>
+<dl class="method">
+<dt id="tasker.main.TaskCmd.parse_task">
+<code class="descclassname">TaskCmd.</code><code class="descname">parse_task</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="headerlink" href="#tasker.main.TaskCmd.parse_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a tuple of the following values:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>complete (boolean)</li>
+<li>priority (single character)</li>
+<li>start (datetime.datetime object)</li>
+<li>end (datetime.datetime object or None)</li>
+<li>task (string)</li>
+<li>contexts (tuple of contexts - words beginning with <code class="docutils literal"><span class="pre">&#64;</span></code>)</li>
+<li>projects (tuple of projects - words beginning with <code class="docutils literal"><span class="pre">+</span></code>)</li>
+<li>extensions (dictionary of extension: value pairs)</li>
+</ol>
+</div></blockquote>
+<p><a class="reference internal" href="#tasker.main.TaskCmd.parse_task" title="tasker.main.TaskCmd.parse_task"><code class="xref py py-meth docutils literal"><span class="pre">parse_task()</span></code></a> is a general utility function. The first five of these
+can be fused into a single line of text using <a class="reference internal" href="#tasker.main.TaskCmd.graft" title="tasker.main.TaskCmd.graft"><code class="xref py py-meth docutils literal"><span class="pre">graft()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.main.TaskCmd.graft">
+<code class="descclassname">TaskCmd.</code><code class="descname">graft</code><span class="sig-paren">(</span><em>c</em>, <em>p</em>, <em>s</em>, <em>e</em>, <em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#tasker.main.TaskCmd.graft" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a single text representing the task</p>
+<p>The parameters match the first five components returned by
+<a class="reference internal" href="#tasker.main.TaskCmd.parse_task" title="tasker.main.TaskCmd.parse_task"><code class="xref py py-meth docutils literal"><span class="pre">parse_task()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.main.TaskCmd.get_tasks">
+<code class="descclassname">TaskCmd.</code><code class="descname">get_tasks</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#tasker.main.TaskCmd.get_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of (line number, task text) pairs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; path to the file to read</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">dictionary of line number, text pairs</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The first line is assigned the key <code class="docutils literal"><span class="pre">1</span></code> instead of <code class="docutils literal"><span class="pre">0</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.main.TaskCmd.write_tasks">
+<code class="descclassname">TaskCmd.</code><code class="descname">write_tasks</code><span class="sig-paren">(</span><em>task_dict</em>, <em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#tasker.main.TaskCmd.write_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes the working task_dictionary to the appropriate file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>task_dict</strong> (<em>dict</em>) &#8211; Dictionary of line-number: task pairs</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">results pair</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.main.TaskCmd.run_hooks">
+<code class="descclassname">TaskCmd.</code><code class="descname">run_hooks</code><span class="sig-paren">(</span><em>func_name</em>, <em>c</em>, <em>p</em>, <em>s</em>, <em>e</em>, <em>t</em>, <em>o</em>, <em>j</em>, <em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#tasker.main.TaskCmd.run_hooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scans plugins for hooked features. Returns c, p, s, e, t.</p>
+<p>This can allow for a plugin to write a listener method that adds something
+to the command queue or even alter the text of the todo.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The task text is not re-parsed, so this could lead to confusion
+in the context and projects list and the extensions.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.main.TaskCmd.add_task">
+<code class="descclassname">TaskCmd.</code><code class="descname">add_task</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="headerlink" href="#tasker.main.TaskCmd.add_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends a task directly to the file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.main.TaskCmd.add_done">
+<code class="descclassname">TaskCmd.</code><code class="descname">add_done</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="headerlink" href="#tasker.main.TaskCmd.add_done" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a completed task to the list, allowing Tasker to serve as a log of
+actions.</p>
+<p>This method calls <a class="reference internal" href="#tasker.main.TaskCmd.run_hooks" title="tasker.main.TaskCmd.run_hooks"><code class="xref py py-meth docutils literal"><span class="pre">TaskCmd.run_hooks()</span></code></a> twice: once on creating the task
+and the second on completing the task.</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">TaskCmd.complete_task(tasknum, comment):</code></dt>
+<dd><p>This is the method that <code class="xref py py-meth docutils literal"><span class="pre">do_do()</span></code> calls.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="lib.html" title="tasker.lib"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pendplugin.html" title="Building the Pending Plugin"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.0.0.2016.03.26 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Joshua R English.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+    </div>
+  </body>
+</html>

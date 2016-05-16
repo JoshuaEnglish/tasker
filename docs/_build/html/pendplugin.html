@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Building the Pending Plugin &mdash; Tasker 1.0.0.2016.03.26 documentation</title>
+    
+    <link rel="stylesheet" href="_static/butterick.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0.2016.03.26',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Tasker 1.0.0.2016.03.26 documentation" href="index.html" />
+    <link rel="next" title="tasker.main" href="main.html" />
+    <link rel="prev" title="Plugin Primer" href="pluginprimer.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="main.html" title="tasker.main"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pluginprimer.html" title="Plugin Primer"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.0.0.2016.03.26 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="building-the-pending-plugin">
+<h1>Building the Pending Plugin<a class="headerlink" href="#building-the-pending-plugin" title="Permalink to this headline">¶</a></h1>
+<p>This is one of three tutorials on writing plugins for Tasker.</p>
+<p>The goal of the plugin is to allow the user to declare that a task should
+be added to list with a Z priority (this is allowed by the main program) but
+when a specific task is completed, then this new task should be prioritized
+to A.</p>
+<p>How this should look (ignoring timestamps):</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; list
+1 Call Mom re +GarageSale to confirm date @phone
+
+&gt; after 1 Post to Craigslist
+added &#39;(Z) Post to Craigslist +GarageSale&#39;
+
+&gt; list
+1 Call Mom re +GarageSale to confirm date @phone
+
+&gt; do 1 She sez next Saturtday
+completed x Call Mom re +GarageSale to confirm date @phone # She sez next Saturday
+
+&gt; list
+2 (A) Post to Craigslist +GarageSale
+</pre></div>
+</div>
+<p>The first thing to code is the command <cite>after</cite> which needs to to be added
+to the main program. We want to use <code class="xref py py-class docutils literal"><span class="pre">NewCommand</span></code> because we are creating
+a single command to the main program with no sub commands.</p>
+<p>First create the plugin description file.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>[Core]
+Name = Pending
+Module = PendingPlugin
+
+[Documentation]
+Author = Josh English
+Version = 0.1
+Website = http://joshuarenglish.com
+Description = Adds the &#39;after&#39; command to the program
+</pre></div>
+</div>
+<p>Then create the basic plugin file:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+
+<span class="kn">import</span> <span class="nn">basetaskerplugin</span>
+
+<span class="k">class</span> <span class="nc">PendingPlugin</span><span class="p">(</span><span class="n">basetaskerplugin</span><span class="o">.</span><span class="n">NewCommandPlugin</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">activate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Activating Pending&#39;</span><span class="p">)</span>
+
+        <span class="c1"># declare methods to add to the interactive prompt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setConfigOption</span><span class="p">(</span><span class="s1">&#39;public_methods&#39;</span><span class="p">,</span> <span class="s1">&#39;do_after&#39;</span><span class="p">)</span>
+
+        <span class="c1"># automatically hide the pend extension</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">hasConfigOption</span><span class="p">(</span><span class="s1">&#39;hide_pend_ext&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setConfigOption</span><span class="p">(</span><span class="s1">&#39;hide_pend_ext&#39;</span><span class="p">,</span> <span class="s1">&#39;true&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">after_parser</span> <span class="o">=</span> <span class="n">after</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="s1">&#39;after&#39;</span><span class="p">)</span>
+        <span class="n">after</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;tasknum&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                             <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Task to create the follow-up task from&quot;</span><span class="p">)</span>
+        <span class="n">after</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">REMAINDER</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">parsers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">after</span><span class="p">:</span> <span class="s2">&quot;Add a follow-up task to a current task&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">activate</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This code adds the <cite>after</cite> command to the command line interface. The line
+<cite>self.setConfigOption(&#8216;public_methods&#8217;, &#8216;do_after&#8217;)</cite> tells Tasker to incorprate
+the <cite>do_after</cite> method into the interactive program.</p>
+<p>When plugins are loaded they are given <cite>self.lib</cite> to access the main library.
+The standard library functions are available.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The library is not available to plugins in the <cite>activate</cite> method.</p>
+</div>
+<p>Next, we&#8217;ll describe what <cite>after</cite> is supposed to do:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">PendingPlugin</span><span class="p">(</span><span class="n">basetaskerplugin</span><span class="o">.</span><span class="n">NewCommandPlugin</span><span class="p">):</span>
+
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">do_after</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a new task to be done after a current task is completed&quot;&quot;&quot;</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">after_parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+        <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="n">source_stuff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">parse_task</span><span class="p">(</span><span class="n">tasks</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">tasknum</span><span class="p">])</span>
+        <span class="n">new_task</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">context</span> <span class="ow">in</span> <span class="n">source_stuff</span><span class="p">[</span><span class="mi">5</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">context</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_task</span><span class="p">:</span>
+                <span class="n">new_task</span> <span class="o">+=</span> <span class="s2">&quot; {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">project</span> <span class="ow">in</span> <span class="n">source_stuff</span><span class="p">[</span><span class="mi">6</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">project</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_task</span><span class="p">:</span>
+                <span class="n">new_task</span> <span class="o">+=</span> <span class="s2">&quot; {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">ext</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">source_stuff</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">ext</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;pend&#39;</span><span class="p">,</span> <span class="s1">&#39;uid&#39;</span><span class="p">]:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="s2">&quot;{</span><span class="si">%s</span><span class="s2">:&quot;</span> <span class="o">%</span> <span class="n">ext</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_task</span><span class="p">:</span>
+                <span class="n">new_task</span> <span class="o">+=</span> <span class="s2">&quot; {</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">}&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ext</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_task</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">r&quot;{</span><span class="si">%s</span><span class="s2">:([^}]*)}&quot;</span> <span class="o">%</span> <span class="n">ext</span><span class="p">,</span>
+                                  <span class="s2">r&quot;{</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">}&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ext</span><span class="p">,</span> <span class="n">val</span><span class="p">),</span>
+                                  <span class="n">new_task</span><span class="p">)</span>
+        <span class="n">new_task</span> <span class="o">+=</span> <span class="s2">&quot; {pend:</span><span class="si">%s</span><span class="s2">}&quot;</span> <span class="o">%</span> <span class="n">source_stuff</span><span class="p">[</span><span class="mi">7</span><span class="p">][</span><span class="s1">&#39;uid&#39;</span><span class="p">]</span>
+
+        <span class="n">new_stuff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">parse_task</span><span class="p">(</span><span class="n">new_task</span><span class="p">)</span>
+        <span class="n">new_pri</span> <span class="o">=</span> <span class="n">new_stuff</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">source_stuff</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">else</span> <span class="s1">&#39;Z&#39;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">add_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">graft</span><span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">new_pri</span><span class="p">,</span> <span class="o">*</span><span class="n">new_stuff</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">5</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>This method collects the tasks, parses both the follow-up task and the task
+to base it off of, includes the contexts and projects to the new task, and
+then finally adds the new task with a priority of &#8216;Z&#8217;.</p>
+<p>Now this plugin needs to watch for completed tasks and reprioritize the pending
+task when the appropriate task is completed.</p>
+<p>The <code class="xref py py-class docutils literal"><span class="pre">TaskLib</span></code> instance runs through all active plugins when adding
+or completing tasks. A simple plugin hook method for completed tasks is:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">complete_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="c1"># do that thing you do</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The hook method recieves all 9 objects from <code class="xref py py-meth docutils literal"><span class="pre">TaskLib.parse_task()</span></code> and
+is expected to return a return value, message, and the first 5 parsed items.
+These items will be fed, eventually, into <code class="xref py py-meth docutils literal"><span class="pre">TaskLib.graft()</span></code>.</p>
+<p>The return value should be 0 for successful operation and 2 for an error.
+(1 is used in the core language.) The message is to be filled in only if
+there is an error.</p>
+<p>For this case, we don&#8217;t need to change the task being completed, but an
+entirely separate task.</p>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="main.html" title="tasker.main"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pluginprimer.html" title="Plugin Primer"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.0.0.2016.03.26 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Joshua R English.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+    </div>
+  </body>
+</html>

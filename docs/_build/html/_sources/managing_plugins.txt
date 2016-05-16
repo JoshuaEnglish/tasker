@@ -1,0 +1,70 @@
+Managing Plugins
+==================
+
+Tasker is extensible, which means most of the features are provided as plugins.
+These plugins are written in Python. For more information on writing plugins,
+refer to :doc:`pluginprimer`.
+
+From the command line, you can use any of the commands with::
+
+    > t plugins COMMAND
+
+From the interactive prompt you can use::
+
+    tasker> plugins COMMAND
+
+Or you can access the plugins interactive prompt with::
+
+    > t plugins
+    plugins>
+
+or::
+
+    tasker> plugins
+    plugins>
+
+There are three categories of plugins: 
+
+    #. Plugins that only watch for new tasks and/or completed tasks
+    #. Plugins that add new commands to main program
+    #. Plugins that act like subprograms
+
+The second and third type of plugin can also monitor new tasks and completed
+tasks and respond with special actions of their own.
+
+
+Listing plugins
+---------------
+
+Use ``plugins list`` to get a list of plugins::
+
+    > t plugins list
+    Name     Category   Activated 
+    -------- ---------- ---------
+    Logging  Generic    False     
+    Pending  NewCommand True      
+    Workflow SubCommand True      
+    Reports  NewCommand True    
+
+Listing Categories
+-------------------
+
+Use ``plugins categories`` to get a list of available categories.
+
+
+Activating a Plugin
+-------------------
+
+Use ``plugins activate PLUGINNAME`` to activate.
+
+.. note:: Activating plugins changes the startup behavior, so if you are in 
+    the interactive prompt, the plugin will not be available until you restart.
+
+
+Deactivating a Plugin
+---------------------
+
+Use ``plugins deactivate PLUGINNAME`` to deactivate.
+
+.. note:: Deactivating plugins changes the startup behavior, so if you are in 
+    the interactive prompt, the plugin will not be available until you restart.

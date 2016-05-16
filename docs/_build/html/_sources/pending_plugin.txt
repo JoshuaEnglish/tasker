@@ -1,0 +1,56 @@
+The Pending Plugin
+==================
+
+This plugin provides the ``after`` command to the top level of the program.
+
+The ``after`` command creates a new task to be completed after a given task::
+
+    > t
+    33 (A) 2016-03-25T09:09:02 order a television @shopping +LivingRoomUpdate
+    ---
+    1 task shown
+    
+    > t after 33 post @craigslist ad for old television
+    (Z) 2016-03-25T09:10:16 research Sony and LG televisions @shopping +LivingRoomUpdate {pend:090902250316} {uid:091016250316}
+    
+    > t
+    33 (A) 2016-03-25T09:09:02 order a television @shopping +LivingRoomUpdate
+    34 (Z) 2016-03-25T09:10:16 post @craigslist ad for old television @shopping
+           +LivingRoomUpdate
+    ---
+    2 tasks shown
+
+The new task is given a priority of Z and gets the same contexts and projects
+as the original task.
+
+Once the first task is complete, the pending task in reprioritized::
+
+    > t do 33 
+    x 2016-03-25T09:09:02 2016-03-25T09:16:24 order a television @shopping +LivingRoomUpdate {uid:090902250316}
+    
+    > t
+    34 (A) 2016-03-25T09:10:16 post @craigslist ad for old television @shopping
+           +LivingRoomUpdate
+    ---
+    1 task shown
+
+.. note::
+
+    If you use the ``after`` command on an unprionitized taks, the pending
+    task will appear in the list first, because priotized tasks appear before
+    unprioritized tasks
+
+If you deactivate this plugin, the pended tasks will remain, but they will not
+automatically be updated when needed.
+
+You can create multiple pended tasks off of a single task.
+
+
+
+Under the hood
+--------------
+
+The ``after`` command adds the ``pend`` extension to the new task. The value is
+the ``uid`` value of the old extension. As tasks are completed, this plugin 
+checks the ``uid`` value and if it matches the ``pend`` value, it will 
+reprioritize the pended task.

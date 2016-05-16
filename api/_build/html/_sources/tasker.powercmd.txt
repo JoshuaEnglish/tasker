@@ -1,0 +1,7 @@
+tasker.powercmd module
+======================
+
+.. automodule:: tasker.powercmd
+    :members:
+    :undoc-members:
+    :show-inheritance:

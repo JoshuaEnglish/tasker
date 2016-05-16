@@ -1,0 +1,7 @@
+tasker.lister module
+====================
+
+.. automodule:: tasker.lister
+    :members:
+    :undoc-members:
+    :show-inheritance:

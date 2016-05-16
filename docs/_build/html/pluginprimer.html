@@ -1,0 +1,406 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Plugin Primer &mdash; Tasker 1.0.0.2016.03.26 documentation</title>
+    
+    <link rel="stylesheet" href="_static/butterick.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0.2016.03.26',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Tasker 1.0.0.2016.03.26 documentation" href="index.html" />
+    <link rel="next" title="Building the Pending Plugin" href="pendplugin.html" />
+    <link rel="prev" title="The Workflow Plugin" href="workflow_plugin.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pendplugin.html" title="Building the Pending Plugin"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="workflow_plugin.html" title="The Workflow Plugin"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.0.0.2016.03.26 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="plugin-primer">
+<h1>Plugin Primer<a class="headerlink" href="#plugin-primer" title="Permalink to this headline">¶</a></h1>
+<p>Tasker uses two kinds of interfaces. The first interface is the command line
+that relies on argparse to check the line sent from the system. This line
+is then fed to the underlying cmd.Cmd object.</p>
+<p>Currenty the only command line actions that are supported are <code class="docutils literal"><span class="pre">list</span></code>, <code class="docutils literal"><span class="pre">do</span></code>,
+and <code class="docutils literal"><span class="pre">add</span></code>. Enter the interpretive prompt to access all the features tasker
+offers.</p>
+<div class="section" id="quick-help">
+<h2>Quick Help<a class="headerlink" href="#quick-help" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>To create new top-level commands at the interactive prompt</dt>
+<dd>Create a NewCommand plugin</dd>
+<dt>To create new sub-programs with their own commands:</dt>
+<dd>Create a SubCommand plugin</dd>
+</dl>
+<p>To create new hooks</p>
+<p>Running <code class="docutils literal"><span class="pre">tasker</span> <span class="pre">-i</span></code> or <code class="docutils literal"><span class="pre">tasker</span> <span class="pre">--interactive</span></code> enters the interactive
+prompt.</p>
+<p><code class="xref py py-class docutils literal"><span class="pre">TaskerCmd</span></code> is built on top of <code class="xref py py-class docutils literal"><span class="pre">BossCmd</span></code>, a tool that allows
+to add subprograms (called <em>minions</em>) that provide more functionality. Minions
+can be loaded through the plugin system.</p>
+<p><code class="xref py py-class docutils literal"><span class="pre">BossCmd</span></code> describes a top-level interactive prompt. <code class="xref py py-class docutils literal"><span class="pre">MinionCmd</span></code>
+describes a subprogram at the interactive prompt.</p>
+<p>There are two ways to link a Minion to a Boss:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">Boss</span> <span class="o">=</span> <span class="n">BossCmd</span><span class="p">()</span>
+
+<span class="c1"># long way to add minion to boss</span>
+<span class="n">Story</span> <span class="o">=</span> <span class="n">StoryCmd</span><span class="p">(</span><span class="s1">&#39;story&#39;</span><span class="p">)</span>
+<span class="n">Boss</span><span class="o">.</span><span class="n">add_minion</span><span class="p">(</span><span class="s1">&#39;story&#39;</span><span class="p">,</span> <span class="n">Story</span><span class="p">)</span>
+
+<span class="c1"># minions accept a boss</span>
+<span class="n">Sub</span> <span class="o">=</span> <span class="n">SubmissionCmd</span><span class="p">(</span><span class="s1">&#39;submission&#39;</span><span class="p">,</span> <span class="n">Boss</span><span class="p">)</span>
+<span class="n">Mark</span> <span class="o">=</span> <span class="n">MarketCmd</span><span class="p">(</span><span class="s1">&#39;market&#39;</span><span class="p">,</span> <span class="n">Boss</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The interactive prompt can move in and out of subprograms, and subprograms
+can call eachother without stacking:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Boss</span><span class="o">.</span><span class="n">cmdloop</span><span class="p">()</span>
+<span class="go">Boss&gt; story</span>
+<span class="go">story&gt; submission</span>
+<span class="go">submission&gt; done</span>
+<span class="go">Boss&gt;</span>
+</pre></div>
+</div>
+<p>All MinionCmd instances have a <code class="docutils literal"><span class="pre">done</span></code> command that exits the subpgram and
+returns to the parent BossCmd instance. MinionCmd instances also have a
+<code class="docutils literal"><span class="pre">quit</span></code> command that quits the program entirely.</p>
+<p>If a MinionCmd instance can be called with a command, which will be executed,
+then the program will return to the calling program:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>Boss&gt; story help
+Help for StoryCmd
+Documented commands (type help &lt;topic&gt;):
+========================================
+done  help  market  quit  submission
+
+Boss&gt; submission
+submission&gt; story help
+Help for StoryCmd
+Documented commands (type help &lt;topic&gt;):
+========================================
+done  help  market  quit  submission
+
+submission&gt;
+</pre></div>
+</div>
+</div>
+<div class="section" id="adding-commands-to-tasker">
+<h2>Adding Commands to Tasker<a class="headerlink" href="#adding-commands-to-tasker" title="Permalink to this headline">¶</a></h2>
+<p>To create a new command for the interactive prompt, create two files in the
+<code class="docutils literal"><span class="pre">tasker_plugins</span></code> directory:</p>
+<div class="literal-block-wrapper container" id="plugin-config-sample">
+<div class="code-block-caption"><span class="caption-text">ReportsPlugin.yapsy-plugin</span><a class="headerlink" href="#plugin-config-sample" title="Permalink to this code">¶</a></div>
+<div class="highlight-ini"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="k">[Core]</span>
+<span class="na">Name</span> <span class="o">=</span> <span class="s">Reports</span>
+<span class="na">Module</span> <span class="o">=</span> <span class="s">ReportsPlugin</span>
+
+<span class="k">[Documentation]</span>
+<span class="na">Author</span> <span class="o">=</span> <span class="s">Josh English</span>
+<span class="na">Version</span> <span class="o">=</span> <span class="s">0.1</span>
+<span class="na">Website</span> <span class="o">=</span> <span class="s">http://joshuarenglish.com</span>
+<span class="na">Description</span> <span class="o">=</span> <span class="s">Provides reports in the interactive prompt.</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="literal-block-wrapper container" id="plugin-code-sample">
+<div class="code-block-caption"><span class="caption-text">ReportsPlugin.py</span><a class="headerlink" href="#plugin-code-sample" title="Permalink to this code">¶</a></div>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">ReporterPlugin</span>
+
+<span class="sd">Provide Tasker with two commands: project and contexts</span>
+
+<span class="sd">Created on Wed Mar  9 15:12:07 2016</span>
+
+<span class="sd">@author: jenglish</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">basetaskerplugin</span>
+<span class="kn">import</span> <span class="nn">lister</span>
+
+<span class="n">todo</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">Create a timed report</span>
+<span class="s2">&quot;&quot;&quot;</span>
+<span class="k">class</span> <span class="nc">ReportsPlugin</span><span class="p">(</span><span class="n">basetaskerplugin</span><span class="o">.</span><span class="n">NewCommandPlugin</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">activate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Activating Reports&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setConfigOption</span><span class="p">(</span><span class="s1">&#39;public_methods&#39;</span><span class="p">,</span> <span class="s1">&#39;do_projects,do_contexts&#39;</span><span class="p">)</span>
+
+        <span class="c1"># this is a case where we need to add multiple commands to the main</span>
+        <span class="c1"># argument parser</span>
+
+        <span class="n">common_opts</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">add_help</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">group</span> <span class="o">=</span> <span class="n">common_opts</span><span class="o">.</span><span class="n">add_mutually_exclusive_group</span><span class="p">()</span>
+        
+        <span class="n">group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--closed&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                           <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;include_closed&#39;</span><span class="p">,</span>
+                           <span class="n">help</span><span class="o">=</span><span class="s2">&quot;include results with no open tasks&quot;</span><span class="p">)</span>
+        
+        <span class="n">group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--archive&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                           <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;include_archive&#39;</span><span class="p">,</span>
+                           <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Include the archive in the report&#39;</span><span class="p">)</span>
+        
+        <span class="n">group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--only&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> 
+                           <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;only_archive&#39;</span><span class="p">,</span>
+                           <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Only look in the archive&#39;</span><span class="p">)</span>
+        
+        <span class="n">project</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="s1">&#39;projects&#39;</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="p">[</span><span class="n">common_opts</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">project_parser</span> <span class="o">=</span> <span class="n">project</span>
+
+        <span class="n">context</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="s1">&#39;contexts&#39;</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="p">[</span><span class="n">common_opts</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context_parser</span> <span class="o">=</span> <span class="n">project</span>
+        
+        <span class="c1"># the main program will gather these parsers after activation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parsers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">project</span><span class="p">:</span> <span class="s2">&quot;Project reports&quot;</span><span class="p">,</span>
+            <span class="n">context</span><span class="p">:</span> <span class="s2">&quot;Context reports&quot;</span>
+        <span class="p">}</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">activate</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">do_projects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Print a list of current projects with the number of</span>
+<span class="sd">        open and closed tasks&quot;&quot;&quot;</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;project&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">print_counts</span><span class="p">(</span><span class="o">**</span><span class="nb">vars</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+        <span class="c1">#self.project_report(**vars(args))</span>
+
+    <span class="k">def</span> <span class="nf">do_contexts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Print a list of current contexts with the number of</span>
+<span class="sd">        open and closed tasks&quot;&quot;&quot;</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;context&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">print_counts</span><span class="p">(</span><span class="o">**</span><span class="nb">vars</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+        
+
+    <span class="k">def</span> <span class="nf">print_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">include_closed</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">include_archive</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> 
+                     <span class="n">only_archive</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Print a list of report, noting number of open and closed tasks.</span>
+
+<span class="sd">        :param bool include_closed: Include closed tasks</span>
+<span class="sd">        :param bool include_archive: Include archived tasks</span>
+<span class="sd">        :param bool only_archive: Only show archived tasks</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">show_closed</span> <span class="o">=</span> <span class="nb">any</span><span class="p">((</span><span class="n">include_closed</span><span class="p">,</span> <span class="n">include_archive</span><span class="p">,</span> <span class="n">only_archive</span><span class="p">))</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">get_counts</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> 
+                                     <span class="n">include_archive</span><span class="p">,</span> 
+                                     <span class="n">only_archive</span><span class="p">)</span>
+        <span class="n">show_list</span> <span class="o">=</span> <span class="nb">any</span><span class="p">((</span><span class="n">k</span><span class="p">[</span><span class="s1">&#39;open&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="k">if</span> <span class="n">show_list</span> <span class="ow">or</span> <span class="n">show_closed</span><span class="p">:</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="s2">&quot;{} Open Closed&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">title</span><span class="p">())</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> 
+                           <span class="nb">str</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;open&#39;</span><span class="p">]),</span> 
+                           <span class="nb">str</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;closed&#39;</span><span class="p">]))</span>
+            <span class="n">lister</span><span class="o">.</span><span class="n">print_list</span><span class="p">([</span><span class="n">s</span><span class="p">(</span><span class="n">count</span><span class="p">)</span> <span class="k">for</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+                               <span class="k">if</span> <span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="n">count</span><span class="p">][</span><span class="s1">&#39;open&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">show_closed</span><span class="p">)],</span>
+                              <span class="n">headers</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;No open {}s.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+
+</pre></div>
+</td></tr></table></div>
+</div>
+<p>The first file follows the rules set out by <a class="reference external" href="https://yapsy.readthedocs.org/en/latest/PluginManager.html#plugin-info-file-format">YAPSY</a>.</p>
+<p>The Python code subclasses <code class="xref py py-class docutils literal"><span class="pre">basetaskemanager.NewCommandClass</span></code>. Tasker
+uses YAPSY&#8217;s <a class="reference external" href="https://yapsy.readthedocs.org/en/latest/ConfigurablePluginManager.html">ConfigurablePluginManager</a>, which decorates plugin instances
+with the following methods to access the Manager&#8217;s ConfigParser instance
+(which is same ConfigParser instance Tasker uses by default).</p>
+<dl class="method">
+<dt id="hasConfigOption">
+<code class="descname">hasConfigOption</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#hasConfigOption" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if the config parser has the option for this plugin.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="getConfigOption">
+<code class="descname">getConfigOption</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#getConfigOption" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the configuration entry</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="setConfigOption">
+<code class="descname">setConfigOption</code><span class="sig-paren">(</span><em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#setConfigOption" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the configuration entry</p>
+</dd></dl>
+
+<p>Use these methods initially in the activate method. Setting a <code class="docutils literal"><span class="pre">public_methods</span></code>
+configuration entry will cause the manager to copy the methods listed there
+to the main <code class="xref py py-class docutils literal"><span class="pre">TaskCmd</span></code> instance. The plugin will be assigned the
+main TaskCmd instance through the <code class="docutils literal"><span class="pre">.cli</span></code> property</p>
+<p>The next step is to define the public methods that will copy over. In this
+example, the two methods call the plugin&#8217;s private methods that are not
+transferred over.</p>
+<p>Finally, write the non <code class="docutils literal"><span class="pre">do_</span></code> methods, using <code class="docutils literal"><span class="pre">self.cli</span></code> to access TaskCmd.
+See the <code class="xref py py-class docutils literal"><span class="pre">TaskCmd</span></code> page for details.</p>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pendplugin.html" title="Building the Pending Plugin"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="workflow_plugin.html" title="The Workflow Plugin"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.0.0.2016.03.26 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Joshua R English.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+    </div>
+  </body>
+</html>

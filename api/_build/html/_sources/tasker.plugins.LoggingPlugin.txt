@@ -1,0 +1,7 @@
+tasker.plugins.LoggingPlugin module
+===================================
+
+.. automodule:: tasker.plugins.LoggingPlugin
+    :members:
+    :undoc-members:
+    :show-inheritance:

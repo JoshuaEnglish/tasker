@@ -42,7 +42,76 @@ TASK_EXTENSION_ERROR = 2
 first = itemgetter(0)
 second = itemgetter(1)
 
+class Task(object):
+    """Simple container for parsed tasks"""
+    
+    __slots__ = ('complete', 'priority', 'start', 'end', 'task',
+                 'contexts', 'projects', 'extensions')
+    
+    def __init__(self, complete, priority, start, end, task, 
+                 contexts, projects, extensions):
+        self.complete = complete
+        self.priority = priority
+        self.start = start
+        self.end = end
+        self.task = task
+        self.contexts = contexts
+        self.projects = projects
+        self.extensions = extensions
+        
+    def __str__(self):
+        res = []
+        if self.complete:
+            res.append('x')
+        if self.priority and not self.complete:
+            res.append('(%s)' % self.priority)
+        if self.start:
+            res.append(self.start.strftime(TIMEFMT))
+        if self.end:
+            res.append(self.end.strftime(TIMEFMT))
+        res.append(self.task.strip())
+        return " ".join(res)
 
+    @classmethod
+    def from_text(cls, text):
+        """Returns a parsed task from a line of text"""
+        text = text.strip()
+        match = re_task.match(text)
+        if not any(match.groups()):
+            raise ValueError('Task did not parse')
+        complete = bool(match.group('complete'))
+
+        priority = match.group('priority')[1] if match.group('priority') else ''
+
+        if match.group('start'):
+            start = datetime.datetime.strptime(match.group('start').strip(), TIMEFMT)
+        else:
+            start = datetime.datetime.now()
+
+        if match.group('end'):
+            end = datetime.datetime.strptime(match.group('end').strip(), TIMEFMT)
+        else:
+            end = None
+
+        task = match.group('text').strip()
+
+        context = [t.strip() for t in re_context.findall(text)]
+        projects = [t.strip() for t in re_project.findall(text)]
+        extensions = re_ext.findall(text)
+        edict = {}
+        for ext in extensions:
+            key, val = ext.split(':', 1)
+            key = key.replace(' {', '')
+            val = val.replace('}', '')
+            edict[key] = val.strip()
+        if 'uid' not in edict:
+            edict['uid'] = start.strftime(IDFMT)
+            task += " {uid:%s}" % edict['uid']
+        
+        return cls(complete, priority, start, end, task, 
+                   context, projects, edict)
+        
+    
 class TaskLib(object):
 
     def __init__(self, config=None, manager=None):
@@ -79,14 +148,15 @@ class TaskLib(object):
             "A" : colorama.Fore.RED,
             "B" : colorama.Fore.YELLOW,
             "C" : colorama.Fore.GREEN,
+            "Z" : colorama.Fore.LIGHTBLACK_EX
             }
     def get_extensions_to_hide(self):
         """get_extensions_to_hide()
         Compile a list of all extensions from the config file
         """
-        ext_list = ','.join([self.config[d].get('hidden-extensions','')
-                             for d in self.config])
-        ext_list = [s.strip() for s in ext_list.split(',') if s]
+        ext_list = ','.join([self.config[section].get('hidden-extensions','')
+                             for section in self.config])
+        ext_list = [ext.strip() for ext in ext_list.split(',') if ext]
         return ext_list
 
     def hide_extension(self, ext):
@@ -346,7 +416,7 @@ class TaskLib(object):
         if filters:
             self.log.info('Filtering tasks by keywords')
             everything = [(key, val) for key, val in everything
-                          if filterop([_ in val for _ in filters])]
+                          if filterop([word in val for word in filters])]
         
         if not self.config['Tasker'].getboolean('show-priority-z', True):
             self.log.info("Hiding priority Z tasks")
@@ -383,21 +453,23 @@ class TaskLib(object):
             stuff = sorted(everything, key=first)
         return stuff
 
-    def list_tasks(self, by_pri=True, filters: str = None, filterop=None, showcomplete=None,
-                   showext=None):
+    def list_tasks(self, by_pri=True, filters: str = None, filterop=None, 
+                   showcomplete=None, showext=None):
         """list_tasks([by_pri, filters, filterop, showcomplete, showuid)
         Displays a list of tasks.
         :type by_pri: Boolean
-        :param by_pri: If true, sorts by priority, if false, sorts by order in file
+        :param by_pri: If true, sorts by priority, 
+                       if false, sorts by order in file
         :param filters: Words to filter the list
         :param filterop: all or any (the functions, not strings
         :param showcomplete: If true, shows completed tasks
-        :param showext: If true, shows the normally hidden extensions of the task.
+        :param showext: If true, shows the normally hidden 
+                        extensions of the task.
         :rtype: None
         """
         showext = showext or False
         count = 0
-        colorize = self.config['Tasker'].getboolean('use-color', True)
+        #colorize = self.config['Tasker'].getboolean('use-color', True)
         shown_tasks = self.sort_tasks(by_pri, filters, filterop, showcomplete)
         self.log.info('Listing %s tasks %s',
                       'all' if showcomplete else 'open',
@@ -427,6 +499,7 @@ class TaskLib(object):
                 wrapfunc = str
             else:
                 self.log.error("Unknown textwrap preference %s", wrap)
+            
             for idx, task in shown_tasks:
                 pri = self.parse_task(task)[1]
             
@@ -434,9 +507,10 @@ class TaskLib(object):
                     for ext in self.extension_hiders:
                         task = self.extension_hiders[ext].sub("", task)
                 print(("{3}{1:{0}d} {2}".format(idlen, idx,
-                                                wrapfunc(task),self.get_color(pri))))
+                                                wrapfunc(task),
+                                                self.get_color(pri))))
                 count += 1
-            print('-'*(idlen+1))
+            print('{0}{1}'.format(colorama.Fore.RESET,'-'*(idlen+1)))
         msg=("{:d} task{:s} shown".format(count, '' if count==1 else 's'))
         print(msg)
         return TASK_OK, msg
@@ -549,4 +623,6 @@ class TaskLib(object):
 
         return res
 
-
+if __name__ == '__main__':
+    task = Task.from_text("(A) 2016-05-12T10:47:12 check for approval on +OUMeridianMaps @quote")
+    print(task)

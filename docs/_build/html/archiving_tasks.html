@@ -1,0 +1,145 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Archiving Tasks &mdash; Tasker 1.0.0.2016.03.26 documentation</title>
+    
+    <link rel="stylesheet" href="_static/butterick.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0.2016.03.26',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Tasker 1.0.0.2016.03.26 documentation" href="index.html" />
+    <link rel="next" title="Tasker Configuration" href="configuration.html" />
+    <link rel="prev" title="Basic Usage" href="basic_usage.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="configuration.html" title="Tasker Configuration"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="basic_usage.html" title="Basic Usage"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.0.0.2016.03.26 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="archiving-tasks">
+<h1>Archiving Tasks<a class="headerlink" href="#archiving-tasks" title="Permalink to this headline">¶</a></h1>
+<p>Tasker reads your todo file every time it runs, and it enumerates your tasks
+and after a few weeks of heavy use you may end up with:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt;t
+134 Call that guy about +ThatThing
+150 Hide the @evidence +ThatThing
+---
+2 tasks shown
+</pre></div>
+</div>
+<p>In order to keep your task list small and fast and low-indexed, it is useful
+to archive tasks. The <code class="docutils literal"><span class="pre">archive</span></code> command can take care of this. By default,
+tasks that were recently completed will not be archived:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t list -a TestProject
+37 x 2016-03-24T14:26:12 2016-03-24T14:26:30 This is a +TestProject thing
+---
+1 task shown
+
+&gt; t archive project TestProject
+2016-0324 14:59:28 WARNING: Project +TestProject is not old enough to archive (archive)
+</pre></div>
+</div>
+<p>However, if the last task in the project is old enough, they will be archived:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t list -a FourthProject
+4 x 2016-03-09T14:09:13 2016-03-08T14:00:16 Log request for +FourthProject
+      @quote # No comment
+6 x 2016-03-09T14:19:51 2016-03-09T14:16:20 Get complete information for
+      +FourthProject @quote
+7 x 2016-03-09T14:47:00 2016-03-09T14:19:51 Submit approval for +FourthProject
+      @quote
+8 x 2016-03-09T14:47:00 2016-03-09T14:54:54 Check for approval for
+      +FourthProject @quote
+9 x 2016-03-09T14:54:54 2016-03-10T10:05:06 Send views to AllenM for
+      +FourthProject @quote
+--
+5 tasks shown
+
+&gt; t archive project FourthProject
+Archived 5 tasks
+
+&gt; t list -a FourthProject
+0 tasks shown
+</pre></div>
+</div>
+<p>And this renumbers the task file:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t list -a TestProject
+32 x 2016-03-24T14:26:12 2016-03-24T14:26:30 This is a +TestProject thing
+---
+1 task shown
+</pre></div>
+</div>
+<p>The task number when from 37 to 32. Again, these numbers are meaningless except
+as temporary identifiers.</p>
+<p>You can also adjust the threshold for archiving tasks. The default is three
+days, but you can ajust this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>&gt; t archive project --days 0 TestProject
+Archived 1 tasks
+</pre></div>
+</div>
+<p>You can also list several projects. Only those old enough will be archived.</p>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="configuration.html" title="Tasker Configuration"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="basic_usage.html" title="Basic Usage"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.0.0.2016.03.26 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Joshua R English.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+    </div>
+  </body>
+</html>

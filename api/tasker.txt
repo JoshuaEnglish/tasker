@@ -1,0 +1,31 @@
+tasker package
+==============
+
+Subpackages
+-----------
+
+.. toctree::
+
+    tasker.plugins
+
+Submodules
+----------
+
+.. toctree::
+
+   tasker.basetaskerplugin
+   tasker.core
+   tasker.lib
+   tasker.lister
+   tasker.main
+   tasker.manager
+   tasker.minioncmd
+   tasker.powercmd
+
+Module contents
+---------------
+
+.. automodule:: tasker
+    :members:
+    :undoc-members:
+    :show-inheritance:

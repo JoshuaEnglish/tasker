@@ -1,0 +1,20 @@
+tasker.plugins package
+======================
+
+Submodules
+----------
+
+.. toctree::
+
+   tasker.plugins.LoggingPlugin
+   tasker.plugins.PendingPlugin
+   tasker.plugins.ReportsPlugin
+   tasker.plugins.WorkflowPlugin
+
+Module contents
+---------------
+
+.. automodule:: tasker.plugins
+    :members:
+    :undoc-members:
+    :show-inheritance:

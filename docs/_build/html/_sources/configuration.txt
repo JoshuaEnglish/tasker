@@ -1,0 +1,77 @@
+Tasker Configuration
+====================
+
+Tasker stores in options in a standard .ini file.
+
+The basic sections are: Tasker, Files, Plugin Management
+
+
+Tasker Options
+--------------
+
+These options define the basic behavior of Tasker. The ``priority-z-last``
+option only take effect if the tasks are sorted by priority.
+
+=================  =======  ===================================================
+Option             Default  Description
+=================  =======  ===================================================
+wrap-width         78       Default character width for wrap or shorten options
+wrap-behavior      wrap     Options are wrap, shorten, or none
+show-priority-z    True     Show anything with priority Z
+priority-z-last    True     List anything with a priority Z after
+                            unprioritized tasks
+hidden-extensions  uid      Extensions that should be hidden (see note)
+=================  =======  ===================================================
+
+.. note::
+
+    Each plugin can define its own ``hidden-extensions`` option.
+
+File Options
+------------
+
+These define where Tasker will look for the todo.txt and done.txt files.
+
+========== =============================================
+Option     Default
+========== =============================================
+tasker-dir 'tasker' inside the operating system standard
+           APPDATA folder
+done-path  %(tasker-dir)s/done.txt
+task-path  %(tasker-dir)s/todo.txt
+========== =============================================
+
+.. note::
+
+    You can view these files in your operating system by using the poweruser
+    feature. See :ref:`PowerUser` for details.
+
+
+Plugin Management Options
+--------------------------
+
+These options are managed by the :data:`manager` so there is no need to edit
+manually unless something has gone wrong.
+
+These options are lists separated by `;;` sequences.
+
+==========================  ===================================================
+Option                      Explanation
+==========================  ===================================================
+generic_plugins_to_load     List of plugins to load 
+subcommand_plugins_to_load  List of plugins to load
+newcommand_plugins_to_load  List of plugins to load
+==========================  ===================================================
+
+[SubCommand Plugin: Workflow]
+
+directory = (application folder)\plugins\workflows
+hidden-extensions = wid,ws,wn
+
+[NewCommand Plugin: Reports]
+public_methods = do_projects,do_contexts
+
+[NewCommand Plugin: Pending]
+public_methods = do_after
+hide_pend_ext = true
+hidden-extensions = pid

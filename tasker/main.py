@@ -218,7 +218,7 @@ add_subparser(core.plugin_argparser, "Plugin manager")
 add_subparser(core.archive_argparser, "Archive commands")
 
 log.debug('Collecting Plugins from %s', manager.getPluginLocator().plugins_places)
-#manager.collectPlugins()
+manager.collectPlugins()
 
 for info in manager.getAllPlugins():
     if not info.is_activated:

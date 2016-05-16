@@ -1,0 +1,7 @@
+tasker.plugins.ReportsPlugin module
+===================================
+
+.. automodule:: tasker.plugins.ReportsPlugin
+    :members:
+    :undoc-members:
+    :show-inheritance:

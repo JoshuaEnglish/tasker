@@ -1,0 +1,7 @@
+tasker.plugins.WorkflowPlugin module
+====================================
+
+.. automodule:: tasker.plugins.WorkflowPlugin
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -39,18 +39,6 @@ log.addHandler(screen_handler)
 
 config = ConfigParser(interpolation=ExtendedInterpolation())
 
-#config.read_dict(
-#    {'Files': {#'tasker-dir': os.path.join(os.environ['APPDATA'], 'tasker'),
-#               'task-path': "%(tasker-dir)s/todo.txt",
-#               'done-path': "%(tasker-dir)s/done.txt",
-#               },
-#     'Tasker': {'hidden-extensions': 'uid',
-#                'wrap-behavior': 'wrap',
-#                'wrap-width': '78',
-#                'priority-z-last': 'True',
-#                'show-priority-z': 'True'}
-#     })
-
 if hasattr(sys, "frozen"):
     INSTALL_DIR = os.path.dirname(sys.executable)
 else:
@@ -67,6 +55,7 @@ config.read([
 
 
 def save_config():
+    """Save configuration to the local file"""
     with open(configpath, 'w') as fp:
         config.write(fp)
 
@@ -101,7 +90,7 @@ parser.add_argument('-l', action='store_false', default=True,
                     help='Shows Z-priority tasks before unprioritized tasks')
 
 parser.add_argument('-n', '--no-color', action='store_false', dest='colorize',
-                    default=True, help="Colorizes output")
+                    default=True, help="Turns off colorized output")
 
 feedback = parser.add_mutually_exclusive_group()
 feedback.add_argument('-d', '--debug', action='store_const', const=2,
@@ -187,8 +176,7 @@ class TaskCmd(minioncmd.BossCmd):
               
         shorten: will cut off the text of each task.
         
-        none: will not do any text wrapping and let your interface print
-              tasks
+        none: will not do any text wrapping.
     
         These options can be set at the command line for one time use using
         t --wrap [wrap, shorten, none] 
@@ -288,7 +276,6 @@ def main():
     elif not args.command:
         CLI.onecmd('list')
     else:
-
         CLI.onecmd(' '.join(sys.argv[sys.argv.index(args.command):]))
 
     return 0

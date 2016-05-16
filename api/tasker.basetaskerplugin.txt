@@ -1,0 +1,7 @@
+tasker.basetaskerplugin module
+==============================
+
+.. automodule:: tasker.basetaskerplugin
+    :members:
+    :undoc-members:
+    :show-inheritance:

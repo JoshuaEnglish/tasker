@@ -1,0 +1,7 @@
+tasker.minioncmd module
+=======================
+
+.. automodule:: tasker.minioncmd
+    :members:
+    :undoc-members:
+    :show-inheritance:

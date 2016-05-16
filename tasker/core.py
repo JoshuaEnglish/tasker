@@ -370,7 +370,9 @@ class ArchiveCmd(minioncmd.MinionCmd):
             next_done += 1
             tasks.pop(key)
         
-        self._log.info("Archived %d tasks", len(tasks_to_archive))
         lib.write_tasks(tasks, lib.config['Files']['task-path'])
         lib.write_tasks(done, lib.config['Files']['done-path'])
                 
+        msg = "Archived {} tasks".format(len(tasks_to_archive))
+        self._log.info(msg)
+        print(msg)
