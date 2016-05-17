@@ -539,7 +539,7 @@ class TaskLib(object):
         t = self.reprioritize_text(tasks[tasknum], priority)  # reprioritize grafts result
         if note:
             t = re_note.sub('', t)
-            t = '%s # %s' % (t, note.strip())
+            t = '%s # %s' % (t, ' '.join(note).strip())
         tasks[tasknum] = t
         self.write_tasks(tasks, self.config['Files']['task-path'])
         print(tasks[tasknum])
