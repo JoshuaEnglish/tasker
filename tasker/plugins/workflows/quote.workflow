@@ -21,4 +21,7 @@ vocabulary = project, TM
 8 = SandridgeClearpass,TomKnight
 9 = EdmondPS,TomKnight
 10 = OUOutdoor,SethStemple
+11 = CellMarque,RickGentry
+12 = Continental,ThomKnight
+13 = SprintRefresh,RickGentry
 

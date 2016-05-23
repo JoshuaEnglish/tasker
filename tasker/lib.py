@@ -92,6 +92,9 @@ class Task(object):
             end = datetime.datetime.strptime(match.group('end').strip(), TIMEFMT)
         else:
             end = None
+        
+        if complete and not end:
+            end = datetime.datetime.now()
 
         task = match.group('text').strip()
 
@@ -624,5 +627,5 @@ class TaskLib(object):
         return res
 
 if __name__ == '__main__':
-    task = Task.from_text("(A) 2016-05-12T10:47:12 check for approval on +OUMeridianMaps @quote")
-    print(task)
+    task = Task.from_text("x check for approval on +OUMeridianMaps @quote")
+    print(task, task.complete)

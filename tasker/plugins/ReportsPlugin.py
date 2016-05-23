@@ -9,10 +9,12 @@ Created on Wed Mar  9 15:12:07 2016
 @author: jenglish
 """
 
+import datetime
 
 import argparse
 import basetaskerplugin, lister
 
+from lib import Task
 
 todo = """
 Create a timed report
@@ -20,7 +22,8 @@ Create a timed report
 class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
     def activate(self):
         self._log.debug('Activating Reports')
-        self.setConfigOption('public_methods', 'do_projects,do_contexts')
+        self.setConfigOption('public_methods', 
+                             'do_projects,do_contexts,do_today')
 
         # this is a case where we need to add multiple commands to the main
         # argument parser
@@ -44,12 +47,15 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         self.project_parser = project
 
         context = argparse.ArgumentParser('contexts', parents=[common_opts])
-        self.context_parser = project
+        self.context_parser = context
+        
+        today = argparse.ArgumentParser('today')
         
         # the main program will gather these parsers after activation
         self.parsers = {
             project: "Project reports",
-            context: "Context reports"
+            context: "Context reports",
+            today: "Daily report"
         }
 
         super().activate()
@@ -68,6 +74,18 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         args = self.context_parser.parse_args(text.split())
         args.name='context'
         self.print_counts(**vars(args))
+        
+    def do_today(self, text):
+        """Print a list of tasks completed on the current day"""
+        today = datetime.datetime.today().date()
+        tasks = self.lib.sort_tasks(by_pri=False, filters=None, 
+                                    filterop=None, showcomplete=True)
+        parsed_tasks = [Task.from_text(t) for k, t in tasks]
+        closed_tasks = [t for t in parsed_tasks if t.complete]
+        today_tasks = [t for t in closed_tasks if t.end.date() == today]
+        for task in today_tasks:
+            print(task)
+        
         
 
     def print_counts(self, name, include_closed=False, include_archive=False, 

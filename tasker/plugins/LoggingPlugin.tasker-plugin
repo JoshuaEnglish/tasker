@@ -3,7 +3,7 @@ Name = Logging
 Module = LoggingPlugin
 
 [Documentation]
-Author = Josh ENglish
+Author = Josh English
 Version = 0.1
 Website = http://joshuarenglish.com
 Description = Prints activities in the task manager.
