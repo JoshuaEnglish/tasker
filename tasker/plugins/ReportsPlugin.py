@@ -8,7 +8,7 @@ Created on Wed Mar  9 15:12:07 2016
 
 @author: jenglish
 """
-
+import os
 import datetime
 
 import argparse
@@ -24,6 +24,7 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         self._log.debug('Activating Reports')
         self.setConfigOption('public_methods', 
                              'do_projects,do_contexts,do_today')
+  
 
         # this is a case where we need to add multiple commands to the main
         # argument parser
@@ -50,6 +51,10 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         self.context_parser = context
         
         today = argparse.ArgumentParser('today')
+        today.add_argument('-f', dest='tofile', default=False, 
+                           action='store_true', 
+                           help="Write output to a daily file")
+        self.today_parser = today
         
         # the main program will gather these parsers after activation
         self.parsers = {
@@ -77,15 +82,26 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         
     def do_today(self, text):
         """Print a list of tasks completed on the current day"""
+        args = self.today_parser.parse_args(text.split())
         today = datetime.datetime.today().date()
         tasks = self.lib.sort_tasks(by_pri=False, filters=None, 
                                     filterop=None, showcomplete=True)
         parsed_tasks = [Task.from_text(t) for k, t in tasks]
         closed_tasks = [t for t in parsed_tasks if t.complete]
         today_tasks = [t for t in closed_tasks if t.end.date() == today]
+                    
         for task in today_tasks:
             print(task)
         
+        if args.tofile:
+            folder = self.getConfigOption('daily_report_directory')
+            if not os.path.exists(folder):
+                os.mkdir(folder)
+            filename = self.getConfigOption('daily_report_filename').format(today)
+            with open(os.path.join(folder, filename), 'w') as fp:
+                for task in today_tasks:
+                    fp.write("%s\n" % (task))
+            
         
 
     def print_counts(self, name, include_closed=False, include_archive=False, 
