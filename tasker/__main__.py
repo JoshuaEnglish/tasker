@@ -245,6 +245,11 @@ def load_plugins():
             log.debug("Adding new commands: %s" % ", ".join(methods))
             for method in methods:
                 setattr(CLI.__class__, method, getattr(plugin, method))
+            # load appropriate help methods
+            helpers = [m.replace('do_','help_').strip() for m in methods]
+            for helper in helpers:
+                if hasattr(plugin, helper):
+                    setattr(CLI.__class__, helper, getattr(plugin, helper))
 
 
 def main():

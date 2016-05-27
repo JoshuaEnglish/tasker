@@ -30,7 +30,7 @@ class PendingPlugin(basetaskerplugin.NewCommandPlugin):
 
         super().activate()
     
-
+    
     # noinspection PyIncorrectDocstring,PyIncorrectDocstring
     def do_after(self, line):
         """Create a new task to be done after a current task is completed"""

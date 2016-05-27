@@ -14,7 +14,7 @@ import datetime
 import argparse
 import basetaskerplugin, lister
 
-from lib import Task
+from lib import Task, re_ext
 
 todo = """
 Create a timed report
@@ -44,16 +44,29 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
                            default=False, dest='only_archive',
                            help='Only look in the archive')
         
-        project = argparse.ArgumentParser('projects', parents=[common_opts])
+        project = argparse.ArgumentParser('projects', parents=[common_opts],
+            description = """Print a list of current projects with the number of
+        open and closed tasks.
+        """)
         self.project_parser = project
 
-        context = argparse.ArgumentParser('contexts', parents=[common_opts])
+        context = argparse.ArgumentParser('contexts', parents=[common_opts],
+            description = """Print a list of current contexts with the number of
+        open and closed tasks""")
         self.context_parser = context
         
-        today = argparse.ArgumentParser('today')
+        today = argparse.ArgumentParser('today',
+            description = """Print a list of tasks completed on the current day""")
+        
         today.add_argument('-f', dest='tofile', default=False, 
                            action='store_true', 
                            help="Write output to a daily file")
+        today.add_argument('-c', dest='bycomplete', default=False,
+                           action='store_true',
+                           help="Sort by completed time")
+        today.add_argument('-t', dest='trimoutput', default=False, 
+                           action='store_true',
+                           help="Trim output to dates only")
         self.today_parser = today
         
         # the main program will gather these parsers after activation
@@ -65,13 +78,19 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
 
         super().activate()
 
+    def help_projects(self):
+        self.project_parser.print_help()
+        
     def do_projects(self, text):
         """Print a list of current projects with the number of
-        open and closed tasks"""
+        open and closed tasks. (Docstring)
+        """ 
+        
         args = self.project_parser.parse_args(text.split())
         args.name='project'
         self.print_counts(**vars(args))
         #self.project_report(**vars(args))
+    
 
     def do_contexts(self, text):
         """Print a list of current contexts with the number of
@@ -79,6 +98,9 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         args = self.context_parser.parse_args(text.split())
         args.name='context'
         self.print_counts(**vars(args))
+    
+    def help_today(self):
+        self.today_parser.print_help()
         
     def do_today(self, text):
         """Print a list of tasks completed on the current day"""
@@ -89,7 +111,18 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         parsed_tasks = [Task.from_text(t) for k, t in tasks]
         closed_tasks = [t for t in parsed_tasks if t.complete]
         today_tasks = [t for t in closed_tasks if t.end.date() == today]
-                    
+        
+        if args.bycomplete:
+            today_tasks.sort(key=lambda t: t.end)
+        
+        if args.trimoutput:
+            trimmed_tasks = []
+            for t in today_tasks:
+                s = "{0.start:%Y-%m-%d} {0.end:%Y-%m-%d} {0.task}".format(t)
+                s = re_ext.sub("",s)
+                trimmed_tasks.append(s)
+            today_tasks = trimmed_tasks
+            
         for task in today_tasks:
             print(task)
         
@@ -128,5 +161,6 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
                               headers)
         else:
             print("No open {}s.".format(name))
+        
 
 
