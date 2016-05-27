@@ -19,7 +19,9 @@ class PendingPlugin(basetaskerplugin.NewCommandPlugin):
         self.setConfigOption('public_methods', 'do_after')
                 
        
-        self.after_parser = after = argparse.ArgumentParser('after')
+        self.after_parser = after = argparse.ArgumentParser('after',
+            description="""Create a new task to be done after a 
+            current task is completed""")
         after.add_argument('tasknum', type=int,
                              help="Task to create the follow-up task from")
         after.add_argument('text', nargs=argparse.REMAINDER)
@@ -30,7 +32,9 @@ class PendingPlugin(basetaskerplugin.NewCommandPlugin):
 
         super().activate()
     
-    
+    def help_after(self):
+        self.after_parser.print_help()
+        
     # noinspection PyIncorrectDocstring,PyIncorrectDocstring
     def do_after(self, line):
         """Create a new task to be done after a current task is completed"""

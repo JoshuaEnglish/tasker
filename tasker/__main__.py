@@ -130,6 +130,7 @@ def add_subparser(subparser, helpstr=None):
 class TaskCmd(minioncmd.BossCmd):
     prompt = "tasker> "
     doc_leader = "Tasker Help"
+    minion_header = "Subcommands (type <command> help)"
 
     def __init__(self, completekey='tab', stdin=None, stdout=None,
                  config=None, lib=None):
@@ -153,7 +154,7 @@ class TaskCmd(minioncmd.BossCmd):
             self.lib.add_task(" ".join(args.text))
 
     def do_do(self, line):
-        """Mark a task as complete"""
+        """Mark a task as complete: NUM [COMMENT]"""
         args = commands.choices['do'].parse_args(line.split())
         err, msg = self.lib.complete_task(args.tasknum, " ".join(args.comment))
         if err:
@@ -161,7 +162,7 @@ class TaskCmd(minioncmd.BossCmd):
             sys.exit(err)
 
     def do_pri(self, line):
-        """Prioritize a task: NUM, PRI, (NOTE)"""
+        """Prioritize a task: NUM, PRI, [NOTE]"""
         args = commands.choices['pri'].parse_args(line.split())
         self.lib.prioritize_task(**vars(args))
 

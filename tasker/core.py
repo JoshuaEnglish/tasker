@@ -92,6 +92,7 @@ class PluginCmd(minioncmd.MinionCmd):
     prompt = "plugins> "
     doc_leader = "Plugins Help"
     _log = logging.getLogger('plugin')
+    minion_header = "Other subcommands (type <topic> help)"
 
     def __init__(self, name, master=None, manager=None,
                  completekey='tab', stdin=None, stdout=None):
@@ -294,6 +295,7 @@ class ArchiveCmd(minioncmd.MinionCmd):
     """
     
     _log = logging.getLogger('archive')
+    minion_header = "Other subcommands (type <topic> help)"
 
     def __init__(self, name, master=None,
                  completekey='tab', stdin=None, stdout=None):

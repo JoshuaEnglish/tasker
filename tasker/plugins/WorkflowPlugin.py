@@ -1,9 +1,57 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Feb 29 11:51:14 2016
+About Workflow
 
-@author: jenglish
+These commands allow you to create sequential tasks for projects that
+are the same process but for different contexts: processing orders for
+different customers or verifying lists of data that are the same form.
+
+The inspiration for this was a quoting processing for sales support:
+
+    1. Sales rep requests a pricing quote
+    2. Support rep verifies all information
+    3. Support rep creates the quote
+    4. Support rep submitn quote for pricing
+    5. Pricing returns quote to support rep
+    6. Support rep returns pricing to sales rep
+
+The support rep also had to log each of these steps in a separate job tracker.
+
+Using the quote as a project name and giving all of these steps a @pricing
+context, the following workflow was created:
+
+    1. (A) Log @pricing request for +$project
+    2. (B) Confirm +$project information with $salesrep @pricing
+    3. (A) Submit +$project to @pricing team
+    4. (A) Check for +$project @pricing approval
+    5. (A) Send +$project @pricing to $salesrep
+
+(The support rep was comfortable using the @pricing context in the middle
+of a sentence. It's a style choice.)
+
+In practice, as sales rep Jane Schmo contacts the support rep for a pricing
+quote on the Giganta Corp Land Grab, the rep starts things in tasker with::
+
+    tasker> workflow start GigantaLandGrab JSchmo
+    (A) Log @pricing request for +GigantaLandGrab
+
+    tasker> list
+    1 (A) Log @pricing request for +GigantaLandGrab
+
+(There are extensions being written to the file. They are hidden by default.)
+
+From there, as each step is completed, the sales rep doesn't need to return
+to the workflow command, but treat these as normal tasks::
+
+    tasker> do 1
+    x Log @pricing request for +GigantaLandGrab
+    (B) Confirm +GigantaLandGrab information with JSchmo @pricing
+
+    tasker> list
+    2 (B) Confirm +GigantaLandGrab information with JSchmo @pricing
+
 """
+
 import glob
 import os
 import argparse
@@ -23,6 +71,12 @@ CLEAN_VOCABULARY = re.compile(r"^[@+]")
 
 class WorkflowCLI(minioncmd.MinionCmd):
     prompt = "workflow> "
+    minion_header = "Other subcommands (type <topic> help)"
+    doc_leader = """Workflow Help
+
+    Create and use pre-programmed tasks to generate sequentially without
+    clogging up the Z-priority list
+    """
 
     def __init__(self, completekey='tab', stdin=None, stdout=None,
                  workflow_dir=None):
@@ -88,10 +142,14 @@ class WorkflowCLI(minioncmd.MinionCmd):
 
 
     def do_start(self, text):
-        """Adds the first step of a workflow to the task list.
+        """Usage: start NAME VOCABULARY+
+
+        Add the first step of a workflow to the task list.
         The first word in text should be the name of the workflow.
         Subsequent words are paired with the workflow's vocabulary to
         fill out the step template.
+
+        Call info NAME to get relevant vocabulary.
         """
 
         text = text.strip()
@@ -116,14 +174,20 @@ class WorkflowCLI(minioncmd.MinionCmd):
         return None
 
     def do_list(self, text):
-        """list current workflows"""
+        """Usage: list
+
+        List current workflows
+        """
         print("Workflow list:", file=self.stdout)
         for idx, flow in enumerate(self.workflows, start=1):
             print(idx, flow, file=self.stdout)
         print()
 
     def do_info(self, text):
-        """Print the details of a given workflow"""
+        """Usage: info NAME
+
+        Print the details of a given workflow.
+        """
         text = text.strip()
         if text not in self.workflows:
             print('No workflow "{}" found'.format(text))
@@ -133,7 +197,10 @@ class WorkflowCLI(minioncmd.MinionCmd):
         print()
 
     def do_steps(self, text):
-        """Print the step templates of a given workflow"""
+        """Usage: steps NAME
+
+        Print the step templates of a given workflow.
+        """
         text = text.strip()
         if text not in self.workflows:
             print('No workflow "{}" found'.format(text))
@@ -143,7 +210,10 @@ class WorkflowCLI(minioncmd.MinionCmd):
         print()
 
     def do_instances(self, text):
-        """Prints a list of known instances"""
+        """Usage: instances NAME
+
+        Prints a list of known instances.
+        """
         text = text.strip()
         if text not in self.workflows:
             print('No workflow "{}" found'.format(text))
@@ -153,7 +223,10 @@ class WorkflowCLI(minioncmd.MinionCmd):
         print()
 
     def do_create(self, text):
-        """Create a new workflow: create NAME"""
+        """Usage: create NAME
+
+        Create a new workflow. A wizard collects the necessary information.
+        """
         newname = text.strip().split()
 
         if len(newname) == 0:
@@ -216,7 +289,10 @@ class WorkflowCLI(minioncmd.MinionCmd):
         print("Created new workflow in", fpath)
 
     def do_abandon(self, text):
-        """Abandons an established workflow"""
+        """Usage: abandon TASKNUM REASON+
+
+        Abandons an established workflow.
+        """
         # if ask for workflow name and ID, need to identify the tasknum
         # should expect the tasknum
         # get the worflow name and id
@@ -251,6 +327,9 @@ class WorkflowCLI(minioncmd.MinionCmd):
         self.master.cmdqueue.append("do {} Abandoned: {}".format(tasknum, reason))
         return True
 
+    def help_about(self):
+        "About this plugin"
+        print(__file__.__doc__)
 
 class Workflow(basetaskerplugin.SubCommandPlugin):
     def activate(self):

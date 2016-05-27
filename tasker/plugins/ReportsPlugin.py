@@ -91,7 +91,9 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         self.print_counts(**vars(args))
         #self.project_report(**vars(args))
     
-
+    def help_contexts(self):
+        self.context_parser.print_help()
+        
     def do_contexts(self, text):
         """Print a list of current contexts with the number of
         open and closed tasks"""

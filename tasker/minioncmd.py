@@ -13,8 +13,88 @@ return to the main BossCmd instance.
 import cmd 
 import logging
 
+class ExtHelpCmd(cmd.Cmd):
+    """ExtHelpCmd
+    
+    Extended Help Cmd. Subclass of cmd.Cmd that creates an extra layer
+    of topics to refer to minions in a separate topic group.
+    """
 
-class BossCmd(cmd.Cmd):
+    minion_header = "Minion commands (type <command> help)"
+    doc_header = "Local commands (type help <command>)"
+    
+    def do_help(self, arg):
+        'List available commands with "help" or detailed help with "help cmd".'
+        if arg:
+            # XXX check arg syntax
+            try:
+                func = getattr(self, 'help_' + arg)
+            except AttributeError:
+                try:
+                    doc=getattr(self, 'do_' + arg).__doc__
+                    if doc:
+                        self.stdout.write("%s\n"%str(doc))
+                        return
+                except AttributeError:
+                    pass
+                self.stdout.write("%s\n"%str(self.nohelp % (arg,)))
+                return
+            func()
+        else:
+            names = self.get_names()
+            cmds_doc = []
+            minion_doc = []
+            if hasattr(self, 'minions'):
+                minions = self.minions.keys()
+            elif hasattr(self, 'master'):
+                if self.master is not None:
+                    minions = self.master.minions.keys()
+                else:
+                    minions = []
+            cmds_undoc = []
+            misc = {}
+            for name in names:
+                if name[:5] == 'help_':
+                    misc[name[5:]]=1
+            names.sort()
+            # There can be duplicates if routines overridden
+            prevname = ''
+            for name in names:
+                if name[:3] == 'do_':
+                    if name == prevname:
+                        continue
+                    prevname = name
+                    cmd=name[3:]
+                    if cmd in misc:
+                        if cmd in minions:
+                            minion_doc.append(cmd)
+                        else:
+                            cmds_doc.append(cmd)
+                        del misc[cmd]
+                    elif getattr(self, name).__doc__:
+                        if cmd in minions:
+                            minion_doc.append(cmd)
+                        else:
+                            cmds_doc.append(cmd)
+                    else:
+                        cmds_undoc.append(cmd)
+            
+            cmds_sys = []
+            for cmd in ['help','quit','done']:
+                if cmd in cmds_doc:
+                    cmds_doc.remove(cmd)
+                    cmds_sys.append(cmd)
+            
+            cmds_sys.sort()
+                        
+            self.stdout.write("%s\n"%str(self.doc_leader))
+            self.print_topics(self.doc_header,   cmds_doc,   15, 80)
+            self.print_topics(self.minion_header, minion_doc, 15, 80)
+            self.print_topics("Program control commands", cmds_sys, 15, 80)
+            self.print_topics(self.misc_header,  list(misc.keys()), 15, 80)
+            self.print_topics(self.undoc_header, cmds_undoc, 15, 80)
+
+class BossCmd(ExtHelpCmd):
     """BossCmd
     Command line tool for managing subprograms.
     """
@@ -158,7 +238,7 @@ class BossCmd(cmd.Cmd):
 
 
 
-class MinionCmd(cmd.Cmd):
+class MinionCmd(ExtHelpCmd):
     """MinionCmd
 
     The MinionCmd object provides methods for connecting minions to the boss.
@@ -166,6 +246,7 @@ class MinionCmd(cmd.Cmd):
     """
     _log = logging.getLogger('minioncmd')
     doc_leader = "Help for MinionCmd"
+    minion_header = "Other minions (type <topic> help)"
 
     def __init__(self, name, master=None, 
                  completekey='tab', stdin=None, stdout=None):
