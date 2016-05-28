@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+minioncmd
+=========
 
 This module defines two subclasses of the cmd.Cmd class.
 
@@ -8,10 +10,14 @@ This module defines two subclasses of the cmd.Cmd class.
 structure. MinionCmd instances can transfer control to other instances, or
 return to the main BossCmd instance.
 
+Both :class:`BossCmd` and :class:`MinionCmd` inherit from :class:`ExtHelpCmd`
+which enhances the basic :meth:`~ExtHelpCmd.do_help` method.
+
 """
 
 import cmd 
 import logging
+
 
 class ExtHelpCmd(cmd.Cmd):
     """ExtHelpCmd
@@ -24,7 +30,7 @@ class ExtHelpCmd(cmd.Cmd):
     doc_header = "Local commands (type help <command>)"
     
     def do_help(self, arg):
-        'List available commands with "help" or detailed help with "help cmd".'
+        """List available commands with "help" or detailed help with "help cmd"."""
         if arg:
             # XXX check arg syntax
             try:
@@ -209,7 +215,7 @@ class BossCmd(ExtHelpCmd):
         return cmder
 
     def do_quit(self, line):
-        "Quits the program"
+        """Quits the program"""
         return True 
      
     def postcmd(self, stop, line): 
