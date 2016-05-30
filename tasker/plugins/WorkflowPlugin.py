@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
 """
 About Workflow
+==============
 
 These commands allow you to create sequential tasks for projects that
 are the same process but for different contexts: processing orders for
 different customers or verifying lists of data that are the same form.
+
+Using Workflows
+---------------
 
 The inspiration for this was a quoting processing for sales support:
 
     1. Sales rep requests a pricing quote
     2. Support rep verifies all information
     3. Support rep creates the quote
-    4. Support rep submitn quote for pricing
+    4. Support rep submit quote for pricing
     5. Pricing returns quote to support rep
     6. Support rep returns pricing to sales rep
 
@@ -50,6 +54,11 @@ to the workflow command, but treat these as normal tasks::
     tasker> list
     2 (B) Confirm +GigantaLandGrab information with JSchmo @pricing
 
+When the last task in the workflow is marked as complete, no new tasks are
+added at runtime.
+
+Creating Workflows
+------------------
 """
 
 import glob
@@ -314,22 +323,23 @@ class WorkflowCLI(minioncmd.MinionCmd):
             print("Task does not exist")
             return True
 
-        c, p, s, e, t, c, j, x = self.master.lib.parse_task(selected_victim)
-        flow_name = x['wn']
+        flow_name = selected_victim.extensions['wn']
 
         steps = self.workflows[flow_name]['Steps']
         last_step = max(steps)
 
-        new_version = re.sub(r"{ws:\d+}", "{ws:%s}" % last_step, selected_victim)
+        new_version = re.sub(r"{ws:\d+}", "{ws:%s}" % last_step, selected_victim.text)
 
-        tasks[tasknum] = new_version
+        tasks[tasknum] = Task.fromtext(new_version)
         self.master.lib.tasks = tasks
         self.master.cmdqueue.append("do {} Abandoned: {}".format(tasknum, reason))
         return True
 
     def help_about(self):
-        "About this plugin"
-        print(__file__.__doc__)
+        """About this plugin"""
+        print("""These commands allow you to create sequential tasks for projects that
+are the same process but for different contexts: processing orders for
+different customers or verifying lists of data that are the same form.""")
 
 class Workflow(basetaskerplugin.SubCommandPlugin):
     def activate(self):
@@ -378,23 +388,25 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
         super().activate()
 
 
-    def complete_task(self, c, p, s, e, t, o, j, x):
+    def complete_task(self, this):
         self._log.debug('Workflow checking completed task %s',
-                        x.get('uid', 'NO ID'))
-        if 'wn' in x:
-            flow = self.cli.workflows[x['wn']]
+                        this.extensions.get('uid', 'NO ID'))
+        if 'wn' in this.extensions:
+            flow = self.cli.workflows[this.extensions['wn']]
             steps = flow['Steps']
-            if x['ws'] not in steps:
-                msg = "Workflow {} does not have step {}".format(flow, x['ws'])
+            if this.extensions['ws'] not in steps:
+                msg = "Workflow {} does not have step {}".format(flow, this.extensions['ws'])
                 self._log.error(msg)
                 print(msg) # this will cause problems down the road
-                return (0, None, c, p, s, e, t)
-            next_step = str(int(x['ws'])+1)
+                return (0, None, this)
+            next_step = str(int(this.extensions['ws'])+1)
             if next_step in steps:
                 try:
-                    self.cli.add_workflow_task(x['wn'], next_step, x['wid'])
+                    self.cli.add_workflow_task(this.extensions['wn'],
+                                               next_step,
+                                               this.extensions['wid'])
                 except KeyError as E:
-                    return(2, E, c, p, s, e, t)
-        return(0, None, c, p, s, e, t)
+                    return(2, E, this)
+        return(0, None, this)
 
 

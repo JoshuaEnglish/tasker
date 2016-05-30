@@ -15,28 +15,37 @@ import logging
 import minioncmd
 import lister
 
+
 def add_core_subparsers(commands):
     list_parser = commands.add_parser('list', help='list tasks',
                                       description="Tool for listing tasks",
                                       )
-    list_parser.add_argument('-n', action="store_false",
-                             dest="by_pri", default=True,
-                             help="Prints task list in numerical order, otherwise orders by priority")
+    list_parser.add_argument(
+        '-n', action="store_false",
+        dest="by_pri", default=True,
+        help="Prints task list in numerical order, otherwise orders by priority")
 
-    list_parser.add_argument('-y', dest="filterop", action="store_true",
-                             default=False,
-                             help="Shows tasks matching any filter word. Default is to match all")
-    list_parser.add_argument('-a', dest="showcomplete", action="store_true",
-                             default=False,
-                             help="Show completed (but not archived) tasks.")
-    list_parser.add_argument('-x', dest="showext", action="store_true",
-                             default=False,
-                             help="Shows hidden text extensions")
-    list_parser.add_argument('filters', nargs=argparse.REMAINDER,
-                             help="Only lists tasks containing these words")
+    list_parser.add_argument(
+        '-y', dest="filterop", action="store_true",
+        default=False,
+        help="Shows tasks matching any filter word. Default is to match all")
+
+    list_parser.add_argument(
+        '-a', dest="showcomplete", action="store_true",
+        default=False,
+        help="Show completed (but not archived) tasks.")
+
+    list_parser.add_argument(
+        '-x', dest="showext", action="store_true",
+        default=False,
+        help="Shows hidden text extensions")
+
+    list_parser.add_argument(
+        'filters', nargs=argparse.REMAINDER,
+        help="Only lists tasks containing these words")
 
     add_parser = commands.add_parser('add', help="add a task")
-    add_parser.add_argument('-d','--done', action="store_true",
+    add_parser.add_argument('-d', '--done', action="store_true",
                             default=False, help="Adds task as completed")
     add_parser.add_argument(nargs="+", dest="text",
                             help="text of the new task")
@@ -55,21 +64,22 @@ def add_core_subparsers(commands):
     priority_parser.add_argument('note', nargs=argparse.REMAINDER,
                                  help="optional note to attach to task")
 
+
 plugin_argparser = argparse.ArgumentParser('plugins')
 plugin_commands = plugin_argparser.add_subparsers(title='commands',
-                                 dest="command",
-                                 help="supported commands")
+                                                  dest="command",
+                                                  help="supported commands")
 plugin_commands.add_parser('list', help='List the known plugins')
 
-activate = plugin_commands.add_parser('activate', 
+activate = plugin_commands.add_parser('activate',
                                       help='Activate plugins by name')
 activate.add_argument('name', help='name of the plugin to activate')
 
-deactivate = plugin_commands.add_parser('deactivate', 
+deactivate = plugin_commands.add_parser('deactivate',
                                         help='Deactivate plugin by name')
 deactivate.add_argument('name', help='name of the plugin to deactivate')
 
-plugin_commands.add_parser('categories', 
+plugin_commands.add_parser('categories',
                            help='list current plugin categories')
 
 create = plugin_commands.add_parser('create',
@@ -128,7 +138,7 @@ class PluginCmd(minioncmd.MinionCmd):
         Plugin will be activated on next launch
         """
         stuff = line.split(maxsplit=1)
-        if len(stuff)== 1:
+        if len(stuff) == 1:
             name, category = self.get_plugin_name_and_category(line)
         else:
             name, category = stuff
@@ -147,7 +157,7 @@ class PluginCmd(minioncmd.MinionCmd):
         Plugin will be deactivated on next launch.
         """
         stuff = line.split(maxsplit=1)
-        if len(stuff)== 1:
+        if len(stuff) == 1:
             name, category = self.get_plugin_name_and_category(line)
         else:
             name, category = stuff
@@ -160,7 +170,7 @@ class PluginCmd(minioncmd.MinionCmd):
         else:
             self.manager.deactivatePluginByName(name, category, True)
             print("Plugin activated. Will be active when program restarts.")
-            
+
     def do_create(self, line):
         """Creates a template for for a new plugin"""
         args = create.parse_args(line.split())
@@ -169,25 +179,27 @@ class PluginCmd(minioncmd.MinionCmd):
         args.date = datetime.datetime.isoformat(datetime.datetime.now())
         args.lowername = args.name.lower()
         args.cls = class_map[args.kind]
-        args.clicode = CLI_CODE.format(**vars(args)) if args.kind=='sub' else ''
-        args.clilink = CLI_LINK.format(**vars(args)) if args.kind=='sub' else ''
+        args.clicode = CLI_CODE.format(
+            **vars(args)) if args.kind == 'sub' else ''
+        args.clilink = CLI_LINK.format(
+            **vars(args)) if args.kind == 'sub' else ''
         folder = os.path.abspath(
-                    self.manager.getPluginLocator().plugins_places[0])
-        
-        def_path = os.path.join(folder, 
+            self.manager.getPluginLocator().plugins_places[0])
+
+        def_path = os.path.join(folder,
                                 "{}Plugin.tasker-plugin".format(args.name))
         with open(def_path, 'w') as fp:
             print(PLUGIN_DEFINITION.format(**vars(args)), file=fp, flush=True)
-        
-        code_path = os.path.join(folder, 
+
+        code_path = os.path.join(folder,
                                  "{}Plugin.py".format(args.name))
         with open(code_path, 'w') as fp:
             print(PLUGIN_CODE.format(**vars(args)), file=fp, flush=True)
-            
+
         print("The files have been written to:")
         print(def_path)
         print(code_path)
-            
+
 
 PLUGIN_DEFINITION = """# Plugin Definition File
 # generated by plugins create NAME TYPE
@@ -270,19 +282,19 @@ class {name}Plugin(basetaskerplugin.{cls}):
 archive_argparser = argparse.ArgumentParser('archive')
 
 archive_commands = archive_argparser.add_subparsers(title='commands',
-                                 dest="archivecommand",
-                                 metavar="")
+                                                    dest="archivecommand",
+                                                    metavar="")
 
-archive_parent =argparse.ArgumentParser(add_help=False)
-archive_parent.add_argument('--days', type=int, default=3, 
-                               help='minimum age of closed tasks to archive')
+archive_parent = argparse.ArgumentParser(add_help=False)
+archive_parent.add_argument('--days', type=int, default=3,
+                            help='minimum age of closed tasks to archive')
 
-archive_project_parser = archive_commands.add_parser('project', 
+archive_project_parser = archive_commands.add_parser('project',
                                                      help='Archive by project',
-                                    parents=[archive_parent])
+                                                     parents=[archive_parent])
 
-archive_project_parser.add_argument('projects', 
-                                    help="names of Projects to archive", 
+archive_project_parser.add_argument('projects',
+                                    help="names of Projects to archive",
                                     nargs=argparse.REMAINDER)
 
 
@@ -293,14 +305,14 @@ class ArchiveCmd(minioncmd.MinionCmd):
     These commands archive tasks by project or number.
     Tasks that are not old enough (set by --days) will not be archived.
     """
-    
+
     _log = logging.getLogger('archive')
     minion_header = "Other subcommands (type <topic> help)"
 
     def __init__(self, name, master=None,
                  completekey='tab', stdin=None, stdout=None):
         super().__init__(name, master, completekey, stdin, stdout)
-        
+
     def do_project(self, text):
         """Archive tasks in a given project if all tasks are closed"""
         lib = self.master.lib
@@ -310,15 +322,15 @@ class ArchiveCmd(minioncmd.MinionCmd):
                                showcomplete=True)
         # tasks is a list of tuples
         self._log.info('Found %d candidates to archive', len(tasks))
-        
+
         # create a dictionary of projects, last_date
         end_dates = {}
         open_projects = set()
-                
+
         for num, task in tasks:
             stuff = lib.parse_task(task)
             self._log.debug('Projects: %s', stuff[6])
-        
+
             for proj in stuff[6]:
                 if stuff[3] is None:
                     open_projects.add(proj)
@@ -326,22 +338,22 @@ class ArchiveCmd(minioncmd.MinionCmd):
                 if proj not in end_dates:
                     end_dates[proj] = stuff[3]
                 else:
-                    end_dates[proj] = max(stuff[3], 
+                    end_dates[proj] = max(stuff[3],
                                           end_dates[proj])
         for proj in open_projects:
             self._log.warn('Project %s is still open. Not archived.')
             if proj in end_dates:
                 del end_dates[proj]
-        
+
         if not end_dates:
             self._log.info("No projects to archive")
             return None
-    
+
         self._log.debug('end dates: %s', end_dates)
-        
+
         projects_to_archive = []
         tasks_to_archive = set()
-        
+
         now = datetime.datetime.now()
         for proj in end_dates:
             delta = now - end_dates[proj]
@@ -349,32 +361,32 @@ class ArchiveCmd(minioncmd.MinionCmd):
                 projects_to_archive.append(proj)
             else:
                 self._log.warn('Project %s is not old enough to archive', proj)
-        
+
         if not projects_to_archive:
             self._log.info("No projects to archive")
             return None
-            
+
         for num, task in tasks:
             for proj in projects_to_archive:
                 if proj in task:
                     tasks_to_archive.add(num)
-                    
+
         tasks = lib.get_tasks(lib.config['Files']['task-path'])
         done = lib.get_tasks(lib.config['Files']['done-path'])
-        
+
         try:
             next_done = max(done) + 1
         except ValueError:
             next_done = 1
-        
+
         for key in tasks_to_archive:
             done[next_done] = tasks[key]
             next_done += 1
             tasks.pop(key)
-        
+
         lib.write_tasks(tasks, lib.config['Files']['task-path'])
         lib.write_tasks(done, lib.config['Files']['done-path'])
-                
+
         msg = "Archived {} tasks".format(len(tasks_to_archive))
         self._log.info(msg)
         print(msg)

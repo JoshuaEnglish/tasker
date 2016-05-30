@@ -9,5 +9,5 @@ setup(name='t',
       author="Josh English",
       author_email="josh@joshuarenglish.com",
       license="GNU3",
-      packages=["tasker",],
-      zip_safe=False)
+      packages=["tasker", ],
+      zip_safe=False, requires=['yapsy', 'colorama'])

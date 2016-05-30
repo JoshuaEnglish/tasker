@@ -10,7 +10,7 @@ import datetime
 import logging
 import textwrap
 
-from operator import itemgetter
+from operator import itemgetter, attrgetter
 from collections import defaultdict, Counter
 from functools import partial
 
@@ -39,22 +39,23 @@ TASK_OK = 0
 TASK_ERROR = 1
 TASK_EXTENSION_ERROR = 2
 
-first = itemgetter(0)
-second = itemgetter(1)
+#first = itemgetter(0)
+#second = itemgetter(1)
 
+# todo: add note as a slot for further processing
 class Task(object):
     """Simple container for parsed tasks"""
     
-    __slots__ = ('complete', 'priority', 'start', 'end', 'task',
+    __slots__ = ('complete', 'priority', 'start', 'end', 'text',
                  'contexts', 'projects', 'extensions')
     
-    def __init__(self, complete, priority, start, end, task, 
+    def __init__(self, complete, priority, start, end, text,
                  contexts, projects, extensions):
         self.complete = complete
         self.priority = priority
         self.start = start
         self.end = end
-        self.task = task
+        self.text = text
         self.contexts = contexts
         self.projects = projects
         self.extensions = extensions
@@ -69,12 +70,24 @@ class Task(object):
             res.append(self.start.strftime(TIMEFMT))
         if self.end:
             res.append(self.end.strftime(TIMEFMT))
-        res.append(self.task.strip())
+        res.append(self.text.strip())
         return " ".join(res)
+
+    # __contains__ allows for filtering tasks by content
+    def __contains__(self, searchtext):
+        return searchtext in self.text
+
+    # __lt__ is required for sorting tasks
+    def __lt__(self, other):
+        return str(self) < str(other)
 
     @classmethod
     def from_text(cls, text):
-        """Returns a parsed task from a line of text"""
+        """from_text(text)
+        Returns a parsed task from a line of text.
+        If text starts with *x* and no end time is given, current time
+        will be used as end time.
+        """
         text = text.strip()
         match = re_task.match(text)
         if not any(match.groups()):
@@ -84,12 +97,14 @@ class Task(object):
         priority = match.group('priority')[1] if match.group('priority') else ''
 
         if match.group('start'):
-            start = datetime.datetime.strptime(match.group('start').strip(), TIMEFMT)
+            start = datetime.datetime.strptime(match.group('start').strip(),
+                                               TIMEFMT)
         else:
             start = datetime.datetime.now()
 
         if match.group('end'):
-            end = datetime.datetime.strptime(match.group('end').strip(), TIMEFMT)
+            end = datetime.datetime.strptime(match.group('end').strip(),
+                                             TIMEFMT)
         else:
             end = None
         
@@ -153,6 +168,7 @@ class TaskLib(object):
             "C" : colorama.Fore.GREEN,
             "Z" : colorama.Fore.LIGHTBLACK_EX
             }
+
     def get_extensions_to_hide(self):
         """get_extensions_to_hide()
         Compile a list of all extensions from the config file
@@ -209,6 +225,7 @@ class TaskLib(object):
           
             :param str text: text of a task.
         """
+        raise NotImplementedError("Please use the task object from here on out")
         text = text.strip()
         match = re_task.match(text)
         if not any(match.groups()):
@@ -254,6 +271,7 @@ class TaskLib(object):
         :param str text: remaining text of the task
         :return: string representation of the task
         """
+        raise NotImplementedError("Please use the Task object from here on out")
         res = []
         if complete:
             res.append('x')
@@ -268,17 +286,18 @@ class TaskLib(object):
 
 
     def get_tasks(self, path):
-        """Returns a dictionary of (line number (starting at 1), task text) pairs
-        :rtype: dict
+        """Get tasks from either todo.txt or done.txt
+
         :param path: path to the file to read
-        :return: dictionary of line number, text pairs
+        :rtype: dict
+        :return: dictionary of line number, task instance pairs
         """
         res = {}
         with open(path, 'r') as fp:
             idx = 1
             for line in fp.readlines():
                 if line.strip():
-                    res[idx] = line.strip()
+                    res[idx] = Task.from_text(line.strip())
                     idx += 1
         return res
 
@@ -292,11 +311,11 @@ class TaskLib(object):
         self.log.info('Writing tasks to %s', local_path)
         with open(local_path, 'w') as fp:
             for linenum in sorted(task_dict):
-                fp.write("{}{}".format(task_dict[linenum].strip(), '\n'))
+                fp.write("{}{}".format(task_dict[linenum], '\n'))
         return TASK_OK, "{:d} Tasks written".format(len(task_dict))
 
 
-    def run_hooks(self, func_name, c, p, s, e, t, o, j, x):
+    def run_hooks(self, func_name, this):
         ok = TASK_OK
         msg = ""
         for plugin in self.manager.getAllPlugins():
@@ -305,30 +324,27 @@ class TaskLib(object):
             if hasattr(plugin.plugin_object, func_name):
                 logging.getLogger('hooks').debug('Calling %s.%s', plugin.name, func_name)
                 func = getattr(plugin.plugin_object, func_name)
-                ok, msg, c, p, s, e, t = func(c, p, s, e, t, o, j, x)
-        return ok, msg, c, p, s, e, t
+                ok, msg, this = func(this)
+        return ok, msg, this
 
 
     def add_task(self, text):
 
-        stuff = self.parse_task(text)
-        c, p, s, e, t, o, j, x = stuff
+        this = Task.from_text(text)
 
-        if c  and not e:
-            e = datetime.datetime.now()
+        #if c  and not e:
+        #    e = datetime.datetime.now()
 
         # run hooks, say, if there is a pend extension, check that the pend id is a valid ID
-        err, msg, c, p, s, e, t = self.run_hooks('add_task', c, p, s, e, t, o, j, x)
+        err, msg, this = self.run_hooks('add_task', this)
         if err:
             self.log.error(msg)
             return err, msg
 
-        new_task = self.graft(c, p, s, e, t)
-
         with open(self.config['Files']['task-path'], 'a') as fp:
-            fp.write('{}{}'.format(new_task.strip(), '\n'))
-        print(new_task)
-        return TASK_OK, new_task
+            fp.write('{}{}'.format(this, '\n'))
+        print(this)
+        return TASK_OK, str(this)
 
 
     def add_done(self, text):
@@ -367,23 +383,24 @@ class TaskLib(object):
             tasks = self.tasks = self.get_tasks(self.config['Files']['task-path'])
         else:
             tasks = self.tasks
+
         if tasknum not in tasks:
             del self.tasks
             return TASK_ERROR, "Task number not in task list"
-        if tasks[tasknum].startswith('x'):
+        if tasks[tasknum].complete:
             del self.tasks
             return TASK_ERROR, "Task already completed"
 
         
-        c, p, s, e, t, o, j, x = self.parse_task(tasks[tasknum])
-        c = True
-        e = datetime.datetime.now()
+        this = tasks[tasknum]
+        this.complete = True
+        this.end = datetime.datetime.now()
         if comment:
             t += " # {}".format(comment)
-        tasks[tasknum] = self.graft(c, p, s, e, t)
+        tasks[tasknum] = this
         # run hooks - anything that should happen in response (grab next item in queue)
 
-        err, msg, c, p, s, e, t = self.run_hooks('complete_task', c, p, s, e, t, o, j, x)
+        err, msg, this = self.run_hooks('complete_task', this)
         if err:
             return err, msg
         # End hooks
@@ -414,7 +431,7 @@ class TaskLib(object):
         everything = [(key, val) 
                       for key, val in list(self.get_tasks(
                           self.config['Files']['task-path']).items())
-                      if (showcomplete or not val.startswith('x'))]
+                      if (showcomplete or not val.complete)]
 
         if filters:
             self.log.info('Filtering tasks by keywords')
@@ -430,8 +447,8 @@ class TaskLib(object):
         if by_pri:
             # break up list into three lists: prioritized, unprioritized, and Z
             plist, zlist, ulist = [],[],[]
-            for key,val in everything:
-                pri = self.parse_task(val)[1]
+            for key, val in everything:
+                pri = val.priority
                 if pri and pri != 'Z':
                     plist.append((key, val))
                 elif not pri:
@@ -442,18 +459,19 @@ class TaskLib(object):
             self.log.debug('plist keys: %s', ','.join(str(a) for a,b in plist))
             self.log.debug('zlist keys: %s', ','.join(str(a) for a,b in zlist))
             self.log.debug('ulist keys: %s', ','.join(str(a) for a,b in ulist))
-            
+
+            getter = itemgetter(1)
             if self.config['Tasker'].getboolean('priority-z-last', True):
-                stuff = (sorted(plist, key=second) + 
-                         sorted(ulist, key=second) + 
-                         sorted(zlist, key=second))
+                stuff = (sorted(plist, key=getter) +
+                         sorted(ulist, key=getter) +
+                         sorted(zlist, key=getter))
             else:
-                stuff = (sorted(plist, key=second) +
-                         sorted(zlist, key=second) +
-                         sorted(ulist, key=second))
+                stuff = (sorted(plist, key=getter) +
+                         sorted(zlist, key=getter) +
+                         sorted(ulist, key=getter))
             
         else:
-            stuff = sorted(everything, key=first)
+            stuff = sorted(everything, key=itemgetter(0))
         return stuff
 
     def list_tasks(self, by_pri=True, filters: str = None, filterop=None, 
@@ -472,7 +490,7 @@ class TaskLib(object):
         """
         showext = showext or False
         count = 0
-        #colorize = self.config['Tasker'].getboolean('use-color', True)
+        # colorize = self.config['Tasker'].getboolean('use-color', True)
         shown_tasks = self.sort_tasks(by_pri, filters, filterop, showcomplete)
         self.log.info('Listing %s tasks %s',
                       'all' if showcomplete else 'open',
@@ -489,8 +507,9 @@ class TaskLib(object):
         if shown_tasks:
             maxid = max([a for a, b in shown_tasks])
             idlen = len(str(maxid))
-            self._textwrapper.subsequent_indent = ' '*(idlen+5)
+            self._textwrapper.subsequent_indent = ' ' * (idlen+5)
             wrap = self.config['Tasker'].get('wrap-behavior', 'none')
+            wrapfunc = str
             if wrap == 'wrap':
                 self.log.info("Wrapping long lines of each task")
                 wrapfunc = self._textwrapper.fill
@@ -504,13 +523,13 @@ class TaskLib(object):
                 self.log.error("Unknown textwrap preference %s", wrap)
             
             for idx, task in shown_tasks:
-                pri = self.parse_task(task)[1]
+                pri = task.priority
             
                 if not showext:
                     for ext in self.extension_hiders:
-                        task = self.extension_hiders[ext].sub("", task)
+                        task.text = self.extension_hiders[ext].sub("", task.text)
                 print(("{3}{1:{0}d} {2}".format(idlen, idx,
-                                                wrapfunc(task),
+                                                wrapfunc(str(task)),
                                                 self.get_color(pri))))
                 count += 1
             print('{0}{1}'.format(colorama.Fore.RESET,'-'*(idlen+1)))
@@ -535,37 +554,37 @@ class TaskLib(object):
         if tasknum not in tasks:
             self.log.error('Task %s not in list', tasknum)
             return TASK_ERROR, "Task number not in task list"
-        if tasks[tasknum].startswith('x '):
+        if tasks[tasknum].complete:
             self.log.error('Task %s already completed', tasknum)
             return TASK_ERROR, "Task already completed"
 
-        t = self.reprioritize_text(tasks[tasknum], priority)  # reprioritize grafts result
+        t = self.reprioritize_task(tasks[tasknum], priority)
         if note:
-            t = re_note.sub('', t)
-            t = '%s # %s' % (t, ' '.join(note).strip())
+            text = re_note.sub('', t.text)
+            t.text = '%s # %s' % (text, ' '.join(note).strip())
         tasks[tasknum] = t
         self.write_tasks(tasks, self.config['Files']['task-path'])
         print(tasks[tasknum])
         return TASK_OK, tasks[tasknum]
 
-    def reprioritize_text(self, text, priority):
-        """reprioritize(text, new_priority)
+    def reprioritize_task(self, task, priority):
+        """reprioritize_task(task, new_priority)
         """
-        if text.startswith('x '):
+        if task.complete:
             self.log.warn("Cannot reprioritize completed task")
-            return text
+            return task
 
         np = priority.strip()
         match = re.match(r'^[A-Z]$', np)
         if not match:
             self.log.error("New priority must be A-Z")
-            return text
+            return task
 
-        c, p, s, e, t, o, j, x = self.parse_task(text)
-        newtext = self.graft(c, match.group(), s, e, t)
-        self.log.info("Reprioritized task: %s", newtext)
+        task.priority = match.group()
 
-        return newtext
+        self.log.info("Reprioritized task: %s", task)
+
+        return task
 
     def build_task_dict(self, include_archive=False, only_archive=False):
         """build_task_dict(include_archive, only_archive)
@@ -597,14 +616,13 @@ class TaskLib(object):
             
             {'+SomeProject': Counter({'open': 2, 'closed': 1})}
         
-        
         """
         kind = kind.upper()
 
         if kind == 'PROJECT':
-            idx = 6
+            getter = attrgetter('projects')
         elif kind == 'CONTEXT':
-            idx = 5
+            getter = attrgetter('contexts')
         else:
             raise ValueError("Should pass 'project' or 'context' to get_counts")
         res = defaultdict(Counter)
@@ -613,10 +631,9 @@ class TaskLib(object):
         tasks=self.build_task_dict(include_archive, only_archive)
 
         for task in tasks.values():
-            stuff = self.parse_task(task)
-            items = stuff[idx] # projects and contexts are lists
-            closed = stuff[0]
-            key = 'closed' if closed else 'open'
+            items = getter(task) # projects and contexts are lists
+
+            key = 'closed' if task.complete else 'open'
 
             if not items:
                 res[nothing][key] += 1

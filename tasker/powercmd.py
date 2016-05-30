@@ -81,11 +81,10 @@ class PowerCmd(minioncmd.MinionCmd):
 
     def do_python(self, line):
         """Jump into Python"""
-        namespace = {}
-        namespace['boss'] = self.master
-        namespace['config'] = self.master.config
-        namespace['lib'] = self.master.lib
-        namespace['manager'] = self.master.lib.manager
+        namespace = {'boss': self.master,
+                     'config': self.master.config,
+                     'lib': self.master.lib,
+                     'manager': self.master.lib.manager}
 
         code.interact("Tasker Python Session", local=namespace)
         return None

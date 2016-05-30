@@ -2,6 +2,7 @@ import unittest
 
 from tasker import minioncmd
 
+
 class MinionCmdTestCase(unittest.TestCase):
     def test_default_prompt(self):
         b = minioncmd.BossCmd()
@@ -11,6 +12,7 @@ class MinionCmdTestCase(unittest.TestCase):
         b = minioncmd.BossCmd()
         self.assertListEqual(b.cmdqueue, [])
 
+
 class MinionCmdQueueTestCase(unittest.TestCase):
     def setUp(self):
         self.boss = minioncmd.BossCmd()
@@ -19,8 +21,5 @@ class MinionCmdQueueTestCase(unittest.TestCase):
         del self.boss
 
 
-
-
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()
-

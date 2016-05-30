@@ -28,4 +28,6 @@ vocabulary = project, TM
 15 = DreamWorks,JohnIsaacs
 16 = CharlesRiverLabsRedo,DanaPearson
 17 = OU205Eval,TomKnight
+18 = ObjectUpdate,JE
+19 = TestProject,SomDude
 

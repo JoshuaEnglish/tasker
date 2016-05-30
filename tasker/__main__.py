@@ -5,7 +5,6 @@ Created on Wed Mar 16 14:04:54 2016
 @author: jenglish
 """
 
-
 import sys
 import os
 import argparse
@@ -14,6 +13,7 @@ import logging
 from configparser import ConfigParser, ExtendedInterpolation
 
 import colorama
+# noinspection PyPep8Naming
 import yapsy.ConfigurablePluginManager as CPM
 
 import basetaskerplugin
@@ -21,17 +21,16 @@ import minioncmd
 import core
 import lib
 
-
-
 log = logging.getLogger('main')
 
 screen_handler = logging.StreamHandler()
 
 error_handler = logging.FileHandler('error.txt')
 error_handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s (%(name)s)',
-                               datefmt='%Y-%m%d %H:%M:%S')
-                                
+formatter = logging.Formatter(
+    '%(asctime)s %(levelname)s: %(message)s (%(name)s)',
+    datefmt='%Y-%m%d %H:%M:%S')
+
 screen_handler.setFormatter(formatter)
 error_handler.setFormatter(formatter)
 log.addHandler(error_handler)
@@ -45,11 +44,11 @@ else:
     INSTALL_DIR = os.path.dirname(__file__)
 
 sys.path.insert(0, os.path.abspath(INSTALL_DIR))
-    
+
 configpath = os.path.join(INSTALL_DIR, 'tasker.ini')
 
 config.read([
-    os.path.join(INSTALL_DIR, 'defaults.ini'), 
+    os.path.join(INSTALL_DIR, 'defaults.ini'),
     configpath
 ])
 
@@ -60,10 +59,12 @@ def save_config():
         config.write(fp)
 
 
-parser = argparse.ArgumentParser('t',
-                                 description="Todo Manager",
-                                 #usage='t [main options] command [command options] [command arguments]',
-                                 epilog='For more information use the --manual flag')
+parser = argparse.ArgumentParser(
+    't',
+    description="Extensile text-based todo manager",
+    usage='t [main options] command [command options] [command arguments]',
+    epilog='For more information use the --manual flag'
+)
 
 commands = parser.add_subparsers(title='supported commands',
                                  dest="command",
@@ -78,7 +79,7 @@ parser.add_argument('--power', action='store_true', default=False,
 parser.add_argument('--manual', action='store_true', default=False,
                     help=argparse.SUPPRESS)
 
-parser.add_argument('--wrap', choices=['wrap','shorten','none'], 
+parser.add_argument('--wrap', choices=['wrap', 'shorten', 'none'],
                     default='wrap')
 parser.add_argument('--width', type=int, default=78,
                     help="Width to wrap or shorten text when printing")
@@ -86,7 +87,7 @@ parser.add_argument('--width', type=int, default=78,
 parser.add_argument('-z', action='store_false', default=True,
                     dest='showz', help='Hides Z-priority tasks')
 parser.add_argument('-l', action='store_false', default=True,
-                    dest='integrate', 
+                    dest='integrate',
                     help='Shows Z-priority tasks before unprioritized tasks')
 
 parser.add_argument('-n', '--no-color', action='store_false', dest='colorize',
@@ -126,10 +127,10 @@ def add_subparser(subparser, helpstr=None):
     commands._choices_actions.append(choice_action)
 
 
-
 class TaskCmd(minioncmd.BossCmd):
     prompt = "tasker> "
     doc_leader = "Tasker Help"
+    doc_header = "Top-level commands (type help <command>)"
     minion_header = "Subcommands (type <command> help)"
 
     def __init__(self, completekey='tab', stdin=None, stdout=None,
@@ -140,7 +141,7 @@ class TaskCmd(minioncmd.BossCmd):
         self.lib = lib
 
     def do_list(self, line):
-        "Lists tasks"
+        """Lists tasks"""
         args = commands.choices['list'].parse_args(line.split())
         args.filterop = any if args.filterop else all
         self.lib.list_tasks(**vars(args))
@@ -168,7 +169,7 @@ class TaskCmd(minioncmd.BossCmd):
 
     def save_config(self):
         save_config()
-        
+
     def help_wrap(self):
         """Tasker supports three options for wrapping text:
             
@@ -182,9 +183,8 @@ class TaskCmd(minioncmd.BossCmd):
         These options can be set at the command line for one time use using
         t --wrap [wrap, shorten, none] 
         """
-           
+
         print(TaskCmd.help_wrap.__doc__)
-        
 
 
 manager = CPM.ConfigurablePluginManager(config,
@@ -207,7 +207,8 @@ core.ArchiveCmd('archive', CLI)
 add_subparser(core.plugin_argparser, "Plugin manager")
 add_subparser(core.archive_argparser, "Archive commands")
 
-log.debug('Collecting Plugins from %s', manager.getPluginLocator().plugins_places)
+log.debug('Collecting Plugins from %s',
+          manager.getPluginLocator().plugins_places)
 manager.collectPlugins()
 
 for info in manager.getAllPlugins():
@@ -215,7 +216,7 @@ for info in manager.getAllPlugins():
         continue
     plugin = info.plugin_object
     plugin.lib = LIB
-    
+
     plugin.CONFIG_SECTION_NAME = "%s Plugin: %s" % (info.category, info.name)
     if hasattr(plugin, 'parser'):
         log.debug("Adding command line parser for %s", info.name)
@@ -224,6 +225,7 @@ for info in manager.getAllPlugins():
         for newparser in plugin.parsers:
             log.debug('Adding command parser for %s', newparser.prog)
             add_subparser(newparser, plugin.parsers[newparser])
+
 
 def load_plugins():
     # process activated plugins
@@ -239,7 +241,8 @@ def load_plugins():
                 cli = getattr(plugin, 'cli')
                 CLI.add_minion(name, cli)
             else:
-                log.warn("Subcommand plugin %s has no MinionCmd instance", info.name)
+                log.warn("Subcommand plugin %s has no MinionCmd instance",
+                         info.name)
         elif info.category == 'NewCommand':
             methods = plugin.getConfigOption('public_methods').split(',')
             methods = [m.strip() for m in methods]
@@ -247,14 +250,13 @@ def load_plugins():
             for method in methods:
                 setattr(CLI.__class__, method, getattr(plugin, method))
             # load appropriate help methods
-            helpers = [m.replace('do_','help_').strip() for m in methods]
+            helpers = [m.replace('do_', 'help_').strip() for m in methods]
             for helper in helpers:
                 if hasattr(plugin, helper):
                     setattr(CLI.__class__, helper, getattr(plugin, helper))
 
 
 def main():
-    
     args = parser.parse_args(sys.argv[1:])
 
     if args.power:
@@ -263,13 +265,13 @@ def main():
         pcmd.config = config
         args.interact = True
         CLI.cmdqueue.append('poweruser')
-    
+
     config.set('Tasker', 'wrap-behavior', args.wrap)
     config.set('Tasker', 'wrap-width', str(args.width))
-    
+
     config.set('Tasker', 'show-priority-z', str(args.showz))
     config.set('Tasker', 'priority-z-last', str(args.integrate))
-    
+
     config.set('Tasker', 'use-color', str(args.colorize))
     if args.colorize:
         colorama.init(strip=True)
@@ -285,6 +287,7 @@ def main():
         CLI.onecmd(' '.join(sys.argv[sys.argv.index(args.command):]))
 
     return 0
+
 
 if __name__ == '__main__':
     sys.exit(main())
