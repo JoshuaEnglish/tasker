@@ -396,7 +396,7 @@ class TaskLib(object):
         this.complete = True
         this.end = datetime.datetime.now()
         if comment:
-            t += " # {}".format(comment)
+            this.text += " # {}".format(comment)
         tasks[tasknum] = this
         # run hooks - anything that should happen in response (grab next item in queue)
 

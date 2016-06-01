@@ -30,4 +30,6 @@ vocabulary = project, TM
 17 = OU205Eval,TomKnight
 18 = ObjectUpdate,JE
 19 = TestProject,SomDude
+20 = EludidateRedo,WilsonComas
+21 = WMRefresh,RichardHeffelfinger
 
