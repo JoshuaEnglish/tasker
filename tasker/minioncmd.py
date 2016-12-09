@@ -15,20 +15,20 @@ which enhances the basic :meth:`~ExtHelpCmd.do_help` method.
 
 """
 
-import cmd 
+import cmd
 import logging
 
 
 class ExtHelpCmd(cmd.Cmd):
     """ExtHelpCmd
-    
+
     Extended Help Cmd. Subclass of cmd.Cmd that creates an extra layer
     of topics to refer to minions in a separate topic group.
     """
 
     minion_header = "Minion commands (type <command> help)"
     doc_header = "Local commands (type help <command>)"
-    
+
     def do_help(self, arg):
         """List available commands with "help" or detailed help with "help cmd"."""
         if arg:
@@ -37,13 +37,14 @@ class ExtHelpCmd(cmd.Cmd):
                 func = getattr(self, 'help_' + arg)
             except AttributeError:
                 try:
-                    doc=getattr(self, 'do_' + arg).__doc__
+                    doc = getattr(self, 'do_' + arg).__doc__
                     if doc:
-                        self.stdout.write("%s\n"%str(doc))
+
+                        print(doc, file=self.stdout)
                         return
                 except AttributeError:
                     pass
-                self.stdout.write("%s\n"%str(self.nohelp % (arg,)))
+                print(self.nohelp % (arg,), file=self.stdout)
                 return
             func()
         else:
@@ -61,7 +62,7 @@ class ExtHelpCmd(cmd.Cmd):
             misc = {}
             for name in names:
                 if name[:5] == 'help_':
-                    misc[name[5:]]=1
+                    misc[name[5:]] = 1
             names.sort()
             # There can be duplicates if routines overridden
             prevname = ''
@@ -70,35 +71,37 @@ class ExtHelpCmd(cmd.Cmd):
                     if name == prevname:
                         continue
                     prevname = name
-                    cmd=name[3:]
-                    if cmd in misc:
-                        if cmd in minions:
-                            minion_doc.append(cmd)
+                    cmd_name = name[3:]
+                    if cmd_name in misc:
+                        if cmd_name in minions:
+                            minion_doc.append(cmd_name)
                         else:
-                            cmds_doc.append(cmd)
-                        del misc[cmd]
+                            cmds_doc.append(cmd_name)
+                        del misc[cmd_name]
                     elif getattr(self, name).__doc__:
-                        if cmd in minions:
-                            minion_doc.append(cmd)
+                        if cmd_name in minions:
+                            minion_doc.append(cmd_name)
                         else:
-                            cmds_doc.append(cmd)
+                            cmds_doc.append(cmd_name)
                     else:
-                        cmds_undoc.append(cmd)
-            
+                        cmds_undoc.append(cmd_name)
+
             cmds_sys = []
-            for cmd in ['help','quit','done']:
-                if cmd in cmds_doc:
-                    cmds_doc.remove(cmd)
-                    cmds_sys.append(cmd)
-            
+            for ccmd_namemd in ['help', 'quit', 'done']:
+                if cmd_name in cmds_doc:
+                    cmds_doc.remove(cmd_name)
+                    cmds_sys.append(cmd_name)
+
             cmds_sys.sort()
-                        
-            self.stdout.write("%s\n"%str(self.doc_leader))
-            self.print_topics(self.doc_header,   cmds_doc,   15, 80)
+
+            #self.stdout.write("%s\n"%str(self.doc_leader))
+            print(self.doc_leader, file=self.stdout)
+            self.print_topics(self.doc_header, cmds_doc, 15, 80)
             self.print_topics(self.minion_header, minion_doc, 15, 80)
             self.print_topics("Program control commands", cmds_sys, 15, 80)
-            self.print_topics(self.misc_header,  list(misc.keys()), 15, 80)
+            self.print_topics(self.misc_header, list(misc.keys()), 15, 80)
             self.print_topics(self.undoc_header, cmds_undoc, 15, 80)
+
 
 class BossCmd(ExtHelpCmd):
     """BossCmd
@@ -111,12 +114,12 @@ class BossCmd(ExtHelpCmd):
     prompt = 'Boss> '
     doc_leader = "Help for BossCmd"
 
-    def __init__(self, completekey='tab', stdin=None, stdout=None): 
+    def __init__(self, completekey='tab', stdin=None, stdout=None):
         super().__init__(completekey, stdin, stdout)
-        
+
         #: Flag to detect when minions call to quit the program
         self.exit_called_from_minion = False
-        
+
         #: flag to determine if the BossCmd instance is in the middle of a
         #: loop or not (if not, assume a call to onecmd)
         self.inloop = False
@@ -138,7 +141,7 @@ class BossCmd(ExtHelpCmd):
         """Sets the instance ``inloop`` property to ``False``"""
         self.inloop = False
         super().postloop()
-        
+
     def default(self, line):
         """Called on an input line when the command prefix is not recognized.
 
@@ -146,12 +149,14 @@ class BossCmd(ExtHelpCmd):
         returns.
 
         """
-        self.stdout.write('*** Unknown %s syntax: %s\n' % 
-            (self.__class__.__name__, line))
-        
+        #self.stdout.write('*** Unknown %s syntax: %s\n' %
+        #                  (self.__class__.__name__, line))
+        print("*** Unknown %s syntax: %s" % (self.__class__.__name, line),
+              file=self.stdout)
+
     def add_minion(self, name, cmder):
         """add_minion(name, minion)
-        
+
         Adds the minion to the current instance of BossCmd. This method
         can be called automatically when creating an instance of MinionCmd.
         """
@@ -169,7 +174,7 @@ class BossCmd(ExtHelpCmd):
 
         # step one: create a "do_" method to access the minion
         def do_minion(self, arg):
-            self._log.debug("Calling minion %s with %s",name,  arg)
+            self._log.debug("Calling minion %s with %s", name, arg)
             if arg:
                 cmder.onecmd(arg)
             else:
@@ -179,7 +184,7 @@ class BossCmd(ExtHelpCmd):
 
         setattr(self.__class__, "do_{}".format(name), do_minion)
 
-        
+
         self._log.debug('Creating Switch to minion for %s', name)
 
 
@@ -189,17 +194,17 @@ class BossCmd(ExtHelpCmd):
 
                 self._log.debug("Calling co-minion with line %s", line)
                 self.master.minions[name].onecmd(line)
-                
+
                 if self.master.inloop:
                     self._log.debug("Adding switch back to master.cmdqueue")
                     self.master.cmdqueue.append(self.name)
-                    
+
             else:
                 self._log.debug("Adding co-minon command to master.cmdqueue")
                 self.master.cmdqueue.append('{} {}'.format(name, line))
-                
+
             return True
-        
+
         switch_to_minion.__name__ = "do_%s" % name
         switch_to_minion.__doc__ = "Send a single command to the {} subprogram or begin its loop".format(name)
 
@@ -216,19 +221,19 @@ class BossCmd(ExtHelpCmd):
 
     def do_quit(self, line):
         """Quits the program"""
-        return True 
-     
-    def postcmd(self, stop, line): 
-        # check if minion called for exit 
-        if self.exit_called_from_minion: 
-            stop = True 
-        return stop 
+        return True
+
+    def postcmd(self, stop, line):
+        # check if minion called for exit
+        if self.exit_called_from_minion:
+            stop = True
+        return stop
 
     def onecmd(self, line):
         """Process a single command and process the cmdqueue
         :rtype: boolean
         """
-        stop = super().onecmd( line)
+        stop = super().onecmd(line)
         self.process_queue()
 #        while len(self.cmdqueue):
 #            text = self.cmdqueue.pop(0)
@@ -254,7 +259,7 @@ class MinionCmd(ExtHelpCmd):
     doc_leader = "Help for MinionCmd"
     minion_header = "Other minions (type <topic> help)"
 
-    def __init__(self, name, master=None, 
+    def __init__(self, name, master=None,
                  completekey='tab', stdin=None, stdout=None):
         super().__init__(completekey, stdin, stdout)
         self.prompt = "{}> ".format(name)
@@ -262,14 +267,14 @@ class MinionCmd(ExtHelpCmd):
         self.master = master
         if self.master:
             self.master.add_minion(name, self)
-            
+
     def do_quit(self, line):
         """Exits the entire program"""
         if self.master:
-            self.master.exit_called_from_minion = True 
-        return True 
-    
-    def do_done(self, line): 
+            self.master.exit_called_from_minion = True
+        return True
+
+    def do_done(self, line):
         """Exits the sub program and returns to the main program"""
         return True
 
@@ -280,25 +285,26 @@ class MinionCmd(ExtHelpCmd):
         returns.
 
         """
-        self.stdout.write('*** Unknown %s syntax: %s\n'% (self.__class__.__name__, line))
- 
+        #self.stdout.write('*** Unknown %s syntax: %s\n'% (self.__class__.__name__, line))
+        print('*** Unknown', self.__class__.__name__, 'syntax:', line, file=self.stdout)
+
     def onecmd(self, line):
         """Process a single command and process the cmdqueue
         :rtype: boolean
         """
-        stop = super().onecmd( line)
+        stop = super().onecmd(line)
         self.master.process_queue()
 #        while len(self.cmdqueue):
 #            text = self.cmdqueue.pop(0)
 #            self._log.debug("Processing queued command: %s", text)
 #            self.onecmd(text)
         return stop
-        
-if __name__=='__main__':
+
+if __name__ == '__main__':
     #logging.getLogger('bosscmd').setLevel(logging.DEBUG)
     #logging.getLogger('minioncmd').setLevel(logging.DEBUG)
-    
-    
+
+
     class SubmissionCmd(MinionCmd):
         doc_leader = "Help for SubmissionCmd"
 
@@ -316,10 +322,10 @@ if __name__=='__main__':
 
     class LocalBully(BossCmd):
         doc_leader = "Help for the Bully"
-        
+
         def do_push(self, line):
             print("BullyBoy pushes:", line)
-            
+
     Boss = LocalBully()
 
     # long way to add minion to boss

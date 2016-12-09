@@ -1,0 +1,12 @@
+[Core]
+Name = Quotidia
+Module = QuotidiaPlugin
+
+[Documentation]
+Author = Josh English
+Version = 0.1
+Website = http://joshuarenglish.com
+Description = Automatically generates tasks on schedule
+
+[Workflows]
+directory = quotidia

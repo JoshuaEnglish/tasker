@@ -80,7 +80,12 @@ class PowerCmd(minioncmd.MinionCmd):
 
 
     def do_python(self, line):
-        """Jump into Python"""
+        """Jump into Python.
+        Namespace consists of 'boss' (the BossCmd object),
+        'config' (the application ConfigParser instance),
+        'lib' (the Tasker Library instance), and
+        'manager' (the Plugins Manager).
+        """
         namespace = {'boss': self.master,
                      'config': self.master.config,
                      'lib': self.master.lib,

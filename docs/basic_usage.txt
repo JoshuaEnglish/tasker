@@ -165,7 +165,7 @@ Showing Completed Tasks
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 The default behavior is to only list open tasks, but you can see completed
-tasks with the ``-x`` switch::
+tasks with the ``-a`` switch::
 
     > t list -a
     13 (B) 2016-03-20T18:33:23 Get complete information for +HomeQuote @quote
@@ -221,7 +221,7 @@ Marking tasks as Complete
 -------------------------
 
 You can close a task with the ``do`` command. The input string should be 
-the TASK NUMBER and any EXTRA COMMENT.
+the TASK NUMBER and any EXTRA COMMENT::
 
     > t
     32 2016-03-24T15:30:19 unprioritized task # This should be done soon

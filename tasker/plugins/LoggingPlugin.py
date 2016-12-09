@@ -23,9 +23,9 @@ class Logging(basetaskerplugin.TaskerPlugin):
         print("This is the logging plugin")
 
     def add_task(self, this):
-        print("Adding task: {:s}".format(this))
+        print("Adding task: {:s}".format(this.text))
         return (0, "", this)
 
     def complete_task(self, this):
-        print("Completing task: {:s}".format(this))
+        print("Completing task: {:s}".format(this.text))
         return (0, "", this)
