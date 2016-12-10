@@ -167,21 +167,26 @@ class TaskCmd(minioncmd.BossCmd):
         args = commands.choices['pri'].parse_args(line.split())
         self.lib.prioritize_task(**vars(args))
 
+    def do_note(self, line):
+        """Modify a note on a task: NUM, [NOTE]"""
+        args =commands.choices['note'].parse_args(line.split())
+        self.lib.note_task(args.tasknum, " ".join(args.note))
+
     def save_config(self):
         save_config()
 
     def help_wrap(self):
         """Tasker supports three options for wrapping text:
-            
+
         wrap : will wrap text leaving an indent to clear task numbers
                and priorities.
-              
+
         shorten: will cut off the text of each task.
-        
+
         none: will not do any text wrapping.
-    
+
         These options can be set at the command line for one time use using
-        t --wrap [wrap, shorten, none] 
+        t --wrap [wrap, shorten, none]
         """
 
         print(TaskCmd.help_wrap.__doc__)

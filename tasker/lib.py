@@ -45,10 +45,10 @@ TASK_EXTENSION_ERROR = 2
 # todo: add note as a slot for further processing
 class Task(object):
     """Simple container for parsed tasks"""
-    
+
     __slots__ = ('complete', 'priority', 'start', 'end', 'text',
                  'contexts', 'projects', 'extensions')
-    
+
     def __init__(self, complete, priority, start, end, text,
                  contexts, projects, extensions):
         self.complete = complete
@@ -59,7 +59,7 @@ class Task(object):
         self.contexts = contexts
         self.projects = projects
         self.extensions = extensions
-        
+
     def __str__(self):
         res = []
         if self.complete:
@@ -107,7 +107,7 @@ class Task(object):
                                              TIMEFMT)
         else:
             end = None
-        
+
         if complete and not end:
             end = datetime.datetime.now()
 
@@ -125,11 +125,11 @@ class Task(object):
         if 'uid' not in edict:
             edict['uid'] = start.strftime(IDFMT)
             task += " {uid:%s}" % edict['uid']
-        
-        return cls(complete, priority, start, end, task, 
+
+        return cls(complete, priority, start, end, task,
                    context, projects, edict)
-        
-    
+
+
 class TaskLib(object):
 
     def __init__(self, config=None, manager=None):
@@ -144,18 +144,18 @@ class TaskLib(object):
 
         self._textwrapper = None
 
-        
+
         if not os.path.exists(config['Files']['tasker-dir']):
             try:
                 os.mkdir(config['Files']['tasker-dir'])
             except FileNotFoundError:
                 self.log.error("Default file not found, resetting")
                 config['Files']['tasker-dir'] = os.path.join(
-                                                  os.environ['APPDATA'], 
+                                                  os.environ['APPDATA'],
                                                   'tasker')
                 if not os.path.exists(config['Files']['tasker-dir']):
                     os.mkdir(config['Files']['tasker-dir'])
-                
+
 
         for path in ['task-path', 'done-path']:
             if not os.path.exists(config['Files'][path]):
@@ -214,7 +214,7 @@ class TaskLib(object):
 
     def parse_task(self, text):
         """Return a tuple of the following fields:
-            complete - boolean 
+            complete - boolean
             priority - single letter (blank if complete or unprioritized)
             start - datetime.datetime object
             end - datetime.datetime object or None
@@ -222,7 +222,7 @@ class TaskLib(object):
             contexts - tuple of contexts (including '@')
             projects - tuple of projects (including '+')
             extensions - dictionary of extension values
-          
+
             :param str text: text of a task.
         """
         raise NotImplementedError("Please use the task object from here on out")
@@ -391,7 +391,7 @@ class TaskLib(object):
             del self.tasks
             return TASK_ERROR, "Task already completed"
 
-        
+
         this = tasks[tasknum]
         this.complete = True
         this.end = datetime.datetime.now()
@@ -428,7 +428,7 @@ class TaskLib(object):
             return TASK_ERROR, "Filter Operation must by any or all"
         showcomplete = showcomplete or False
 
-        everything = [(key, val) 
+        everything = [(key, val)
                       for key, val in list(self.get_tasks(
                           self.config['Files']['task-path']).items())
                       if (showcomplete or not val.complete)]
@@ -437,7 +437,7 @@ class TaskLib(object):
             self.log.info('Filtering tasks by keywords')
             everything = [(key, val) for key, val in everything
                           if filterop([word in val for word in filters])]
-        
+
         if not self.config['Tasker'].getboolean('show-priority-z', True):
             self.log.info("Hiding priority Z tasks")
             everything = [(key, val) for key,val in everything
@@ -469,22 +469,22 @@ class TaskLib(object):
                 stuff = (sorted(plist, key=getter) +
                          sorted(zlist, key=getter) +
                          sorted(ulist, key=getter))
-            
+
         else:
             stuff = sorted(everything, key=itemgetter(0))
         return stuff
 
-    def list_tasks(self, by_pri=True, filters: str = None, filterop=None, 
+    def list_tasks(self, by_pri=True, filters: str = None, filterop=None,
                    showcomplete=None, showext=None):
         """list_tasks([by_pri, filters, filterop, showcomplete, showuid)
         Displays a list of tasks.
         :type by_pri: Boolean
-        :param by_pri: If true, sorts by priority, 
+        :param by_pri: If true, sorts by priority,
                        if false, sorts by order in file
         :param filters: Words to filter the list
         :param filterop: all or any (the functions, not strings
         :param showcomplete: If true, shows completed tasks
-        :param showext: If true, shows the normally hidden 
+        :param showext: If true, shows the normally hidden
                         extensions of the task.
         :rtype: None
         """
@@ -503,7 +503,7 @@ class TaskLib(object):
         wrap_width = self.config['Tasker'].getint('wrap-width', 78)
         if not self._textwrapper:
             self._textwrapper = textwrap.TextWrapper(width=wrap_width)
-            
+
         if shown_tasks:
             maxid = max([a for a, b in shown_tasks])
             idlen = len(str(maxid))
@@ -515,16 +515,16 @@ class TaskLib(object):
                 wrapfunc = self._textwrapper.fill
             elif wrap == 'shorten':
                 self.log.info("Shortening each task")
-                wrapfunc = partial(textwrap.shorten, width=wrap_width, 
+                wrapfunc = partial(textwrap.shorten, width=wrap_width,
                                    placeholder='...')
             elif wrap == 'none':
                 wrapfunc = str
             else:
                 self.log.error("Unknown textwrap preference %s", wrap)
-            
+
             for idx, task in shown_tasks:
                 pri = task.priority
-            
+
                 if not showext:
                     for ext in self.extension_hiders:
                         task.text = self.extension_hiders[ext].sub("", task.text)
@@ -539,16 +539,38 @@ class TaskLib(object):
 
     def get_color(self, pri):
         return self.theme.get(pri, colorama.Fore.RESET)
-        
+
+    def note_task(self, tasknum, note=None):
+        """Updates the note on a task by task number."""
+        tasks = self.get_tasks(self.config['Files']['task-path'])
+        if tasknum not in tasks:
+            self.log.error('Task %s not in list', tasknum)
+            return TASK_ERROR, "Task number not in task list"
+        t = tasks[tasknum]
+        t.text = self.update_note(t.text, note)
+        tasks[tasknum] = t
+        self.write_tasks(tasks, self.config['Files']['task-path'])
+        print(tasknum, tasks[tasknum])
+        return TASK_OK, tasks[tasknum]
+
+    def update_note(self, text, note=None):
+        """updates the note from a line of text. If note is None or blank,
+        removes the note from the text entirely.
+        """
+        if note:
+            return "{} # {}".format(re_note.sub('', text), note)
+        else:
+            return re_note.sub('', text)
+
     def prioritize_task(self, tasknum, priority, note=None):
         """prioritize_task(tasknum, new_pri [,note]
-        
+
         Change the priority of a task. Will do nothing if task is closed.
         New priority can be A-Z but should be A-W.
-        
+
         :param int tasknum: Number of task to update
         :param str priority: New priority character
-        :param str note: Optional note to append 
+        :param str note: Optional note to append
         """
         tasks = self.get_tasks(self.config['Files']['task-path'])
         if tasknum not in tasks:
@@ -559,9 +581,10 @@ class TaskLib(object):
             return TASK_ERROR, "Task already completed"
 
         t = self.reprioritize_task(tasks[tasknum], priority)
-        if note:
-            text = re_note.sub('', t.text)
-            t.text = '%s # %s' % (text, ' '.join(note).strip())
+        t.text = self.update_note(t.text, note)
+#        if note:
+#            text = re_note.sub('', t.text)
+#            t.text = '%s # %s' % (text, ' '.join(note).strip())
         tasks[tasknum] = t
         self.write_tasks(tasks, self.config['Files']['task-path'])
         print(tasks[tasknum])
@@ -606,16 +629,16 @@ class TaskLib(object):
     def get_counts(self, kind, include_archive=False, only_archive=False):
         """get_counts(kind, include_archive, only_archive)
         Returns a dictionary of :class:`collections.Counter` objects.
-        
-        
+
+
         :param str kind: 'project' or 'context'
         :param bool include_archive: passed to :meth:`build_task_dict`
         :param bool only_archive: passet to :meth:`build_task_dict`
-        
+
         The resulting dictionary looks like::
-            
+
             {'+SomeProject': Counter({'open': 2, 'closed': 1})}
-        
+
         """
         kind = kind.upper()
 

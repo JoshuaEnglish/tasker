@@ -64,6 +64,11 @@ def add_core_subparsers(commands):
     priority_parser.add_argument('note', nargs=argparse.REMAINDER,
                                  help="optional note to attach to task")
 
+    note_parser = commands.add_parser('note', help='notate tasks')
+    note_parser.add_argument('tasknum', type=int,
+                             help='number of the task to prioritize')
+    note_parser.add_argument('note', nargs=argparse.REMAINDER,
+                             help="note to add (blank removes note)")
 
 plugin_argparser = argparse.ArgumentParser('plugins')
 plugin_commands = plugin_argparser.add_subparsers(title='commands',
@@ -221,17 +226,17 @@ class {name}CLI(minioncmd.MinionCmd):
     prompt = "{lowername}> "
 
     def __init__(self, completekey='tab', stdin=None, stdout=None, ):
-        super().__init__('{lowername}', 
-                         completekey=completekey, 
-                         stdin=stdin, 
+        super().__init__('{lowername}',
+                         completekey=completekey,
+                         stdin=stdin,
                          stdout=stdout)
-        
+
 '''
 
 CLI_LINK = '''
         self.cli_name = '{lowername}'
         self.cli = {name}CLI()
-        
+
         '''
 PLUGIN_CODE = '''
 """
@@ -256,11 +261,11 @@ class {name}Plugin(basetaskerplugin.{cls}):
         {clilink}
         # define argument parsers
         {lowername} = argparse.ArgumentParser('{lowername}')
-        
+
         # add parsers
 
         self.parsers = {{
-            {lowername}: "Thumb twiddlers",            
+            {lowername}: "Thumb twiddlers",
         }}
 
         super().activate()
@@ -272,7 +277,7 @@ class {name}Plugin(basetaskerplugin.{cls}):
     # hook method - delete if not going to use
     def add_task(self, c, p, s, e, t, o, j, x):
         return (0, "", c, p, s, e, t)
-        
+
     # hook method - delete if not going to use
     def complete_task(self, c, p, s, e, t, o, j, x):
         return (0, "", c, p, s, e, t)
@@ -301,7 +306,7 @@ archive_project_parser.add_argument('projects',
 class ArchiveCmd(minioncmd.MinionCmd):
     prompt = "archive> "
     doc_leader = """Archive Help
-    
+
     These commands archive tasks by project or number.
     Tasks that are not old enough (set by --days) will not be archived.
     """
