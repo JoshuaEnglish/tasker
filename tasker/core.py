@@ -15,6 +15,11 @@ import logging
 import minioncmd
 import lister
 
+__version__ = "1.1"
+__updated__ = "2016-12-16"
+__history__ = """
+1.1 archive projects should work now
+"""
 
 def add_core_subparsers(commands):
     list_parser = commands.add_parser('list', help='list tasks',
@@ -333,20 +338,21 @@ class ArchiveCmd(minioncmd.MinionCmd):
         open_projects = set()
 
         for num, task in tasks:
-            stuff = lib.parse_task(task)
-            self._log.debug('Projects: %s', stuff[6])
 
-            for proj in stuff[6]:
-                if stuff[3] is None:
+
+            self._log.debug('Projects: %s', task.projects)
+
+            for proj in task.projects:
+                if task.end is None:
                     open_projects.add(proj)
                     continue
                 if proj not in end_dates:
-                    end_dates[proj] = stuff[3]
+                    end_dates[proj] = task.end
                 else:
-                    end_dates[proj] = max(stuff[3],
+                    end_dates[proj] = max(task.end,
                                           end_dates[proj])
         for proj in open_projects:
-            self._log.warn('Project %s is still open. Not archived.')
+            self._log.warn('Project %s is still open. Not archived.', proj)
             if proj in end_dates:
                 del end_dates[proj]
 

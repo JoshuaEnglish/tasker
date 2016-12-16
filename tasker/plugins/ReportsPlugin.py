@@ -14,11 +14,18 @@ import datetime
 import argparse
 import basetaskerplugin
 import lister
+import textwrap
 
 from lib import Task, re_ext
 
 todo = """
 Create a timed report
+"""
+
+__version__ = '1.1'
+__updated__ = '2016-12-13'
+__history__ = """
+1.1 -- today report to the screen is wrapped
 """
 
 
@@ -121,16 +128,25 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         if args.bycomplete:
             today_tasks.sort(key=lambda t: t.end)
 
+        indent = 40
         if args.trimoutput:
             trimmed_tasks = []
+            indent = 22
             for t in today_tasks:
                 s = "{0.start:%Y-%m-%d} {0.end:%Y-%m-%d} {0.text}".format(t)
                 s = re_ext.sub("", s)
                 trimmed_tasks.append(s)
             today_tasks = trimmed_tasks
+        else:
+            today_tasks = [str(t)[2:] for t in today_tasks]
+        #wrap_width = self.config['Tasker'].getint('wrap-width', 78)
+        textwrapper = textwrap.TextWrapper(width=78,
+                                           subsequent_indent = ' ' * indent)
 
         for task in today_tasks:
-            print(task)
+            #print(task, type(task))
+
+            print(textwrapper.fill(task))
 
         if args.tofile:
             folder = self.getConfigOption('daily_report_directory')

@@ -16,6 +16,11 @@ from functools import partial
 
 import colorama
 
+__version__ = "1.1"
+__updated__ = "2016-12-14"
+__history__ = """
+1.1 listing tasks is now case insensitive
+"""
 
 TIMEFMT = '%Y-%m-%dT%H:%M:%S'
 IDFMT = '%H%M%S%d%m%y'
@@ -436,7 +441,7 @@ class TaskLib(object):
         if filters:
             self.log.info('Filtering tasks by keywords')
             everything = [(key, val) for key, val in everything
-                          if filterop([word in val for word in filters])]
+                          if filterop([word.lower() in val.text.lower() for word in filters])]
 
         if not self.config['Tasker'].getboolean('show-priority-z', True):
             self.log.info("Hiding priority Z tasks")
