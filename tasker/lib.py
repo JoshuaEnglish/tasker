@@ -16,10 +16,11 @@ from functools import partial
 
 import colorama
 
-__version__ = "1.1"
-__updated__ = "2016-12-14"
+__version__ = "1.2"
+__updated__ = "2016-12-19"
 __history__ = """
 1.1 listing tasks is now case insensitive
+1.2 Filtering by (p) matches against the priority
 """
 
 TIMEFMT = '%Y-%m-%dT%H:%M:%S'
@@ -80,7 +81,7 @@ class Task(object):
 
     # __contains__ allows for filtering tasks by content
     def __contains__(self, searchtext):
-        return searchtext in self.text
+        return searchtext.lower() in self.text.lower()
 
     # __lt__ is required for sorting tasks
     def __lt__(self, other):
@@ -167,12 +168,15 @@ class TaskLib(object):
                 fd = open(config['Files'][path], 'w')
                 fd.close()
 
-        self.theme = {
-            "A" : colorama.Fore.RED,
-            "B" : colorama.Fore.YELLOW,
-            "C" : colorama.Fore.GREEN,
-            "Z" : colorama.Fore.LIGHTBLACK_EX
-            }
+        self.theme = {}
+        if self.config.getboolean('Tasker', 'use-color'):
+
+            self.theme = {
+                "A" : colorama.Fore.RED,
+                "B" : colorama.Fore.YELLOW,
+                "C" : colorama.Fore.GREEN,
+                "Z" : colorama.Fore.LIGHTBLACK_EX
+                }
 
     def get_extensions_to_hide(self):
         """get_extensions_to_hide()
@@ -438,15 +442,28 @@ class TaskLib(object):
                           self.config['Files']['task-path']).items())
                       if (showcomplete or not val.complete)]
 
+        def include_task(filters, task):
+            "return a list of booleans"
+            yeas = []
+            for word in filters:
+                yea = False
+                if word.lower() in task.text.lower():
+                    yea = True
+                if word.startswith('(') and word.endswith(')'):
+                    if word[1].upper() == task.priority:
+                        yea = True
+                yeas.append(yea)
+            return filterop(yeas)
+
         if filters:
             self.log.info('Filtering tasks by keywords')
             everything = [(key, val) for key, val in everything
-                          if filterop([word.lower() in val.text.lower() for word in filters])]
+                          if include_task(filters, val)]
 
         if not self.config['Tasker'].getboolean('show-priority-z', True):
             self.log.info("Hiding priority Z tasks")
-            everything = [(key, val) for key,val in everything
-                          if self.parse_task(val)[1] != "Z"]
+            everything = [(key, val) for key, val in everything
+                          if val.priority != "Z"]
 
         # todo .. print completed tasks in revers Cron order? The priorities get wiped
         if by_pri:

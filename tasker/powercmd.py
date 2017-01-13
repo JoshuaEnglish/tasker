@@ -89,7 +89,8 @@ class PowerCmd(minioncmd.MinionCmd):
         namespace = {'boss': self.master,
                      'config': self.master.config,
                      'lib': self.master.lib,
-                     'manager': self.master.lib.manager}
+                     'manager': self.master.lib.manager,
+                     'log': logging.getLogger('main')}
 
         code.interact("Tasker Python Session", local=namespace)
         return None

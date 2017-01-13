@@ -15,13 +15,19 @@ import logging
 import minioncmd
 import lister
 
-__version__ = "1.1"
-__updated__ = "2016-12-16"
+__version__ = "1.2"
+__updated__ = "2017-01-10"
 __history__ = """
 1.1 archive projects should work now
+1.2 archive by number should work now
 """
 
 def add_core_subparsers(commands):
+    """Adds the core subparsers: list, add, do, priority, note
+
+    :param argparse.ArgumentParser commands: The main ArgumentParser instance
+                                             of the application
+    """
     list_parser = commands.add_parser('list', help='list tasks',
                                       description="Tool for listing tasks",
                                       )
@@ -105,7 +111,8 @@ class_map = {'new': 'NewCommandPlugin',
 
 class PluginCmd(minioncmd.MinionCmd):
     """PluginCmd(name [,master, manager, completekey, stdin, stout])
-    Specialized subclass of MinionCmd that has access to the YAPSY
+
+    Subclass of MinionCmd that has access to the YAPSY
     manager.
     """
 
@@ -307,6 +314,16 @@ archive_project_parser.add_argument('projects',
                                     help="names of Projects to archive",
                                     nargs=argparse.REMAINDER)
 
+archive_number_parser = archive_commands.add_parser('number',
+    help='Archive tasks by number',
+    parents = [archive_parent])
+
+archive_number_parser.add_argument('numbers',
+                                    help="numbers of tasks to archive",
+                                    nargs=argparse.REMAINDER,
+                                    type=int)
+
+# todo: Isolate the code writing the todo and done files (DRY)
 
 class ArchiveCmd(minioncmd.MinionCmd):
     prompt = "archive> "
@@ -323,6 +340,51 @@ class ArchiveCmd(minioncmd.MinionCmd):
                  completekey='tab', stdin=None, stdout=None):
         super().__init__(name, master, completekey, stdin, stdout)
 
+    def do_number(self, text):
+        """Archive tasks by number"""
+        lib = self.master.lib
+        args = archive_number_parser.parse_args(text.split())
+        tasks = lib.sort_tasks(showcomplete=True)
+
+        tasks_to_archive = []
+
+        print("tasks to archive:", args.numbers)
+        now = datetime.datetime.now()
+        for num, task in tasks:
+
+            if num in args.numbers:
+
+                if not task.complete:
+                    print("Task", num, "still open. Not archived")
+                    continue
+                delta = now - task.end
+                if delta.days <= args.days:
+                    print("Task", num, "recently closed. Not archived")
+                    continue
+
+                if task.projects:
+                    print("Warning: Task", num, "may be part of a project.")
+                tasks_to_archive.append(num)
+
+        print("tasks I can archive", tasks_to_archive)
+
+        tasks = lib.get_tasks(lib.config['Files']['task-path'])
+        done = lib.get_tasks(lib.config['Files']['done-path'])
+
+        next_done = max(done) + 1 if done else 1
+
+        for key in tasks_to_archive:
+            done[next_done] = tasks[key]
+            next_done += 1
+            tasks.pop(key)
+
+        lib.write_tasks(tasks, lib.config['Files']['task-path'])
+        lib.write_tasks(done, lib.config['Files']['done-path'])
+
+        msg = "Archived {} tasks".format(len(tasks_to_archive))
+        self._log.info(msg)
+        print(msg)
+
     def do_project(self, text):
         """Archive tasks in a given project if all tasks are closed"""
         lib = self.master.lib
@@ -336,6 +398,7 @@ class ArchiveCmd(minioncmd.MinionCmd):
         # create a dictionary of projects, last_date
         end_dates = {}
         open_projects = set()
+
 
         for num, task in tasks:
 
@@ -385,10 +448,8 @@ class ArchiveCmd(minioncmd.MinionCmd):
         tasks = lib.get_tasks(lib.config['Files']['task-path'])
         done = lib.get_tasks(lib.config['Files']['done-path'])
 
-        try:
-            next_done = max(done) + 1
-        except ValueError:
-            next_done = 1
+        next_done = max(done) + 1 if done else 1
+
 
         for key in tasks_to_archive:
             done[next_done] = tasks[key]

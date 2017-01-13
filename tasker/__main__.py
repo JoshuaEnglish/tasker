@@ -21,7 +21,8 @@ import minioncmd
 import core
 import lib
 
-log = logging.getLogger('main')
+log = logging.getLogger()
+#log.setLevel(0)
 
 screen_handler = logging.StreamHandler()
 
@@ -29,7 +30,7 @@ error_handler = logging.FileHandler('error.txt')
 error_handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
     '%(asctime)s %(levelname)s: %(message)s (%(name)s)',
-    datefmt='%Y-%m%d %H:%M:%S')
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 screen_handler.setFormatter(formatter)
 error_handler.setFormatter(formatter)
@@ -192,47 +193,9 @@ class TaskCmd(minioncmd.BossCmd):
         print(TaskCmd.help_wrap.__doc__)
 
 
-manager = CPM.ConfigurablePluginManager(config,
-                                        config_change_trigger=save_config,
-                                        plugin_info_ext="tasker-plugin")
-manager.setPluginPlaces([os.path.join(INSTALL_DIR, 'plugins')])
-manager.setCategoriesFilter({
-    "NewCommand": basetaskerplugin.NewCommandPlugin,
-    "SubCommand": basetaskerplugin.SubCommandPlugin,
-    "Generic": basetaskerplugin.TaskerPlugin,
-})
-
-LIB = lib.TaskLib(config, manager)
-LIB.commands = commands
-CLI = TaskCmd(config=config, lib=LIB)
-
-core.PluginCmd('plugins', CLI, manager)
-core.ArchiveCmd('archive', CLI)
-
-add_subparser(core.plugin_argparser, "Plugin manager")
-add_subparser(core.archive_argparser, "Archive commands")
-
-log.debug('Collecting Plugins from %s',
-          manager.getPluginLocator().plugins_places)
-manager.collectPlugins()
-
-for info in manager.getAllPlugins():
-    if not info.is_activated:
-        continue
-    plugin = info.plugin_object
-    plugin.lib = LIB
-
-    plugin.CONFIG_SECTION_NAME = "%s Plugin: %s" % (info.category, info.name)
-    if hasattr(plugin, 'parser'):
-        log.debug("Adding command line parser for %s", info.name)
-        add_subparser(plugin.parser, getattr(plugin, 'helpstr', None))
-    elif hasattr(plugin, 'parsers'):
-        for newparser in plugin.parsers:
-            log.debug('Adding command parser for %s', newparser.prog)
-            add_subparser(newparser, plugin.parsers[newparser])
 
 
-def load_plugins():
+def load_plugins(manager, CLI):
     # process activated plugins
 
     for info in manager.getAllPlugins():
@@ -263,13 +226,14 @@ def load_plugins():
 
 def main():
     args = parser.parse_args(sys.argv[1:])
+    log.setLevel(30- (args.verbose - args.quiet) * 10)
+    screen_handler.setLevel(30 - (args.verbose - args.quiet) * 10)
+    log.debug(args)
 
-    if args.power:
-        import powercmd
-        pcmd = powercmd.PowerCmd('poweruser', CLI, manager)
-        pcmd.config = config
-        args.interact = True
-        CLI.cmdqueue.append('poweruser')
+    if args.manual:
+        print("Print manual")
+
+        return 0
 
     config.set('Tasker', 'wrap-behavior', args.wrap)
     config.set('Tasker', 'wrap-width', str(args.width))
@@ -278,11 +242,61 @@ def main():
     config.set('Tasker', 'priority-z-last', str(args.integrate))
 
     config.set('Tasker', 'use-color', str(args.colorize))
-    if args.colorize:
-        colorama.init(strip=True)
-    screen_handler.setLevel(30 - (args.verbose - args.quiet) * 10)
-    log.debug(args)
-    load_plugins()
+
+    manager = CPM.ConfigurablePluginManager(config,
+                                            config_change_trigger=save_config,
+                                            plugin_info_ext="tasker-plugin")
+    manager.setPluginPlaces([os.path.join(INSTALL_DIR, 'plugins')])
+    manager.setCategoriesFilter({
+        "NewCommand": basetaskerplugin.NewCommandPlugin,
+        "SubCommand": basetaskerplugin.SubCommandPlugin,
+        "Generic": basetaskerplugin.TaskerPlugin,
+    })
+
+    LIB = lib.TaskLib(config, manager)
+    LIB.commands = commands
+    CLI = TaskCmd(config=config, lib=LIB)
+
+    core.PluginCmd('plugins', CLI, manager)
+    core.ArchiveCmd('archive', CLI)
+
+    add_subparser(core.plugin_argparser, "Plugin manager")
+    add_subparser(core.archive_argparser, "Archive commands")
+
+    log.debug('Collecting Plugins from %s',
+              manager.getPluginLocator().plugins_places)
+    manager.collectPlugins()
+
+    for info in manager.getAllPlugins():
+        if not info.is_activated:
+            continue
+        plugin = info.plugin_object
+        plugin.lib = LIB
+
+        plugin.CONFIG_SECTION_NAME = "%s Plugin: %s" % (info.category, info.name)
+        if hasattr(plugin, 'parser'):
+            log.debug("Adding command line parser for %s", info.name)
+            add_subparser(plugin.parser, getattr(plugin, 'helpstr', None))
+        elif hasattr(plugin, 'parsers'):
+            for newparser in plugin.parsers:
+                log.debug('Adding command parser for %s', newparser.prog)
+                add_subparser(newparser, plugin.parsers[newparser])
+
+
+    if args.power:
+        import powercmd
+        pcmd = powercmd.PowerCmd('poweruser', CLI, manager)
+        pcmd.config = config
+        args.interact = True
+        CLI.cmdqueue.append('poweruser')
+
+
+
+    colorama.init(strip=True)
+
+
+
+    load_plugins(manager, CLI)
 
     if args.interact:
         CLI.cmdloop()
