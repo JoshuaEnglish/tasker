@@ -48,4 +48,6 @@ vocabulary = project, TM
 35 = GrupoEduk,JorgeGarcia
 36 = 49ersRAP,EISA
 37 = UOAP,THKN
+38 = L3SwitchRMA,MichaelWilson
+39 = L3IAPRMA,Michael,Wilson
 

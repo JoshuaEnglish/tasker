@@ -5,6 +5,25 @@ Created on Wed Mar 16 14:04:54 2016
 @author: jenglish
 """
 
+__problem__ = """
+The argument parser needs to be aware of the plug ins to load, so:
+
+    create config (configparser)
+    config reads defaults and ini file (which list plugins to load)
+    create parser (argparse.parser)
+    create manager (yapsy plugin manager - requires config)
+    create library (needs manager and config) (although manager could be tacked on later)
+    manager scans plugins to add to the parser
+
+    parser parses command line
+
+
+    update configparser with parser args
+
+    create cli
+    manager scans plugins to add to the cli
+
+"""
 import sys
 import os
 import argparse
@@ -29,8 +48,11 @@ screen_handler = logging.StreamHandler()
 error_handler = logging.FileHandler('error.txt')
 error_handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
-    '%(asctime)s %(levelname)s: %(message)s (%(name)s)',
-    datefmt='%Y-%m-%d %H:%M:%S')
+    #'%(asctime)s %(levelname)s: %(message)s (%(name)s)',
+    '%(asctime)s %(levelname)s:\n\t[%(pathname)s\%(filename)s:%(lineno)s]\n\t%(message)s (%(name)s)',
+    #datefmt='%Y-%m-%d %H:%M:%S'
+    datefmt='%H:%M'
+    )
 
 screen_handler.setFormatter(formatter)
 error_handler.setFormatter(formatter)
@@ -204,6 +226,7 @@ def load_plugins(manager, CLI):
         plugin = info.plugin_object
 
         if info.category == 'SubCommand':
+            log.info('Adding %s SubCommand to CLI', info.name)
             if hasattr(plugin, 'cli'):
                 name = getattr(plugin, 'cli_name')
                 cli = getattr(plugin, 'cli')
@@ -211,7 +234,9 @@ def load_plugins(manager, CLI):
             else:
                 log.warn("Subcommand plugin %s has no MinionCmd instance",
                          info.name)
+
         elif info.category == 'NewCommand':
+            log.info('Adding %s NewCommand to CLI', info.name)
             methods = plugin.getConfigOption('public_methods').split(',')
             methods = [m.strip() for m in methods]
             log.debug("Adding new commands: %s" % ", ".join(methods))
@@ -225,24 +250,6 @@ def load_plugins(manager, CLI):
 
 
 def main():
-    args = parser.parse_args(sys.argv[1:])
-    log.setLevel(30- (args.verbose - args.quiet) * 10)
-    screen_handler.setLevel(30 - (args.verbose - args.quiet) * 10)
-    log.debug(args)
-
-    if args.manual:
-        print("Print manual")
-
-        return 0
-
-    config.set('Tasker', 'wrap-behavior', args.wrap)
-    config.set('Tasker', 'wrap-width', str(args.width))
-
-    config.set('Tasker', 'show-priority-z', str(args.showz))
-    config.set('Tasker', 'priority-z-last', str(args.integrate))
-
-    config.set('Tasker', 'use-color', str(args.colorize))
-
     manager = CPM.ConfigurablePluginManager(config,
                                             config_change_trigger=save_config,
                                             plugin_info_ext="tasker-plugin")
@@ -252,19 +259,7 @@ def main():
         "SubCommand": basetaskerplugin.SubCommandPlugin,
         "Generic": basetaskerplugin.TaskerPlugin,
     })
-
-    LIB = lib.TaskLib(config, manager)
-    LIB.commands = commands
-    CLI = TaskCmd(config=config, lib=LIB)
-
-    core.PluginCmd('plugins', CLI, manager)
-    core.ArchiveCmd('archive', CLI)
-
-    add_subparser(core.plugin_argparser, "Plugin manager")
-    add_subparser(core.archive_argparser, "Archive commands")
-
-    log.debug('Collecting Plugins from %s',
-              manager.getPluginLocator().plugins_places)
+    log.info('collecting Plugins')
     manager.collectPlugins()
 
     for info in manager.getAllPlugins():
@@ -282,6 +277,40 @@ def main():
                 log.debug('Adding command parser for %s', newparser.prog)
                 add_subparser(newparser, plugin.parsers[newparser])
 
+    args = parser.parse_args(sys.argv[1:])
+    log.setLevel(30- (args.verbose - args.quiet) * 10)
+    screen_handler.setLevel(30 - (args.verbose - args.quiet) * 10)
+    log.debug(args)
+
+
+
+    config.set('Tasker', 'wrap-behavior', args.wrap)
+    config.set('Tasker', 'wrap-width', str(args.width))
+
+    config.set('Tasker', 'show-priority-z', str(args.showz))
+    config.set('Tasker', 'priority-z-last', str(args.integrate))
+
+    config.set('Tasker', 'use-color', str(args.colorize))
+
+
+
+    LIB = lib.TaskLib(config, manager)
+    LIB.commands = commands
+    CLI = TaskCmd(config=config, lib=LIB)
+
+    core.PluginCmd('plugins', CLI, manager)
+    core.ArchiveCmd('archive', CLI)
+
+    add_subparser(core.plugin_argparser, "Plugin manager")
+    add_subparser(core.archive_argparser, "Archive commands")
+
+    log.info('Collecting Plugins from %s',
+              manager.getPluginLocator().plugins_places)
+
+    load_plugins(manager, CLI)
+
+
+
 
     if args.power:
         import powercmd
@@ -296,7 +325,11 @@ def main():
 
 
 
-    load_plugins(manager, CLI)
+
+    if args.manual:
+        print("Print manual")
+
+        return 0
 
     if args.interact:
         CLI.cmdloop()

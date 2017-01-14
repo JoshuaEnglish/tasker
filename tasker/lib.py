@@ -172,10 +172,12 @@ class TaskLib(object):
         if self.config.getboolean('Tasker', 'use-color'):
 
             self.theme = {
-                "A" : colorama.Fore.RED,
+                "A" : colorama.Fore.RED + colorama.Style.BRIGHT,
                 "B" : colorama.Fore.YELLOW,
                 "C" : colorama.Fore.GREEN,
+                "P" : colorama.Fore.CYAN + colorama.Style.BRIGHT,
                 "Z" : colorama.Fore.LIGHTBLACK_EX
+
                 }
 
     def get_extensions_to_hide(self):
@@ -560,7 +562,7 @@ class TaskLib(object):
         return TASK_OK, msg
 
     def get_color(self, pri):
-        return self.theme.get(pri, colorama.Fore.RESET)
+        return self.theme.get(pri, colorama.Style.RESET_ALL)
 
     def note_task(self, tasknum, note=None):
         """Updates the note on a task by task number."""
