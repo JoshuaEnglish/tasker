@@ -15,11 +15,12 @@ import logging
 import minioncmd
 import lister
 
-__version__ = "1.2"
-__updated__ = "2017-01-10"
+__version__ = "1.3"
+__updated__ = "2017-01-25"
 __history__ = """
 1.1 archive projects should work now
 1.2 archive by number should work now
+1.3 Updated stock plugin code for plugin creation
 """
 
 def add_core_subparsers(commands):
@@ -261,7 +262,7 @@ Created on {date}
 @author: {user}
 """
 import argparse
-from tasker import basetaskerplugin
+import basetaskerplugin
 
 {clicode}
 class {name}Plugin(basetaskerplugin.{cls}):
@@ -287,12 +288,45 @@ class {name}Plugin(basetaskerplugin.{cls}):
         pass
 
     # hook method - delete if not going to use
-    def add_task(self, c, p, s, e, t, o, j, x):
-        return (0, "", c, p, s, e, t)
+    def add_task(self, this):
+        """Hook method called when adding tasks
+
+        This method can access the the TaskLib instance through the
+        ``self.lib`` property.
+
+        Args:
+            this: the :class:`Task` being added
+
+        Returns:
+            tuple: (code, message, this)
+
+            code is 0 for TASK_OK or 2 for TASK_EXT_ERROR
+            message is a string explaining the error (empty string if code
+            is 0)
+            this is the task, either as passed or if edited
+        """
+        return (0, "", this)
 
     # hook method - delete if not going to use
-    def complete_task(self, c, p, s, e, t, o, j, x):
-        return (0, "", c, p, s, e, t)
+    def complete_task(self, this):
+        """Hook method called when completing tasks
+
+        This method can access the the TaskLib instance through the
+        ``self.lib`` property.
+
+        Args:
+            this: the :class:`Task` being added
+
+        Returns:
+            tuple: (code, message, this)
+
+            code is 0 for TASK_OK or 2 for TASK_EXT_ERROR
+            message is a string explaining the error (empty string if code
+            is 0)
+            this is the task, either as passed or if edited
+        """
+
+        return (0, "", this)
 
 '''
 

@@ -11,7 +11,8 @@ from yapsy.IPlugin import IPlugin
 
 class BaseTaskerPlugin(IPlugin):
     _log = logging.getLogger('plugin')
-    
+    EXTENSION_ERROR = 2
+
 
 class TaskerPlugin(BaseTaskerPlugin):
     pass

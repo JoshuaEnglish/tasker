@@ -113,8 +113,11 @@ parser.add_argument('-l', action='store_false', default=True,
                     dest='integrate',
                     help='Shows Z-priority tasks before unprioritized tasks')
 
-parser.add_argument('-n', '--no-color', action='store_false', dest='colorize',
-                    default=True, help="Turns off colorized output")
+theme = parser.add_mutually_exclusive_group()
+theme.add_argument('-t', '--theme', action='store', dest='theme',
+                    default='default', help="Sets color theme")
+theme.add_argument('-n-' '--no-color', action='store_const', dest='theme',
+                    const='none', help="Removes color output")
 
 feedback = parser.add_mutually_exclusive_group()
 feedback.add_argument('-d', '--debug', action='store_const', const=2,
@@ -151,7 +154,7 @@ def add_subparser(subparser, helpstr=None):
 
 
 class TaskCmd(minioncmd.BossCmd):
-    prompt = "tasker> "
+    prompt = "tasker>"
     doc_leader = "Tasker Help"
     doc_header = "Top-level commands (type help <command>)"
     minion_header = "Subcommands (type <command> help)"
@@ -250,6 +253,7 @@ def load_plugins(manager, CLI):
 
 
 def main():
+    LIB = lib.TaskLib(config) # manager needs LIB before LIB needs manager
     manager = CPM.ConfigurablePluginManager(config,
                                             config_change_trigger=save_config,
                                             plugin_info_ext="tasker-plugin")
@@ -260,6 +264,7 @@ def main():
         "Generic": basetaskerplugin.TaskerPlugin,
     })
     log.info('collecting Plugins')
+    LIB.manager = manager
     manager.collectPlugins()
 
     for info in manager.getAllPlugins():
@@ -290,11 +295,12 @@ def main():
     config.set('Tasker', 'show-priority-z', str(args.showz))
     config.set('Tasker', 'priority-z-last', str(args.integrate))
 
-    config.set('Tasker', 'use-color', str(args.colorize))
+    config.set('Tasker', 'theme-name', args.theme)
+
+    LIB.set_theme(args.theme)
 
 
 
-    LIB = lib.TaskLib(config, manager)
     LIB.commands = commands
     CLI = TaskCmd(config=config, lib=LIB)
 
@@ -317,11 +323,12 @@ def main():
         pcmd = powercmd.PowerCmd('poweruser', CLI, manager)
         pcmd.config = config
         args.interact = True
+        CLI.args = args
         CLI.cmdqueue.append('poweruser')
 
 
 
-    colorama.init(strip=True)
+    colorama.init(strip=True, autoreset=True)
 
 
 

@@ -16,16 +16,17 @@ import basetaskerplugin
 import lister
 import textwrap
 
-from lib import Task, re_ext
+from lib import re_ext
 
 todo = """
 Create a timed report
 """
 
-__version__ = '1.1'
-__updated__ = '2016-12-13'
+__version__ = '1.2'
+__updated__ = '2017-01-26'
 __history__ = """
 1.1 -- today report to the screen is wrapped
+1.2 -- today report allows optional numbers of days ago
 """
 
 
@@ -78,6 +79,8 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         today.add_argument('-t', dest='trimoutput', default=False,
                            action='store_true',
                            help="Trim output to dates only")
+        today.add_argument('days', default=0, type=int, nargs='?',
+                           help="Days ago to process")
         self.today_parser = today
 
         # the main program will gather these parsers after activation
@@ -119,6 +122,9 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         """Print a list of tasks completed on the current day"""
         args = self.today_parser.parse_args(text.split())
         today = datetime.datetime.today().date()
+        today -= datetime.timedelta(days=args.days)
+        print("Processing report for", today)
+
         tasks = self.lib.sort_tasks(by_pri=False, filters=None,
                                     filterop=None, showcomplete=True)
 
@@ -175,7 +181,7 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         show_list = any((k['open'] for k in counts.values()))
         if show_list or show_closed:
             headers = "{} Open Closed".format(name.title()).split()
-            s = lambda k: (str(k),
+            s = lambda k: (self.lib.get_color('open') + str(k),
                            str(counts[k]['open']),
                            str(counts[k]['closed']))
             lister.print_list([s(count) for count in sorted(counts)

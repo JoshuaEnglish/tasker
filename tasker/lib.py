@@ -15,12 +15,16 @@ from collections import defaultdict, Counter
 from functools import partial
 
 import colorama
+from theme import get_color as get_theme_color
 
-__version__ = "1.2"
-__updated__ = "2016-12-19"
+__version__ = "1.4"
+__updated__ = "2016-01-20"
 __history__ = """
 1.1 listing tasks is now case insensitive
 1.2 Filtering by (p) matches against the priority
+1.3 Fixed bug where notes added in TaskLib.prioritize_task were added as
+    a list, not as a string.
+1.4 Changed theme to an option to support multiple themes
 """
 
 TIMEFMT = '%Y-%m-%dT%H:%M:%S'
@@ -45,6 +49,11 @@ TASK_OK = 0
 TASK_ERROR = 1
 TASK_EXTENSION_ERROR = 2
 
+re_color = re.compile("""
+(?P<style>bright|dim|normal)\s
+(?P<fore>black|blue|cyan|green|lightblack|magenta|red|reset|white|yellow)\s
+on\s(?P<back>black|blue|cyan|green|lightblack|magenta|red|reset|white|yellow)
+""", re.VERBOSE + re.IGNORECASE)
 #first = itemgetter(0)
 #second = itemgetter(1)
 
@@ -169,8 +178,28 @@ class TaskLib(object):
                 fd.close()
 
         self.theme = {}
-        if self.config.getboolean('Tasker', 'use-color'):
 
+
+    def set_theme(self, theme_name=False):
+
+        if not theme_name:
+            return
+        theme_name = theme_name.title()
+
+
+        if theme_name == 'None':
+            self.theme = {}
+            return
+
+        config_name = 'Theme: {}'.format(theme_name)
+        if self.config.has_section(config_name):
+            self.log.info("Setting '%s' color theme", theme_name)
+            self.theme = dict((k.title(), get_theme_color(v)) for k,v in
+                              self.config.items(config_name))
+
+
+        else :
+            self.log.info("Setting default color theme")
             self.theme = {
                 "A" : colorama.Fore.RED + colorama.Style.BRIGHT,
                 "B" : colorama.Fore.YELLOW,
@@ -179,6 +208,7 @@ class TaskLib(object):
                 "Z" : colorama.Fore.LIGHTBLACK_EX
 
                 }
+
 
     def get_extensions_to_hide(self):
         """get_extensions_to_hide()
@@ -224,76 +254,19 @@ class TaskLib(object):
         self.config['Tasker']['hidden_extensions'] = ','.join(extensions)
 
     def parse_task(self, text):
-        """Return a tuple of the following fields:
-            complete - boolean
-            priority - single letter (blank if complete or unprioritized)
-            start - datetime.datetime object
-            end - datetime.datetime object or None
-            task - remaining text (including any projects or contexts)
-            contexts - tuple of contexts (including '@')
-            projects - tuple of projects (including '+')
-            extensions - dictionary of extension values
-
-            :param str text: text of a task.
+        """Deprecated. No longer implemented. This method exists
+        just to catch old code.
         """
         raise NotImplementedError("Please use the task object from here on out")
-        text = text.strip()
-        match = re_task.match(text)
-        if not any(match.groups()):
-            raise ValueError('Task did not parse')
-        complete = bool(match.group('complete'))
 
-        priority = match.group('priority')[1] if match.group('priority') else ''
-
-        if match.group('start'):
-            start = datetime.datetime.strptime(match.group('start').strip(), TIMEFMT)
-        else:
-            start = datetime.datetime.now()
-
-        if match.group('end'):
-            end = datetime.datetime.strptime(match.group('end').strip(), TIMEFMT)
-        else:
-            end = None
-
-        task = match.group('text').strip()
-
-        context = [t.strip() for t in re_context.findall(text)]
-        projects = [t.strip() for t in re_project.findall(text)]
-        extensions = re_ext.findall(text)
-        edict = {}
-        for ext in extensions:
-            key, val = ext.split(':', 1)
-            key = key.replace(' {', '')
-            val = val.replace('}', '')
-            edict[key] = val.strip()
-        if 'uid' not in edict:
-            edict['uid'] = start.strftime(IDFMT)
-            task += " {uid:%s}" % edict['uid']
-        return complete, priority, start, end, task, context, projects, edict
 
 
     def graft(self, complete, priority, start, end, text):
-        """Return a single line of text representing the task.
-        Does not append a line return
-        :param boolean complete: True if task has been completed
-        :param str priority: Single letter A-W for priority, or blank
-        :param datetime.datetime start: Time the task was added to the list
-        :param datetime.datetime end: Time the task was completed (or None)
-        :param str text: remaining text of the task
-        :return: string representation of the task
+        """Deprecated. No longer implemented. This method exists
+        just to catch old code.
         """
         raise NotImplementedError("Please use the Task object from here on out")
-        res = []
-        if complete:
-            res.append('x')
-        if priority and not complete:
-            res.append('(%s)' % priority)
-        if start:
-            res.append(start.strftime(TIMEFMT))
-        if end:
-            res.append(end.strftime(TIMEFMT))
-        res.append(text.strip())
-        return " ".join(res)
+
 
 
     def get_tasks(self, path):
@@ -362,6 +335,7 @@ class TaskLib(object):
         """Adds a completed task. Uses the entry time as start and close
         :param text: Text of the completed task
         """
+        raise NotImplementedError("If you get this, something has gone wrong.")
         self.tasks = self.get_tasks(self.config['Files']['task-path'])
         c, p, s, e, t, o, j, x = self.parse_task(text)
         if not e:
@@ -562,7 +536,9 @@ class TaskLib(object):
         return TASK_OK, msg
 
     def get_color(self, pri):
-        return self.theme.get(pri, colorama.Style.RESET_ALL)
+        color = self.theme.get(pri, colorama.Style.RESET_ALL)
+        self.log.debug('getting color for %s (%s)', pri, color)
+        return color
 
     def note_task(self, tasknum, note=None):
         """Updates the note on a task by task number."""
@@ -605,7 +581,7 @@ class TaskLib(object):
             return TASK_ERROR, "Task already completed"
 
         t = self.reprioritize_task(tasks[tasknum], priority)
-        t.text = self.update_note(t.text, note)
+        t.text = self.update_note(t.text, ' '.join(note))
 #        if note:
 #            text = re_note.sub('', t.text)
 #            t.text = '%s # %s' % (text, ' '.join(note).strip())

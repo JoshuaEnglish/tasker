@@ -1,3 +1,0 @@
-2016-0528 18:24:37 ERROR: Task number not in task list (main)
-2016-0630 16:50:23 ERROR: Task number not in task list (main)
-2016-0705 13:44:06 ERROR: Task already completed (main)
