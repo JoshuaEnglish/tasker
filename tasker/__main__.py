@@ -316,8 +316,6 @@ def main():
     load_plugins(manager, CLI)
 
 
-
-
     if args.power:
         import powercmd
         pcmd = powercmd.PowerCmd('poweruser', CLI, manager)
@@ -327,10 +325,7 @@ def main():
         CLI.cmdqueue.append('poweruser')
 
 
-
     colorama.init(strip=True, autoreset=True)
-
-
 
 
     if args.manual:

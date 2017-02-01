@@ -395,7 +395,8 @@ class TaskLib(object):
         return TASK_OK, tasks[tasknum]
 
 
-    def sort_tasks(self, by_pri=True, filters=None, filterop=None, showcomplete=None):
+    def sort_tasks(self, by_pri=True, filters=None, filterop=None,
+                   showcomplete=None, opendate=None, closedate=None):
         """sort_tasks([by_pri, filters, filteropp, showcomplete])
         Returns a list of (line, task) tuples.
         Default behavior sorts by priority.
@@ -411,7 +412,7 @@ class TaskLib(object):
         if filterop not in (any, all):
             self.log.error('Bad filterop parameter in sort_tasks')
             return TASK_ERROR, "Filter Operation must by any or all"
-        showcomplete = showcomplete or False
+        showcomplete = showcomplete or closedate or False
 
         everything = [(key, val)
                       for key, val in list(self.get_tasks(
@@ -440,6 +441,10 @@ class TaskLib(object):
             self.log.info("Hiding priority Z tasks")
             everything = [(key, val) for key, val in everything
                           if val.priority != "Z"]
+
+        if opendate:
+            everything = [(key, val) for key, val in everything
+                          if val.start.date() == opendate]
 
         # todo .. print completed tasks in revers Cron order? The priorities get wiped
         if by_pri:
@@ -473,23 +478,25 @@ class TaskLib(object):
         return stuff
 
     def list_tasks(self, by_pri=True, filters: str = None, filterop=None,
-                   showcomplete=None, showext=None):
+                   showcomplete=None, showext=None,
+                   opendate=None, closedate=None):
         """list_tasks([by_pri, filters, filterop, showcomplete, showuid)
         Displays a list of tasks.
         :type by_pri: Boolean
-        :param by_pri: If true, sorts by priority,
+        :param bool by_pri: If true, sorts by priority,
                        if false, sorts by order in file
-        :param filters: Words to filter the list
-        :param filterop: all or any (the functions, not strings
-        :param showcomplete: If true, shows completed tasks
-        :param showext: If true, shows the normally hidden
-                        extensions of the task.
-        :rtype: None
+        :param str filters: Words to filter the list
+        :param func filterop: all or any (the functions, not strings
+        :param bool showcomplete: If true, shows completed tasks
+        :param bool showext: If true, shows the normally hidden
+                             extensions of the task.
+        :rtype: TASK_OK, None
         """
         showext = showext or False
         count = 0
         # colorize = self.config['Tasker'].getboolean('use-color', True)
-        shown_tasks = self.sort_tasks(by_pri, filters, filterop, showcomplete)
+        shown_tasks = self.sort_tasks(by_pri, filters, filterop, showcomplete,
+                                      opendate, closedate)
         self.log.info('Listing %s tasks %s',
                       'all' if showcomplete else 'open',
                       'by priority' if by_pri else 'by number')

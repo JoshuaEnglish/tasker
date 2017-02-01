@@ -21,7 +21,20 @@ __history__ = """
 1.1 archive projects should work now
 1.2 archive by number should work now
 1.3 Updated stock plugin code for plugin creation
+1.4 Can now filter tasks by open date
 """
+
+def valid_date(string):
+    """Confirm dates in the arguments work as dates"""
+    if string.lower() == 'today':
+        return datetime.date.today()
+
+    try:
+        return datetime.datetime.strptime(string, "%Y-%m-%d").date()
+    except ValueError:
+        msg = "Not a valid date: '{0}'.".format(string)
+        raise argparse.ArgumentTypeError(msg)
+
 
 def add_core_subparsers(commands):
     """Adds the core subparsers: list, add, do, priority, note
@@ -52,9 +65,14 @@ def add_core_subparsers(commands):
         default=False,
         help="Shows hidden text extensions")
 
+    list_parser.add_argument('-o', dest='opendate', type=valid_date,
+                             help="Lists tasks opened on a given date")
+
     list_parser.add_argument(
         'filters', nargs=argparse.REMAINDER,
         help="Only lists tasks containing these words")
+
+
 
     add_parser = commands.add_parser('add', help="add a task")
     add_parser.add_argument('-d', '--done', action="store_true",
