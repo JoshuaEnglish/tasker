@@ -1,7 +1,7 @@
 tasker.main
 ===========
 
-.. module :: tasker.main
+.. module :: tasker.__main__
    :synopsis: Explanation of the main code
 
 This page describes the main module that runs the show.

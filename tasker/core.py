@@ -28,6 +28,10 @@ def valid_date(string):
     """Confirm dates in the arguments work as dates"""
     if string.lower() == 'today':
         return datetime.date.today()
+    elif string.lower() == 'yesterday':
+        return datetime.date.today() - datetime.timedelta(days=1)
+    elif string.lower() == 'tomorrow':
+        return datetime.date.today() + datetime.timedelta(days=1)
 
     try:
         return datetime.datetime.strptime(string, "%Y-%m-%d").date()
@@ -66,8 +70,10 @@ def add_core_subparsers(commands):
         help="Shows hidden text extensions")
 
     list_parser.add_argument('-o', dest='opendate', type=valid_date,
-                             help="Lists tasks opened on a given date")
+                             help="Lists tasks opened on a given date.")
 
+    list_parser.add_argument('-c', dest='closedate', type=valid_date,
+                             help="Lists tasks closed on a given date.")
     list_parser.add_argument(
         'filters', nargs=argparse.REMAINDER,
         help="Only lists tasks containing these words")
@@ -128,6 +134,7 @@ class_map = {'new': 'NewCommandPlugin',
              'generic': 'TaskerPlugin'}
 
 
+# todo: Add About <plugin> and help <plugin> commands
 class PluginCmd(minioncmd.MinionCmd):
     """PluginCmd(name [,master, manager, completekey, stdin, stout])
 

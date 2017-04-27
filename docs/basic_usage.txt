@@ -306,6 +306,6 @@ about errors with ``-qq``.
 
 
 .. argparse::
-   :ref: tasker.main.parser
+   :ref: tasker.__main__.parser
    :prog: t
 

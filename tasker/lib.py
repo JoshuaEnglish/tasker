@@ -336,28 +336,6 @@ class TaskLib(object):
         :param text: Text of the completed task
         """
         raise NotImplementedError("If you get this, something has gone wrong.")
-        self.tasks = self.get_tasks(self.config['Files']['task-path'])
-        c, p, s, e, t, o, j, x = self.parse_task(text)
-        if not e:
-            e = datetime.datetime.now()
-        err, msg, c, p, s, e, t = self.run_hooks('add_task', c, p, s, e, t, o, j, x)
-        if err:
-            self.log.error(msg)
-            return err, msg
-
-        c = True
-
-        err, msg, c, p, s, e, t = self.run_hooks('complete_task', c, p, s, e, t, o, j, x)
-        if err:
-            self.log.error(msg)
-            return err, msg
-
-        done = self.graft(c, p, s, e, t)
-        with open(self.config['Files']['task-path'], 'a') as fp:
-            fp.write('{}{}'.format(done.strip(), '\n'))
-        del self.tasks
-        print(done)
-        return TASK_OK, done
 
 
     def complete_task(self, tasknum, comment=None):
@@ -445,6 +423,10 @@ class TaskLib(object):
         if opendate:
             everything = [(key, val) for key, val in everything
                           if val.start.date() == opendate]
+
+        if closedate:
+            everything = [(key, val) for key, val in everything
+                          if val.end.date() == closedate]
 
         # todo .. print completed tasks in revers Cron order? The priorities get wiped
         if by_pri:

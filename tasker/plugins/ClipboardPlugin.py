@@ -68,25 +68,25 @@ class ClipboardPlugin(basetaskerplugin.NewCommandPlugin):
 
         return (0, "", this)
 
-    # hook method - delete if not going to use
+    def help_clipping(self):
+        """Clipping allows you to use {p} in a task and have it be replaced
+        with the contents of the clipboard."""
+
+
+    #
     def complete_task(self, this):
         """Hook method called when completing tasks
-
         This method can access the the TaskLib instance through the
         ``self.lib`` property.
-
         Args:
             this: the :class:`Task` being added
-
         Returns:
             tuple: (code, message, this)
-
             code is 0 for TASK_OK or 2 for TASK_EXT_ERROR
             message is a string explaining the error (empty string if code
             is 0)
             this is the task, either as passed or if edited
         """
+        this.text = this.text.replace('{p}', pyperclip.paste())
 
         return (0, "", this)
-
-

@@ -77,7 +77,14 @@ WORKFLOWS = os.path.join(os.path.dirname(__file__), 'workflows')
 
 CLEAN_VOCABULARY = re.compile(r"^[@+]")
 
+__todo__ = """
+2017-04-14: Local branches.
+add a wx key that would read the next step, otherwise
+grab the next task number. wx:0 could end a branch.
 
+If a workflow requires interacting with separate systems, they can
+be joined in one workflow. wx should allow for comma-dileneated numbers
+"""
 class WorkflowCLI(minioncmd.MinionCmd):
     prompt = "workflow> "
     minion_header = "Other subcommands (type <topic> help)"
@@ -334,6 +341,21 @@ class WorkflowCLI(minioncmd.MinionCmd):
         self.master.lib.tasks = tasks
         self.master.cmdqueue.append("do {} Abandoned: {}".format(tasknum, reason))
         return True
+
+    def do_edit(self, text):
+        """Opens the workflow file in the default editor"""
+        workflow_path = os.path.join(self._workflow_dir, "%s.workflow" % text)
+        if not os.path.exists(workflow_path):
+            msg = "Workflow file %s does not exist" % text
+            self._log.error(msg)
+            self.print(msg)
+            return None
+        editor_path = self.master.config.get('Tasker', 'editor')
+        if os.path.exists(editor_path):
+            import subprocess
+            subprocess.Popen("%s %s" % (editor_path, workflow_path))
+        else:
+            os.start(workflow)
 
     def help_about(self):
         """About this plugin"""
