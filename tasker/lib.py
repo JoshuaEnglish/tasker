@@ -18,13 +18,14 @@ import colorama
 from theme import get_color as get_theme_color
 
 __version__ = "1.4"
-__updated__ = "2016-01-20"
+__updated__ = "2017-05-11"
 __history__ = """
 1.1 listing tasks is now case insensitive
 1.2 Filtering by (p) matches against the priority
 1.3 Fixed bug where notes added in TaskLib.prioritize_task were added as
     a list, not as a string.
 1.4 Changed theme to an option to support multiple themes
+1.5 Fixed bug where list -c failed
 """
 
 TIMEFMT = '%Y-%m-%dT%H:%M:%S'
@@ -426,7 +427,7 @@ class TaskLib(object):
 
         if closedate:
             everything = [(key, val) for key, val in everything
-                          if val.end.date() == closedate]
+                          if val.end and val.end.date() == closedate]
 
         # todo .. print completed tasks in revers Cron order? The priorities get wiped
         if by_pri:
