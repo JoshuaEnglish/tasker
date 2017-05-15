@@ -51,7 +51,7 @@ formatter = logging.Formatter(
     #'%(asctime)s %(levelname)s: %(message)s (%(name)s)',
     '%(asctime)s %(levelname)s:\n\t[%(pathname)s\%(filename)s:%(lineno)s]\n\t%(message)s (%(name)s)',
     #datefmt='%Y-%m-%d %H:%M:%S'
-    datefmt='%H:%M'
+    datefmt='%H:%M:%S'
     )
 
 screen_handler.setFormatter(formatter)
@@ -65,7 +65,6 @@ if hasattr(sys, "frozen"):
     INSTALL_DIR = os.path.dirname(sys.executable)
 else:
     INSTALL_DIR = os.path.dirname(__file__)
-
 sys.path.insert(0, os.path.abspath(INSTALL_DIR))
 
 configpath = os.path.join(INSTALL_DIR, 'tasker.ini')

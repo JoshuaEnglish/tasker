@@ -63,3 +63,6 @@ target/
 
 tasker/tasker.ini
 error.txt
+
+# VIM
+.swp
