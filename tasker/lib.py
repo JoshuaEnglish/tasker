@@ -26,7 +26,9 @@ __history__ = """
     a list, not as a string.
 1.4 Changed theme to an option to support multiple themes
 1.5 Fixed bug where list -c failed
+1.5 Added Show Task Hook to allow plugins to refine filtering of tasks
 """
+
 
 TIMEFMT = '%Y-%m-%dT%H:%M:%S'
 IDFMT = '%H%M%S%d%m%y'
@@ -45,6 +47,8 @@ re_project = re.compile("\s([+][-\w]+)")
 re_ext = re.compile(r"\s{\w+:[^}]*}")
 re_uid = re.compile(r"\s{uid:[^}]*}")
 re_note = re.compile('\s#\s.*$')
+
+re_pri_filter = re.compile(r"~?\(([A-Z])\)")
 
 TASK_OK = 0
 TASK_ERROR = 1
@@ -335,6 +339,9 @@ class TaskLib(object):
     def add_done(self, text):
         """Adds a completed task. Uses the entry time as start and close
         :param text: Text of the completed task
+
+	Depracated: Use ``t add x ...`` in the CLI. If a task text begins with
+	``x `` then the task will be created as closed
         """
         raise NotImplementedError("If you get this, something has gone wrong.")
 
@@ -399,15 +406,17 @@ class TaskLib(object):
                       if (showcomplete or not val.complete)]
 
         def include_task(filters, task):
-            "return a list of booleans"
+            "return a boolean value to include the task or not"
             yeas = []
             for word in filters:
-                yea = False
+                # yea = False
+                yea = word.startswith('~')
                 if word.lower() in task.text.lower():
-                    yea = True
-                if word.startswith('(') and word.endswith(')'):
-                    if word[1].upper() == task.priority:
-                        yea = True
+                    # yea = True
+                    yea = not yea
+                pri = re_pri_filter.match(word)
+                if pri and pri.group(1) == task.priority:
+                    yea = not yea 
                 yeas.append(yea)
             return filterop(yeas)
 
