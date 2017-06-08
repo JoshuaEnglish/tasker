@@ -16,4 +16,5 @@ vocabulary = person
 [Instances]
 1 = MattFleming
 2 = KevinClark
+3 = RichGreger
 

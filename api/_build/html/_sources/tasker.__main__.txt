@@ -1,0 +1,7 @@
+tasker.__main__ module
+======================
+
+.. automodule:: tasker.__main__
+    :members:
+    :undoc-members:
+    :show-inheritance:

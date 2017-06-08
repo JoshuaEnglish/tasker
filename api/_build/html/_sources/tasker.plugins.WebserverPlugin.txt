@@ -1,0 +1,7 @@
+tasker.plugins.WebserverPlugin module
+=====================================
+
+.. automodule:: tasker.plugins.WebserverPlugin
+    :members:
+    :undoc-members:
+    :show-inheritance:

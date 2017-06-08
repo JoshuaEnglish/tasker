@@ -1,0 +1,7 @@
+tasker.plugins.ClipboardPlugin module
+=====================================
+
+.. automodule:: tasker.plugins.ClipboardPlugin
+    :members:
+    :undoc-members:
+    :show-inheritance:

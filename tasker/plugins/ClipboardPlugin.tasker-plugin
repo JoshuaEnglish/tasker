@@ -6,7 +6,7 @@ Module = ClipboardPlugin
 
 [Documentation]
 Author = jenglish
-Version = 0.0
-Website = http://example.com
-Description = Twiddles its thumbs
+Version = 1.0
+Website = http://JoshuaREnglish.com
+Description = Allows copying and pasting from the system clipboard
 

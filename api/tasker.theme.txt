@@ -1,0 +1,7 @@
+tasker.theme module
+===================
+
+.. automodule:: tasker.theme
+    :members:
+    :undoc-members:
+    :show-inheritance:

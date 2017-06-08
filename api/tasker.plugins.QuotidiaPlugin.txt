@@ -1,0 +1,7 @@
+tasker.plugins.QuotidiaPlugin module
+====================================
+
+.. automodule:: tasker.plugins.QuotidiaPlugin
+    :members:
+    :undoc-members:
+    :show-inheritance:

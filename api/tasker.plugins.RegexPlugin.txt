@@ -1,0 +1,7 @@
+tasker.plugins.RegexPlugin module
+=================================
+
+.. automodule:: tasker.plugins.RegexPlugin
+    :members:
+    :undoc-members:
+    :show-inheritance:

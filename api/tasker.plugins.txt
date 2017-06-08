@@ -6,9 +6,13 @@ Submodules
 
 .. toctree::
 
+   tasker.plugins.ClipboardPlugin
    tasker.plugins.LoggingPlugin
    tasker.plugins.PendingPlugin
+   tasker.plugins.QuotidiaPlugin
+   tasker.plugins.RegexPlugin
    tasker.plugins.ReportsPlugin
+   tasker.plugins.WebserverPlugin
    tasker.plugins.WorkflowPlugin
 
 Module contents

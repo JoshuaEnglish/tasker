@@ -13,14 +13,15 @@ Submodules
 
 .. toctree::
 
+   tasker.__main__
    tasker.basetaskerplugin
    tasker.core
    tasker.lib
    tasker.lister
-   tasker.main
    tasker.manager
    tasker.minioncmd
    tasker.powercmd
+   tasker.theme
 
 Module contents
 ---------------

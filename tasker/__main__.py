@@ -50,8 +50,8 @@ error_handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
     #'%(asctime)s %(levelname)s: %(message)s (%(name)s)',
     '%(asctime)s %(levelname)s:\n\t[%(pathname)s\%(filename)s:%(lineno)s]\n\t%(message)s (%(name)s)',
-    #datefmt='%Y-%m-%d %H:%M:%S'
-    datefmt='%H:%M:%S'
+    datefmt='%Y-%m-%d %H:%M:%S'
+    # datefmt='%H:%M:%S'
     )
 
 screen_handler.setFormatter(formatter)
@@ -215,8 +215,6 @@ class TaskCmd(minioncmd.BossCmd):
         """
 
         print(TaskCmd.help_wrap.__doc__)
-
-
 
 
 def load_plugins(manager, CLI):

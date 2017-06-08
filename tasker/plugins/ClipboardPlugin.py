@@ -8,6 +8,7 @@ Created on 2017-01-25T16:26:34.706840
 
 @author: Josh English
 """
+import re
 import argparse
 import basetaskerplugin
 
@@ -25,7 +26,10 @@ class ClipboardPlugin(basetaskerplugin.NewCommandPlugin):
         self.clip_parser = clipboard = argparse.ArgumentParser('clip')
         clipboard.add_argument('n', type=int,
                                help="number of the task to copy to the clipboard")
-
+        clipboard.add_argument('regex', nargs='?',
+                               help='Optional Regular Expression',
+                               default=".*")
+        
         # add parsers
 
         self.parsers = {
@@ -42,8 +46,9 @@ class ClipboardPlugin(basetaskerplugin.NewCommandPlugin):
             print("Task number %s not in tasks" % args.n)
             return False
         else:
-            pyperclip.copy(str(tasks[args.n]))
-            print("Copied to clipboard:", tasks[args.n])
+            m = re.search(args.regex, str(tasks[args.n]))
+            pyperclip.copy(m.group())
+            print("Copied to clipboard:", m.group())
             return True
 
     # hook method - delete if not going to use
