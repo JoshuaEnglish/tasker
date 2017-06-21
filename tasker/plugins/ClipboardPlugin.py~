@@ -8,6 +8,7 @@ Created on 2017-01-25T16:26:34.706840
 
 @author: Josh English
 """
+import re
 import argparse
 import basetaskerplugin
 

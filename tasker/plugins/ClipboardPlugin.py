@@ -21,15 +21,15 @@ class ClipboardPlugin(basetaskerplugin.NewCommandPlugin):
         # edit the following line
         self.setConfigOption('public_methods', 'do_clip')
 
-
         # define argument parsers
         self.clip_parser = clipboard = argparse.ArgumentParser('clip')
         clipboard.add_argument('n', type=int,
-                               help="number of the task to copy to the clipboard")
-        clipboard.add_argument('regex', nargs='?',
+                               help="number of the task to copy "
+                                    "to the clipboard")
+        clipboard.add_argument('regex', nargs=argparse.ZERO_OR_MORE,
                                help='Optional Regular Expression',
-                               default=".*")
-        
+                               default=[".*"])
+
         # add parsers
 
         self.parsers = {
@@ -46,10 +46,15 @@ class ClipboardPlugin(basetaskerplugin.NewCommandPlugin):
             print("Task number %s not in tasks" % args.n)
             return False
         else:
-            m = re.search(args.regex, str(tasks[args.n]))
-            pyperclip.copy(m.group())
-            print("Copied to clipboard:", m.group())
-            return True
+            regex = " ".join(args.regex)
+            m = re.search(regex, tasks[args.n].text)
+            if m:
+                pyperclip.copy(m.group())
+                print("Copied to clipboard:", m.group())
+                return True
+            else:
+                print("Nothing found. Nothing copied")
+                return False
 
     # hook method - delete if not going to use
     def add_task(self, this):
@@ -77,8 +82,6 @@ class ClipboardPlugin(basetaskerplugin.NewCommandPlugin):
         """Clipping allows you to use {p} in a task and have it be replaced
         with the contents of the clipboard."""
 
-
-    #
     def complete_task(self, this):
         """Hook method called when completing tasks
         This method can access the the TaskLib instance through the
