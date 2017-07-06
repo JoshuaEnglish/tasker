@@ -102,11 +102,12 @@ parser.add_argument('--manual', action='store_true', default=False,
                     help=argparse.SUPPRESS)
 
 parser.add_argument('--wrap', choices=['wrap', 'shorten', 'none'],
-                    default='wrap')
-parser.add_argument('--width', type=int, default=78,
+                    default=config['Tasker'].get('wrap-behavior'),
+                    help="How to handle longer lines in tasks")
+parser.add_argument('--width', type=int, default=config['Tasker'].getint('wrap-width'),
                     help="Width to wrap or shorten text when printing")
 
-parser.add_argument('-z', action='store_false', default=True,
+parser.add_argument('-z', action='store_false', default=config['Tasker'].getboolean('priority-z-last'),
                     dest='showz', help='Hides Z-priority tasks')
 parser.add_argument('-l', action='store_false', default=True,
                     dest='integrate',
