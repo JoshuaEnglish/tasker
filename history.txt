@@ -1,0 +1,7 @@
+# Changelog for Tasker
+
+2017-07-06 
+
+- Fixed logical bug where the argument parser overrode settings 
+  in the tasker.ini file. Argument parser now polls config object
+  for correct defaults.
