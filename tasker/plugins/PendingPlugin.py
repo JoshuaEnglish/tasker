@@ -6,7 +6,7 @@ Created on Fri Mar 18 13:28:58 2016
 """
 import re
 import argparse
- 
+
 import basetaskerplugin
 
 from lib import Task
@@ -35,27 +35,27 @@ class PendingPlugin(basetaskerplugin.NewCommandPlugin):
         self.setConfigOption('public_methods', 'do_after')
 
         super().activate()
-    
+
     def help_after(self):
         self.after_parser.print_help()
-        
+
     # noinspection PyIncorrectDocstring,PyIncorrectDocstring
     def do_after(self, line):
         """Create a new task to be done after a current task is completed"""
         args = self.after_parser.parse_args(line.split())
-        
+
         tasks = self.lib.get_tasks(self.lib.config['Files']['task-path'])
         source = tasks[args.tasknum]
         new_task = Task.from_text(' '.join(args.text))
 
-        
+
         for context in source.contexts:
             if context not in new_task:
                 new_task.text += " {}".format(context)
         for project in source.projects:
             if project not in new_task:
                 new_task.text += " {}".format(project)
-                
+
         for ext, val in list(source.extensions.items()):
             if ext in ['pend', 'uid']:
                 continue
@@ -66,11 +66,11 @@ class PendingPlugin(basetaskerplugin.NewCommandPlugin):
                                   r"{%s:%s}" % (ext, val),
                                   new_task)
         new_task.text += " {pend:%s}" % source.extensions['uid']
-        
+
         new_task.priority = 'Z'
-        
+
         return self.lib.add_task(str(new_task))
-        
+
     def complete_task(self, this):
         for idx, task in self.lib.tasks.items():
             match = re_pend.search(task.text)

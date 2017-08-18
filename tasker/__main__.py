@@ -5,25 +5,6 @@ Created on Wed Mar 16 14:04:54 2016
 @author: jenglish
 """
 
-__problem__ = """
-The argument parser needs to be aware of the plug ins to load, so:
-
-    create config (configparser)
-    config reads defaults and ini file (which list plugins to load)
-    create parser (argparse.parser)
-    create manager (yapsy plugin manager - requires config)
-    create library (needs manager and config) (although manager could be tacked on later)
-    manager scans plugins to add to the parser
-
-    parser parses command line
-
-
-    update configparser with parser args
-
-    create cli
-    manager scans plugins to add to the cli
-
-"""
 import sys
 import os
 import argparse
@@ -40,18 +21,38 @@ import minioncmd
 import core
 import lib
 
+__problem__ = """
+The argument parser needs to be aware of the plug ins to load, so:
+
+    create config (configparser)
+    config reads defaults and ini file (which list plugins to load)
+    create parser (argparse.parser)
+    create manager (yapsy plugin manager - requires config)
+    create library (needs manager and config)
+    manager scans plugins to add to the parser
+
+    parser parses command line (pull defaults from config)
+
+    update configparser with parser args
+
+    create cli
+    manager scans plugins to add to the cli
+
+"""
+
 log = logging.getLogger()
-#log.setLevel(0)
+# log.setLevel(0)
 
 screen_handler = logging.StreamHandler()
 
 error_handler = logging.FileHandler('error.txt')
 error_handler.setLevel(logging.DEBUG)
+extra_info = ('%(asctime)s %(levelname)s:\n\t[%(pathname)s\%(filename)s:'
+              '%(lineno)s]\n\t%(message)s (%(name)s)')
+normal_info = '%(asctime)s %(levelname)s: %(message)s (%(name)s)'
 formatter = logging.Formatter(
-    #'%(asctime)s %(levelname)s: %(message)s (%(name)s)',
-    '%(asctime)s %(levelname)s:\n\t[%(pathname)s\%(filename)s:%(lineno)s]\n\t%(message)s (%(name)s)',
-    datefmt='%Y-%m-%d %H:%M:%S'
-    # datefmt='%H:%M:%S'
+    normal_info,
+    datefmt="%Y-%m-%d %H:%M:%S"
     )
 
 screen_handler.setFormatter(formatter)
@@ -104,10 +105,12 @@ parser.add_argument('--manual', action='store_true', default=False,
 parser.add_argument('--wrap', choices=['wrap', 'shorten', 'none'],
                     default=config['Tasker'].get('wrap-behavior'),
                     help="How to handle longer lines in tasks")
-parser.add_argument('--width', type=int, default=config['Tasker'].getint('wrap-width'),
+parser.add_argument('--width', type=int,
+                    default=config['Tasker'].getint('wrap-width'),
                     help="Width to wrap or shorten text when printing")
 
-parser.add_argument('-z', action='store_false', default=config['Tasker'].getboolean('priority-z-last'),
+parser.add_argument('-z', action='store_false',
+                    default=config['Tasker'].getboolean('priority-z-last'),
                     dest='showz', help='Hides Z-priority tasks')
 parser.add_argument('-l', action='store_false', default=True,
                     dest='integrate',
@@ -115,9 +118,9 @@ parser.add_argument('-l', action='store_false', default=True,
 
 theme = parser.add_mutually_exclusive_group()
 theme.add_argument('-t', '--theme', action='store', dest='theme',
-                    default='default', help="Sets color theme")
+                   default='default', help="Sets color theme")
 theme.add_argument('-n-' '--no-color', action='store_const', dest='theme',
-                    const='none', help="Removes color output")
+                   const='none', help="Removes color output")
 
 feedback = parser.add_mutually_exclusive_group()
 feedback.add_argument('-d', '--debug', action='store_const', const=2,
@@ -167,7 +170,7 @@ class TaskCmd(minioncmd.BossCmd):
         self.lib = lib
 
     def do_list(self, line):
-        """Lists tasks"""
+        """Lists tasks [-nayx] [-o DATE] [-c DATE] [FILTERS]"""
         args = commands.choices['list'].parse_args(line.split())
         args.filterop = any if args.filterop else all
         self.lib.list_tasks(**vars(args))
@@ -195,7 +198,7 @@ class TaskCmd(minioncmd.BossCmd):
 
     def do_note(self, line):
         """Modify a note on a task: NUM, [NOTE]"""
-        args =commands.choices['note'].parse_args(line.split())
+        args = commands.choices['note'].parse_args(line.split())
         self.lib.note_task(args.tasknum, " ".join(args.note))
 
     def save_config(self):
@@ -251,7 +254,7 @@ def load_plugins(manager, CLI):
 
 
 def main():
-    LIB = lib.TaskLib(config) # manager needs LIB before LIB needs manager
+    LIB = lib.TaskLib(config)  # manager needs LIB before LIB needs manager
     manager = CPM.ConfigurablePluginManager(config,
                                             config_change_trigger=save_config,
                                             plugin_info_ext="tasker-plugin")
@@ -271,7 +274,8 @@ def main():
         plugin = info.plugin_object
         plugin.lib = LIB
 
-        plugin.CONFIG_SECTION_NAME = "%s Plugin: %s" % (info.category, info.name)
+        plugin.CONFIG_SECTION_NAME = "%s Plugin: %s" % (info.category,
+                                                        info.name)
         if hasattr(plugin, 'parser'):
             log.debug("Adding command line parser for %s", info.name)
             add_subparser(plugin.parser, getattr(plugin, 'helpstr', None))
@@ -281,11 +285,9 @@ def main():
                 add_subparser(newparser, plugin.parsers[newparser])
 
     args = parser.parse_args(sys.argv[1:])
-    log.setLevel(30- (args.verbose - args.quiet) * 10)
+    log.setLevel(30 - (args.verbose - args.quiet) * 10)
     screen_handler.setLevel(30 - (args.verbose - args.quiet) * 10)
     log.debug(args)
-
-
 
     config.set('Tasker', 'wrap-behavior', args.wrap)
     config.set('Tasker', 'wrap-width', str(args.width))
@@ -297,8 +299,6 @@ def main():
 
     LIB.set_theme(args.theme)
 
-
-
     LIB.commands = commands
     CLI = TaskCmd(config=config, lib=LIB)
 
@@ -309,10 +309,9 @@ def main():
     add_subparser(core.archive_argparser, "Archive commands")
 
     log.info('Collecting Plugins from %s',
-              manager.getPluginLocator().plugins_places)
+             manager.getPluginLocator().plugins_places)
 
     load_plugins(manager, CLI)
-
 
     if args.power:
         import powercmd
@@ -322,9 +321,7 @@ def main():
         CLI.args = args
         CLI.cmdqueue.append('poweruser')
 
-
     colorama.init(strip=True, autoreset=True)
-
 
     if args.manual:
         print("Print manual")

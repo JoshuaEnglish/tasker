@@ -6,7 +6,7 @@ vocabulary = person
 [Steps]
 1 = (A) Collect starting information on $person @newhire +${person}Hire
 2 = (A) Confirm $person data in @DirectoryWorks @newhire +${person}Hire
-3 = (A) Email Eric to set up $person in @SFDC @newhire +${person}Hire
+3 = (A) Submit ticket to add $person in @SFDC @newhire +${person}Hire
 4 = (A) Submit @TechDirect ticket to add $person in @Anaplan @newhire +${person}Hire
 5 = (A) Submit ticket to add $person to @SFDC territories @newhire +${person}Hire
 6 = (A) Put $person on guarantee in @Anaplan @newhire +${person}Hire
@@ -18,4 +18,9 @@ vocabulary = person
 2 = KevinClark
 3 = RichGreger
 4 = JohnKlopacz
+5 = MattGann
+6 = TimBarnhart
+7 = SorayaVincent
+8 = RobertSaldivar
+9 = RyanBurch
 

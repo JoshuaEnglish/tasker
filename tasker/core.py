@@ -24,6 +24,7 @@ __history__ = """
 1.4 Can now filter tasks by open date
 """
 
+
 def valid_date(string):
     """Confirm dates in the arguments work as dates"""
     if string.lower() == 'today':
@@ -77,8 +78,6 @@ def add_core_subparsers(commands):
     list_parser.add_argument(
         'filters', nargs=argparse.REMAINDER,
         help="Only lists tasks containing these words")
-
-
 
     add_parser = commands.add_parser('add', help="add a task")
     add_parser.add_argument('-d', '--done', action="store_true",
@@ -375,14 +374,15 @@ archive_project_parser.add_argument('projects',
 
 archive_number_parser = archive_commands.add_parser('number',
     help='Archive tasks by number',
-    parents = [archive_parent])
+    parents=[archive_parent])
 
 archive_number_parser.add_argument('numbers',
-                                    help="numbers of tasks to archive",
-                                    nargs=argparse.REMAINDER,
-                                    type=int)
+                                   help="numbers of tasks to archive",
+                                   nargs=argparse.REMAINDER,
+                                   type=int)
 
 # todo: Isolate the code writing the todo and done files (DRY)
+
 
 class ArchiveCmd(minioncmd.MinionCmd):
     prompt = "archive> "
@@ -455,13 +455,10 @@ class ArchiveCmd(minioncmd.MinionCmd):
         self._log.info('Found %d candidates to archive', len(tasks))
 
         # create a dictionary of projects, last_date
-        end_dates = {}
-        open_projects = set()
-
+        end_dates = {}  # stores project: end_date pairs
+        open_projects = set()  # a set of open projects
 
         for num, task in tasks:
-
-
             self._log.debug('Projects: %s', task.projects)
 
             for proj in task.projects:
@@ -500,15 +497,20 @@ class ArchiveCmd(minioncmd.MinionCmd):
             return None
 
         for num, task in tasks:
-            for proj in projects_to_archive:
-                if proj in task:
-                    tasks_to_archive.add(num)
+            if task.end is None:
+                continue  # don't archive open tasks
+            if (now - task.end).days <= args.days:
+                continue  # don't archive recently closed tasks
+            if all(proj in projects_to_archive for proj in task.projects):
+                tasks_to_archive.add(num)
+            # for proj in projects_to_archive:
+                # if proj in task:
+                    # tasks_to_archive.add(num)
 
         tasks = lib.get_tasks(lib.config['Files']['task-path'])
         done = lib.get_tasks(lib.config['Files']['done-path'])
 
         next_done = max(done) + 1 if done else 1
-
 
         for key in tasks_to_archive:
             done[next_done] = tasks[key]

@@ -35,6 +35,8 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         self._log.debug('Activating Reports')
         self.setConfigOption('public_methods',
                              'do_projects,do_contexts,do_today')
+        self.setConfigOption('daily_report_filename',
+                             "{0.year}-{0.month}-{0.day}")
 
         # this is a case where we need to add multiple commands to the main
         # argument parser
@@ -54,6 +56,10 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
                            default=False, dest='only_archive',
                            help='Only look in the archive')
 
+        group.add_argument('--nowait', action='store_true',
+                           default=False, dest='only_active',
+                           help="Only list projects without a (Z) priority")
+
         project = argparse.ArgumentParser(
             'projects', parents=[common_opts],
             description="""Print a list of current projects with the number of
@@ -62,13 +68,15 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         )
         self.project_parser = project
 
-        context = argparse.ArgumentParser('contexts', parents=[common_opts],
-                                          description="""Print a list of current contexts with the number of
-        open and closed tasks""")
+        context = argparse.ArgumentParser(
+            'contexts', parents=[common_opts],
+            description="""Print a list of current contexts with the number """
+                        """of open and closed tasks""")
         self.context_parser = context
 
-        today = argparse.ArgumentParser('today',
-                                        description="""Print a list of tasks completed on the current day""")
+        today = argparse.ArgumentParser(
+            'today', description="""Print a list of tasks completed on """
+                                 """the current day (or n days ago)""")
 
         today.add_argument('-f', dest='tofile', default=False,
                            action='store_true',
@@ -97,13 +105,12 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
 
     def do_projects(self, text):
         """Print a list of current projects with the number of
-        open and closed tasks. (Docstring)
+        open and closed tasks.
         """
 
         args = self.project_parser.parse_args(text.split())
         args.name = 'project'
         self.print_counts(**vars(args))
-        # self.project_report(**vars(args))
 
     def help_contexts(self):
         self.context_parser.print_help()
@@ -145,13 +152,11 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
             today_tasks = trimmed_tasks
         else:
             today_tasks = [str(t)[2:] for t in today_tasks]
-        #wrap_width = self.config['Tasker'].getint('wrap-width', 78)
+        # wrap_width = self.config['Tasker'].getint('wrap-width', 78)
         textwrapper = textwrap.TextWrapper(width=78,
-                                           subsequent_indent = ' ' * indent)
+                                           subsequent_indent=' ' * indent)
 
         for task in today_tasks:
-            #print(task, type(task))
-
             print(textwrapper.fill(task))
 
         if args.tofile:
@@ -165,27 +170,41 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
                     fp.write("%s\n" % (task))
 
     def print_counts(self, name, include_closed=False, include_archive=False,
-                     only_archive=False):
+                     only_archive=False, only_active=False):
         """Print a list of report, noting number of open and closed tasks.
 
         :param str name:
         :param bool include_closed: Include closed tasks
         :param bool include_archive: Include archived tasks
         :param bool only_archive: Only show archived tasks
+        :param bool only_active: Don't include projects that are priority Z
         """
 
         show_closed = any((include_closed, include_archive, only_archive))
         counts = self.lib.get_counts(name.lower(),
                                      include_archive,
                                      only_archive)
+        self._log.debug(counts)
         show_list = any((k['open'] for k in counts.values()))
+
+        def s(k):
+            """Tuplize a count"""
+            return (self.lib.get_color('open') + str(k),
+                    str(counts[k]['open']),
+                    str(counts[k]['closed'])
+                    )
+
+        def f(k):
+            """Determine if a count should be in the list"""
+            yahsure = counts[k]['open'] or show_closed
+            if only_active:
+                yahsure = yahsure and (counts[k]['Z'] == counts[k]['open'])
+            return yahsure
+
         if show_list or show_closed:
             headers = "{} Open Closed".format(name.title()).split()
-            s = lambda k: (self.lib.get_color('open') + str(k),
-                           str(counts[k]['open']),
-                           str(counts[k]['closed']))
             lister.print_list([s(count) for count in sorted(counts)
-                               if (counts[count]['open'] or show_closed)],
+                               if f(count)],
                               headers)
         else:
             print("No open {}s.".format(name))

@@ -59,8 +59,7 @@ re_color = re.compile("""
 (?P<fore>black|blue|cyan|green|lightblack|magenta|red|reset|white|yellow)\s
 on\s(?P<back>black|blue|cyan|green|lightblack|magenta|red|reset|white|yellow)
 """, re.VERBOSE + re.IGNORECASE)
-#first = itemgetter(0)
-#second = itemgetter(1)
+
 
 # todo: add note as a slot for further processing
 class Task(object):
@@ -164,7 +163,6 @@ class TaskLib(object):
 
         self._textwrapper = None
 
-
         if not os.path.exists(config['Files']['tasker-dir']):
             try:
                 os.mkdir(config['Files']['tasker-dir'])
@@ -175,7 +173,6 @@ class TaskLib(object):
                                                   'tasker')
                 if not os.path.exists(config['Files']['tasker-dir']):
                     os.mkdir(config['Files']['tasker-dir'])
-
 
         for path in ['task-path', 'done-path']:
             if not os.path.exists(config['Files'][path]):
@@ -416,7 +413,7 @@ class TaskLib(object):
                     yea = not yea
                 pri = re_pri_filter.match(word)
                 if pri and pri.group(1) == task.priority:
-                    yea = not yea 
+                    yea = not yea
                 yeas.append(yea)
             return filterop(yeas)
 
@@ -650,10 +647,10 @@ class TaskLib(object):
         res = defaultdict(Counter)
         nothing = 'NO {}'.format(kind)
 
-        tasks=self.build_task_dict(include_archive, only_archive)
+        tasks = self.build_task_dict(include_archive, only_archive)
 
         for task in tasks.values():
-            items = getter(task) # projects and contexts are lists
+            items = getter(task)  # projects and contexts are lists
 
             key = 'closed' if task.complete else 'open'
 
@@ -662,6 +659,7 @@ class TaskLib(object):
 
             for item in items:
                 res[item][key] += 1
+                res[item][task.priority] += 1
 
         return res
 
