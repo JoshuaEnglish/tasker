@@ -22,11 +22,14 @@ todo = """
 Create a timed report
 """
 
-__version__ = '1.2'
-__updated__ = '2017-01-26'
+__version__ = '1.3'
+__updated__ = '2017-08-25'
 __history__ = """
 1.1 -- today report to the screen is wrapped
 1.2 -- today report allows optional numbers of days ago
+1.3 -- projects report now has --nowait option that hides projects/contexts if
+       all open tasks are in priority Z
+
 """
 
 
