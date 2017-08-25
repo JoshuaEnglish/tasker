@@ -198,7 +198,7 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
             """Determine if a count should be in the list"""
             yahsure = counts[k]['open'] or show_closed
             if only_active:
-                yahsure = yahsure and (counts[k]['Z'] == counts[k]['open'])
+                yahsure = yahsure and (counts[k]['Z'] != counts[k]['open'])
             return yahsure
 
         if show_list or show_closed:
