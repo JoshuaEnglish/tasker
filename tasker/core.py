@@ -15,13 +15,14 @@ import logging
 import minioncmd
 import lister
 
-__version__ = "1.3"
-__updated__ = "2017-01-25"
+__version__ = "1.5"
+__updated__ = "2017-09-11"
 __history__ = """
 1.1 archive projects should work now
 1.2 archive by number should work now
 1.3 Updated stock plugin code for plugin creation
 1.4 Can now filter tasks by open date
+1.5 ???
 """
 
 
@@ -361,7 +362,7 @@ archive_commands = archive_argparser.add_subparsers(title='commands',
                                                     metavar="")
 
 archive_parent = argparse.ArgumentParser(add_help=False)
-archive_parent.add_argument('--days', type=int, default=3,
+archive_parent.add_argument('--days', type=int, default=7,
                             help='minimum age of closed tasks to archive')
 
 archive_project_parser = archive_commands.add_parser('project',
@@ -372,7 +373,8 @@ archive_project_parser.add_argument('projects',
                                     help="names of Projects to archive",
                                     nargs=argparse.REMAINDER)
 
-archive_number_parser = archive_commands.add_parser('number',
+archive_number_parser = archive_commands.add_parser(
+    'number',
     help='Archive tasks by number',
     parents=[archive_parent])
 

@@ -181,13 +181,11 @@ class TaskLib(object):
 
         self.theme = {}
 
-
     def set_theme(self, theme_name=False):
 
         if not theme_name:
             return
         theme_name = theme_name.title()
-
 
         if theme_name == 'None':
             self.theme = {}
@@ -196,27 +194,23 @@ class TaskLib(object):
         config_name = 'Theme: {}'.format(theme_name)
         if self.config.has_section(config_name):
             self.log.info("Setting '%s' color theme", theme_name)
-            self.theme = dict((k.title(), get_theme_color(v)) for k,v in
+            self.theme = dict((k.title(), get_theme_color(v)) for k, v in
                               self.config.items(config_name))
-
-
-        else :
+        else:
             self.log.info("Setting default color theme")
             self.theme = {
-                "A" : colorama.Fore.RED + colorama.Style.BRIGHT,
-                "B" : colorama.Fore.YELLOW,
-                "C" : colorama.Fore.GREEN,
-                "P" : colorama.Fore.CYAN + colorama.Style.BRIGHT,
-                "Z" : colorama.Fore.LIGHTBLACK_EX
-
+                "A": colorama.Fore.RED + colorama.Style.BRIGHT,
+                "B": colorama.Fore.YELLOW,
+                "C": colorama.Fore.GREEN,
+                "P": colorama.Fore.CYAN + colorama.Style.BRIGHT,
+                "Z": colorama.Fore.LIGHTBLACK_EX
                 }
-
 
     def get_extensions_to_hide(self):
         """get_extensions_to_hide()
         Compile a list of all extensions from the config file
         """
-        ext_list = ','.join([self.config[section].get('hidden-extensions','')
+        ext_list = ','.join([self.config[section].get('hidden-extensions', '')
                              for section in self.config])
         ext_list = [ext.strip() for ext in ext_list.split(',') if ext]
         return ext_list
@@ -261,15 +255,11 @@ class TaskLib(object):
         """
         raise NotImplementedError("Please use the task object from here on out")
 
-
-
     def graft(self, complete, priority, start, end, text):
         """Deprecated. No longer implemented. This method exists
         just to catch old code.
         """
         raise NotImplementedError("Please use the Task object from here on out")
-
-
 
     def get_tasks(self, path):
         """Get tasks from either todo.txt or done.txt
@@ -287,7 +277,6 @@ class TaskLib(object):
                     idx += 1
         return res
 
-
     def write_tasks(self, task_dict, local_path):
         """write_tasks(task_dict, local_path)
         Writes the working task_dictionary to the appropriate file
@@ -300,7 +289,6 @@ class TaskLib(object):
                 fp.write("{}{}".format(task_dict[linenum], '\n'))
         return TASK_OK, "{:d} Tasks written".format(len(task_dict))
 
-
     def run_hooks(self, func_name, this):
         ok = TASK_OK
         msg = ""
@@ -308,20 +296,18 @@ class TaskLib(object):
             if not plugin.is_activated:
                 continue
             if hasattr(plugin.plugin_object, func_name):
-                logging.getLogger('hooks').debug('Calling %s.%s', plugin.name, func_name)
+                logging.getLogger('hooks').debug('Calling %s.%s',
+                                                 plugin.name, func_name)
                 func = getattr(plugin.plugin_object, func_name)
                 ok, msg, this = func(this)
         return ok, msg, this
 
-
     def add_task(self, text):
-
         this = Task.from_text(text)
 
-        #if c  and not e:
-        #    e = datetime.datetime.now()
+        # if c and not e:
+        #     e = datetime.datetime.now()
 
-        # run hooks, say, if there is a pend extension, check that the pend id is a valid ID
         err, msg, this = self.run_hooks('add_task', this)
         if err:
             self.log.error(msg)
@@ -332,23 +318,22 @@ class TaskLib(object):
         print(this)
         return TASK_OK, str(this)
 
-
     def add_done(self, text):
         """Adds a completed task. Uses the entry time as start and close
         :param text: Text of the completed task
 
-	Depracated: Use ``t add x ...`` in the CLI. If a task text begins with
-	``x `` then the task will be created as closed
+        Depracated: Use ``t add x ...`` in the CLI. If a task text begins with
+        ``x `` then the task will be created as closed
         """
         raise NotImplementedError("If you get this, something has gone wrong.")
-
 
     def complete_task(self, tasknum, comment=None):
         """Completes an open task if task is not already closed.
         """
         # Check if self.tasks has been established
         if not hasattr(self, 'tasks') or self.tasks is None:
-            tasks = self.tasks = self.get_tasks(self.config['Files']['task-path'])
+            tasks = self.tasks = self.get_tasks(
+                self.config['Files']['task-path'])
         else:
             tasks = self.tasks
 
@@ -359,14 +344,12 @@ class TaskLib(object):
             del self.tasks
             return TASK_ERROR, "Task already completed"
 
-
         this = tasks[tasknum]
         this.complete = True
         this.end = datetime.datetime.now()
         if comment:
             this.text += " # {}".format(comment)
         tasks[tasknum] = this
-        # run hooks - anything that should happen in response (grab next item in queue)
 
         err, msg, this = self.run_hooks('complete_task', this)
         if err:
@@ -377,13 +360,12 @@ class TaskLib(object):
         print(tasks[tasknum])
         return TASK_OK, tasks[tasknum]
 
-
     def sort_tasks(self, by_pri=True, filters=None, filterop=None,
                    showcomplete=None, opendate=None, closedate=None):
         """sort_tasks([by_pri, filters, filteropp, showcomplete])
         Returns a list of (line, task) tuples.
         Default behavior sorts by priority.
-        Default behavior does no filtering.-
+        Default behavior does no filtering.
         Default filter operation is all (all must match).
         Default behavior does not list completed tasks
         Default behavior does not look in the done.txt file.
@@ -402,23 +384,24 @@ class TaskLib(object):
                           self.config['Files']['task-path']).items())
                       if (showcomplete or not val.complete)]
 
-        def include_task(filters, task):
-            "return a boolean value to include the task or not"
-            yeas = []
-            for word in filters:
-                # yea = False
-                yea = word.startswith('~')
-                if word.lower() in task.text.lower():
-                    # yea = True
-                    yea = not yea
-                pri = re_pri_filter.match(word)
-                if pri and pri.group(1) == task.priority:
-                    yea = not yea
-                yeas.append(yea)
-            return filterop(yeas)
-
         if filters:
             self.log.info('Filtering tasks by keywords')
+
+            def include_task(filters, task):
+                "return a boolean value to include the task or not"
+                yeas = []
+                for word in filters:
+                    # yea = False
+                    yea = word.startswith('~')
+                    if word.lower() in task.text.lower():
+                        # yea = True
+                        yea = not yea
+                    pri = re_pri_filter.match(word)
+                    if pri and pri.group(1) == task.priority:
+                        yea = not yea
+                    yeas.append(yea)
+                return filterop(yeas)
+
             everything = [(key, val) for key, val in everything
                           if include_task(filters, val)]
 
@@ -428,17 +411,17 @@ class TaskLib(object):
                           if val.priority != "Z"]
 
         if opendate:
+            self.log.info("Showing items opened on %s", opendate)
             everything = [(key, val) for key, val in everything
                           if val.start.date() == opendate]
 
         if closedate:
+            self.log.info("Showing items closed on %s", closedate)
             everything = [(key, val) for key, val in everything
                           if val.end and val.end.date() == closedate]
 
-        # todo .. print completed tasks in revers Cron order? The priorities get wiped
         if by_pri:
-            # break up list into three lists: prioritized, unprioritized, and Z
-            plist, zlist, ulist = [],[],[]
+            plist, zlist, ulist = [], [], []
             for key, val in everything:
                 pri = val.priority
                 if pri and pri != 'Z':
@@ -447,10 +430,6 @@ class TaskLib(object):
                     ulist.append((key, val))
                 else:
                     zlist.append((key, val))
-
-            self.log.debug('plist keys: %s', ','.join(str(a) for a,b in plist))
-            self.log.debug('zlist keys: %s', ','.join(str(a) for a,b in zlist))
-            self.log.debug('ulist keys: %s', ','.join(str(a) for a,b in ulist))
 
             getter = itemgetter(1)
             if self.config['Tasker'].getboolean('priority-z-last', True):
@@ -492,7 +471,7 @@ class TaskLib(object):
 
         for ext in self.get_extensions_to_hide():
             if ext not in self.extension_hiders:
-                self.extension_hiders[ext] = re.compile(r"\s{%s:[^}]*}" % ext.strip())
+                self.extension_hiders[ext] = re.compile(r"\s{%s:[^}]*}" % ext)
 
         wrap_width = self.config['Tasker'].getint('wrap-width', 78)
         if not self._textwrapper:
@@ -521,13 +500,14 @@ class TaskLib(object):
 
                 if not showext:
                     for ext in self.extension_hiders:
-                        task.text = self.extension_hiders[ext].sub("", task.text)
+                        task.text = self.extension_hiders[ext].sub("",
+                                                                   task.text)
                 print(("{3}{1:{0}d} {2}".format(idlen, idx,
                                                 wrapfunc(str(task)),
                                                 self.get_color(pri))))
                 count += 1
-            print('{0}{1}'.format(colorama.Fore.RESET,'-'*(idlen+1)))
-        msg=("{:d} task{:s} shown".format(count, '' if count==1 else 's'))
+            print('{0}{1}'.format(colorama.Fore.RESET, '-'*(idlen+1)))
+        msg = ("{:d} task{:s} shown".format(count, '' if count == 1 else 's'))
         print(msg)
         return TASK_OK, msg
 
@@ -617,10 +597,9 @@ class TaskLib(object):
             if include_archive:
                 done = self.get_tasks(self.config['Files']['done-path'])
                 for key, val in done.items():
-                    tasks['x%d' % key]=val
+                    tasks['x%d' % key] = val
 
         return tasks
-
 
     def get_counts(self, kind, include_archive=False, only_archive=False):
         """get_counts(kind, include_archive, only_archive)

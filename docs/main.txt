@@ -7,7 +7,7 @@ tasker.main
 This page describes the main module that runs the show.
 
 The module-level object ``CLI`` is an instance of :class:`TaskCmd` which is
-a subclass of :class:`BossCmd`. Other tools exists as subclasses of
+a subclass of :class:`BossCmd`. Other tools exist as subclasses of
 :class:`MinionCmd`.
 
 The first thing the script does is create a ConfigParser object, set the

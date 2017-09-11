@@ -23,4 +23,10 @@ vocabulary = person
 7 = SorayaVincent
 8 = RobertSaldivar
 9 = RyanBurch
+10 = HarithBalala
+11 = TimJames
+12 = HelenaBrill
+13 = MichaelHascall
+14 = LanceTrumbull
+15 = AlexPrimeaux
 
