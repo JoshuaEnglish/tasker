@@ -28,7 +28,7 @@ to add subprograms (called *minions*) that provide more functionality. Minions
 can be loaded through the plugin system.
 
 :class:`BossCmd` describes a top-level interactive prompt. :class:`MinionCmd`
-describes a subprogram at the interactive prompt. 
+describes a subprogram at the interactive prompt.
 
 There are two ways to link a Minion to a Boss::
 
@@ -49,10 +49,10 @@ can call eachother without stacking::
     Boss> story
     story> submission
     submission> done
-    Boss> 
+    Boss>
 
 All MinionCmd instances have a ``done`` command that exits the subpgram and
-returns to the parent BossCmd instance. MinionCmd instances also have a 
+returns to the parent BossCmd instance. MinionCmd instances also have a
 ``quit`` command that quits the program entirely.
 
 If a MinionCmd instance can be called with a command, which will be executed,
@@ -63,14 +63,14 @@ then the program will return to the calling program::
     Documented commands (type help <topic>):
     ========================================
     done  help  market  quit  submission
-    
+
     Boss> submission
     submission> story help
     Help for StoryCmd
     Documented commands (type help <topic>):
     ========================================
     done  help  market  quit  submission
-    
+
     submission>
 
 
@@ -122,6 +122,95 @@ transferred over.
 
 Finally, write the non ``do_`` methods, using ``self.cli`` to access TaskCmd.
 See the :class:`TaskCmd` page for details.
+
+
+Advanced Plugins with their own Library
+=======================================
+
+There may be a time when you need a plugin that is practically a fully-
+functional application on its own. In my case, I found tracking tasks didn't
+do a good enough job of keeping projects updated. I could never decide if I
+should close a task with a note and recreate it, or add a completed task on
+the project with a note, and if so, would I get a history based on open dates
+or closed dates? I decided to create a dashboard plugin to let me manage on-
+going projects that got updates that didn't correspond to actionable items.
+
+I decided to store the dashboard in XML, a format I'm used to and have used in
+other projects. I am using the built-in ``xml.etree.ElementTree`` module instead
+of lxml, which means I have lost validation methods, but it should be more
+portable.
+
+In reviewing the Workflow plugin, which had been my most complicated plugin so
+far, I realized that a lot of "library logic" was in the Client Line Interface,
+and it should have been in the Plugin Object itself or in a separate library.
+
+I decided to create the Dashboard using a standalone library file which I could
+prototype outside of tasker and get the basic functionality established. This
+also means that other APIs such as REST should be easier later on, if I decided
+to finally build that out.
+
+I wrote the library and made sure it printed nothing but returned Python objects
+(dictionaries, lists, tuples) or raised errors.
+
+Once the library worked well enough (some features aren't there yet, like
+archiving a project from the dashboard into an archive), I realized I could
+have created a CLI for it as is, but I wanted to create better integration
+with tasker.
+
+The DashboardLib object has the following API::
+
+.. code::
+
+    def list_projects(self):
+        """Return list of project names in the dashboard file"""
+
+    def new_project(self, projectid, name, background,
+                    status=NEW, priority=NOW):
+        """new_project(projectid, name background)
+        Create a new project """
+
+    def add_project_note(self, projectid, stub, text):
+        """add_project_note(projectid, stub, text)
+        Add a note to a project.
+
+        stub is a small text description
+        text is a longer text description """
+
+    def complete_project(self, projectid, text):
+        """complete_project(projectid, text)
+        Add a note to the project that the project is closed. Set status to
+        DONE.  """
+
+    def get_dashboard_report(self):
+        """Return (id, status, latest_timestamp, stub) tuples of
+        dashboard items """
+
+    def get_project_details(self, projectid, inorder=False):
+        """get_project_details(projectid [, inorder=False])
+        Return a dictionary containing the text of the project.
+        Keys are:
+            name
+            background
+            created
+            modified
+            status
+            priority
+            notes - a list of (time, stub, text) tuples
+
+        Notes are sorted in chronological order if *inorder* is true, otherwise
+        in reverse chronological order (the default).  """
+
+    def update_priority(self, projectid, priority):
+        """update_priority(projectid, priority)
+        Update the projectid with the new priority. New priority must be
+        "NOW", "LATER", "PENDING".  """
+
+    def update_status(self, projectid, status):
+        """update_status(projectid, status)
+        Update the projectid with the new status. New status must be
+        "NEW", "WORKING", "DONE", "ZOMBIED" """
+
+
 
 
 .. _ConfigurablePluginManager: https://yapsy.readthedocs.org/en/latest/ConfigurablePluginManager.html

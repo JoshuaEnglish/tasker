@@ -1,0 +1,25 @@
+<dashboard>
+<project created="2017-09-21T10:32:25" id="NGA" modified="2017-09-21T10:34:31" priority="NOW" status="WORKING">
+<name>National Gallery of Art Claim</name>
+<background>Kevin Clark is trying to process a MyComp claim for 50 APs for the National Gallery of Art.
+They were ordered through Avnet and Sysorex and Henkels and McCoy, who are listed as the 
+end user is our systems.
+
+The Sales Order ID in Birst is 24Z324593001. It is listed for $39,714.50 in Bookings.
+
+The Sales Order ID in Sandy is the same, matching to SAP 0303221055. Sandy lists it for 
+$456,258.
+
+The SAP number does not appear in Birst Booking.
+
+Neither one show up in Birst Shipping with those numbers. It is in the shipping report 
+with a Primary Transaction ID of 8101241836. Birsh Shipping is not (9/21/2017) giving
+me any data on that. I have that number in my notes.
+
+I have a note that Chris Wade helped Kevin with the manual claim on 9/12</background>
+<note created="2017-09-21T10:34:31">
+<stub>Checking with Kevin and Chris</stub>
+<text>On 9/12 I worked with Chris on the background. They were going to file a claim.</text>
+</note>
+</project>
+</dashboard>

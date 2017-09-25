@@ -74,7 +74,6 @@ import minioncmd
 
 WORKFLOWS = os.path.join(os.path.dirname(__file__), 'workflows')
 
-
 CLEAN_VOCABULARY = re.compile(r"^[@+]")
 
 __todo__ = """
@@ -84,9 +83,20 @@ grab the next task number. wx:0 could end a branch.
 
 If a workflow requires interacting with separate systems, they can
 be joined in one workflow. wx should allow for comma-dileneated numbers
+
+2017-09-18: Move library logic to an actual library
+There is logic in the CLI that should be handled by a library or the plugin
+object itself. The CLI object does not know about the Plugin, but the Plugin
+knows about the CLI.
 """
+
+
+class WorkflowLib(object):
+    pass
+
+
 class WorkflowCLI(minioncmd.MinionCmd):
-    prompt = "workflow> "
+    prompt = "workflow>"
     minion_header = "Other subcommands (type <topic> help)"
     doc_leader = """Workflow Help
 
@@ -111,11 +121,11 @@ class WorkflowCLI(minioncmd.MinionCmd):
 
         self._workflow_dir = local_dir
 
-
     def add_workflow_task(self, flow, stepnum, flow_id):
         """add_workflow_task(flow, stepnum, flow_id)
 
         Adds a new task to the task manager based on the workflow.
+        This method is called during the `do_complete` hook.
 
         :param str flow: name of the workflow to follow
         :param int/str stepnum: number of the step
@@ -156,7 +166,6 @@ class WorkflowCLI(minioncmd.MinionCmd):
         else:
             self._log.error("No BossCmd instance to add task with")
 
-
     def do_start(self, text):
         """Usage: start NAME VOCABULARY+
 
@@ -171,6 +180,7 @@ class WorkflowCLI(minioncmd.MinionCmd):
         text = text.strip()
         words = text.split()
         flow = words.pop(0)
+        # At this point, everything should be done by a library
         if flow not in self.workflows:
             self._log.error("Missing workflow: %s", flow)
             print("Missing workflow: {}".format(flow))
@@ -185,7 +195,8 @@ class WorkflowCLI(minioncmd.MinionCmd):
 
         instances[str(next_id)] = ','.join(words)
         self.add_workflow_task(flow, 1, next_id)
-        with open(os.path.join(self._workflow_dir, "%s.workflow" % flow), 'w') as fp:
+        path = os.path.join(self._workflow_dir, "%s.workflow" % flow)
+        with open(path, 'w') as fp:
             self.workflows[flow].write(fp)
         return None
 
@@ -265,7 +276,8 @@ class WorkflowCLI(minioncmd.MinionCmd):
         desc = input("Please enter a description for this workflow: ")
         steps = []
         vocabulary = []
-        print("When entering steps, use $<word> to define the vocabulary for this workflow.")
+        print("When entering steps, use $<word> to define the vocabulary "
+              "for this workflow.")
         print("Enter a blank line to complete this process.")
         while keep_going:
             step = input("Describe step number %d: " % (len(steps)+1))
@@ -280,6 +292,7 @@ class WorkflowCLI(minioncmd.MinionCmd):
                             vocabulary.append(candidate)
             else:
                 keep_going = False
+        #  At this point, everything should be passed to a library
         print("Vocabulary: %s" % ', '.join(vocabulary))
 
         cp = ConfigParser()
@@ -335,11 +348,13 @@ class WorkflowCLI(minioncmd.MinionCmd):
         steps = self.workflows[flow_name]['Steps']
         last_step = max(steps)
 
-        new_version = re.sub(r"{ws:\d+}", "{ws:%s}" % last_step, selected_victim.text)
-
+        new_version = re.sub(r"{ws:\d+}", "{ws:%s}" % last_step,
+                             selected_victim.text)
+        Task = tasks[tasknum].__class__
         tasks[tasknum] = Task.fromtext(new_version)
         self.master.lib.tasks = tasks
-        self.master.cmdqueue.append("do {} Abandoned: {}".format(tasknum, reason))
+        self.master.cmdqueue.append(
+            "do {} Abandoned: {}".format(tasknum, reason))
         return True
 
     def do_edit(self, text):
@@ -355,13 +370,14 @@ class WorkflowCLI(minioncmd.MinionCmd):
             import subprocess
             subprocess.Popen("%s %s" % (editor_path, workflow_path))
         else:
-            os.start(workflow)
+            os.startfile(workflow_path)
 
     def help_about(self):
         """About this plugin"""
         print("""These commands allow you to create sequential tasks for projects that
 are the same process but for different contexts: processing orders for
 different customers or verifying lists of data that are the same form.""")
+
 
 class Workflow(basetaskerplugin.SubCommandPlugin):
     def activate(self):
@@ -374,41 +390,45 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
             self.setConfigOption('hidden-extensions', 'wid,ws,wn')
 
         self.cli_name = 'workflow'
-        self.cli = WorkflowCLI() # needs to be an instance
-
-#        self._log.debug("Adding workflow commands")
+        self.cli = WorkflowCLI()  # needs to be an instance
 
         parser = self.parser = argparse.ArgumentParser('workflow')
         self.helpstr = 'Workflows commands (see `help workflow`)'
         workflow_commands = parser.add_subparsers(title='workflow commands',
                                                   dest='subcommand',
                                                   metavar='')
-        start_workflow = workflow_commands.add_parser('start', help='start a workflow')
-        start_workflow.add_argument('name', help="The name of the workflow to start")
-        start_workflow.add_argument('vocabulary', nargs=argparse.REMAINDER,
-                                    help="The vocabulary for the workflow instance")
-#
+        start_workflow = workflow_commands.add_parser(
+            'start', help='start a workflow')
+        start_workflow.add_argument(
+            'name', help="The name of the workflow to start")
+        start_workflow.add_argument(
+            'vocabulary', nargs=argparse.REMAINDER,
+            help="The vocabulary for the workflow instance")
+
         workflow_commands.add_parser('list', help='lists known workflows')
 
-        steps = workflow_commands.add_parser('steps',
-                                             help='displays templated steps for a given workflow')
+        steps = workflow_commands.add_parser(
+            'steps',
+            help='displays templated steps for a given workflow')
         steps.add_argument('text', nargs=argparse.REMAINDER)
 
-        instance = workflow_commands.add_parser('instances',
-                                                help='displays known instances of a workflow')
+        instance = workflow_commands.add_parser(
+            'instances',
+            help='displays known instances of a workflow')
         instance.add_argument('workflow')
 
-        info = workflow_commands.add_parser('info',
-                                            help="displays information about a workflow")
+        info = workflow_commands.add_parser(
+            'info',
+            help="displays information about a workflow")
         info.add_argument('workflow')
 
-        create = workflow_commands.add_parser('create',
-                                              help="creates a new workflow file")
+        create = workflow_commands.add_parser(
+            'create',
+            help="creates a new workflow file")
         create.add_argument('name', help="the name of the workflow to create")
         create.add_argument('--edit', help="launch the editor automatically")
 
         super().activate()
-
 
     def complete_task(self, this):
         self._log.debug('Workflow checking completed task %s',
@@ -417,9 +437,11 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
             flow = self.cli.workflows[this.extensions['wn']]
             steps = flow['Steps']
             if this.extensions['ws'] not in steps:
-                msg = "Workflow {} does not have step {}".format(flow, this.extensions['ws'])
+                msg = "Workflow {} does not have step {}".format(
+                    flow,
+                    this.extensions['ws'])
                 self._log.error(msg)
-                print(msg) # this will cause problems down the road
+                print(msg)  # this will cause problems down the road
                 return (0, None, this)
             next_step = str(int(this.extensions['ws'])+1)
             if next_step in steps:
@@ -430,5 +452,3 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
                 except KeyError as E:
                     return(2, E, this)
         return(0, None, this)
-
-

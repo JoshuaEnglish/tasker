@@ -30,34 +30,28 @@ class ExtHelpCmd(cmd.Cmd):
     doc_header = "Local commands (type help <command>)"
 
     def do_help(self, arg):
-        """List available commands with "help" or detailed help with "help cmd"."""
+        """List available commands with "help" or detailed help with
+        "help cmd"."""
         if arg:
             # XXX check arg syntax
-            try:
-                func = getattr(self, 'help_' + arg)
-            except AttributeError:
-                try:
-                    doc = getattr(self, 'do_' + arg).__doc__
-                    if doc:
-
-                        print(doc, file=self.stdout)
-                        return
-                except AttributeError:
-                    pass
+            if hasattr(self, 'help_' + arg):
+                getattr(self, 'help_' + arg)()
+            elif hasattr(self, 'do_' + arg):
+                doc = getattr(self, 'do_' + arg).__doc__
+                if doc:
+                    print(doc, file=self.stdout)
+            else:
                 print(self.nohelp % (arg,), file=self.stdout)
-                return
-            func()
         else:
             names = self.get_names()
             cmds_doc = []
             minion_doc = []
+            minions = []
             if hasattr(self, 'minions'):
                 minions = self.minions.keys()
             elif hasattr(self, 'master'):
                 if self.master is not None:
                     minions = self.master.minions.keys()
-                else:
-                    minions = []
             cmds_undoc = []
             misc = {}
             for name in names:
@@ -87,14 +81,13 @@ class ExtHelpCmd(cmd.Cmd):
                         cmds_undoc.append(cmd_name)
 
             cmds_sys = []
-            for ccmd_namemd in ['help', 'quit', 'done']:
+            for cmd_name in ['help', 'quit', 'done']:
                 if cmd_name in cmds_doc:
                     cmds_doc.remove(cmd_name)
                     cmds_sys.append(cmd_name)
 
             cmds_sys.sort()
 
-            #self.stdout.write("%s\n"%str(self.doc_leader))
             print(self.doc_leader, file=self.stdout)
             self.print_topics(self.doc_header, cmds_doc, 15, 80)
             self.print_topics(self.minion_header, minion_doc, 15, 80)
@@ -131,7 +124,6 @@ class BossCmd(ExtHelpCmd):
         #: dynamically applied to minions
         self.switchers = {}
 
-
     def preloop(self):
         """Sets the instance ``inloop`` property to ``True``"""
         self.inloop = True
@@ -147,10 +139,7 @@ class BossCmd(ExtHelpCmd):
 
         If this method is not overridden, it prints an error message and
         returns.
-
         """
-        #self.stdout.write('*** Unknown %s syntax: %s\n' %
-        #                  (self.__class__.__name__, line))
         print("*** Unknown %s syntax: %s" % (self.__class__.__name, line),
               file=self.stdout)
 
@@ -171,7 +160,6 @@ class BossCmd(ExtHelpCmd):
             cmder.master = None
         cmder.master = self
 
-
         # step one: create a "do_" method to access the minion
         def do_minion(self, arg):
             self._log.debug("Calling minion %s with %s", name, arg)
@@ -180,13 +168,12 @@ class BossCmd(ExtHelpCmd):
             else:
                 cmder.cmdloop()
 
-        do_minion.__doc__ = "Send a single command to the {} subprogram or start its loop.".format(name)
+        do_minion.__doc__ = ("Send a single command to the {} subprogram or "
+                             "start its loop.").format(name)
 
         setattr(self.__class__, "do_{}".format(name), do_minion)
 
-
         self._log.debug('Creating Switch to minion for %s', name)
-
 
         # step two: create a "do_" method for the minions
         def switch_to_minion(self, line):
@@ -206,7 +193,8 @@ class BossCmd(ExtHelpCmd):
             return True
 
         switch_to_minion.__name__ = "do_%s" % name
-        switch_to_minion.__doc__ = "Send a single command to the {} subprogram or begin its loop".format(name)
+        switch_to_minion.__doc__ = ("Send a single command to the {} "
+                                    "subprogram or begin its loop").format(name)
 
         self.switchers[name] = switch_to_minion
 
@@ -214,8 +202,10 @@ class BossCmd(ExtHelpCmd):
             for minion in self.minions:
                 if switch == minion:
                     continue
-                self._log.debug('Adding do_%s to %s', switch, minion)
-                setattr(self.minions[minion].__class__, "do_{}".format(switch), self.switchers[switch])
+                # self._log.debug('Adding do_%s to %s', switch, minion)
+                setattr(self.minions[minion].__class__,
+                        "do_{}".format(switch),
+                        self.switchers[switch])
 
         return cmder
 
@@ -248,7 +238,6 @@ class BossCmd(ExtHelpCmd):
             self.onecmd(text)
 
 
-
 class MinionCmd(ExtHelpCmd):
     """MinionCmd
 
@@ -262,7 +251,7 @@ class MinionCmd(ExtHelpCmd):
     def __init__(self, name, master=None,
                  completekey='tab', stdin=None, stdout=None):
         super().__init__(completekey, stdin, stdout)
-        self.prompt = "{}> ".format(name)
+        self.prompt = "{}>".format(name)
         self.name = name
         self.master = master
         if self.master:
@@ -285,8 +274,8 @@ class MinionCmd(ExtHelpCmd):
         returns.
 
         """
-        #self.stdout.write('*** Unknown %s syntax: %s\n'% (self.__class__.__name__, line))
-        print('*** Unknown', self.__class__.__name__, 'syntax:', line, file=self.stdout)
+        print('*** Unknown', self.__class__.__name__,
+              'syntax:', line, file=self.stdout)
 
     def onecmd(self, line):
         """Process a single command and process the cmdqueue
@@ -294,24 +283,15 @@ class MinionCmd(ExtHelpCmd):
         """
         stop = super().onecmd(line)
         self.master.process_queue()
-#        while len(self.cmdqueue):
-#            text = self.cmdqueue.pop(0)
-#            self._log.debug("Processing queued command: %s", text)
-#            self.onecmd(text)
         return stop
 
+
 if __name__ == '__main__':
-    #logging.getLogger('bosscmd').setLevel(logging.DEBUG)
-    #logging.getLogger('minioncmd').setLevel(logging.DEBUG)
-
-
     class SubmissionCmd(MinionCmd):
         doc_leader = "Help for SubmissionCmd"
 
-
     class StoryCmd(MinionCmd):
         doc_leader = "Help for StoryCmd"
-
 
     class MarketCmd(MinionCmd):
         doc_leader = "Help for MarketCmd"

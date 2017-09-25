@@ -12,6 +12,9 @@ import argparse
 import datetime
 import logging
 
+from collections import defaultdict
+from itertools import chain
+
 import minioncmd
 import lister
 
@@ -54,7 +57,7 @@ def add_core_subparsers(commands):
     list_parser.add_argument(
         '-n', action="store_false",
         dest="by_pri", default=True,
-        help="Prints task list in numerical order, otherwise orders by priority")
+        help="Prints task list in numerical order, otherwise by priority")
 
     list_parser.add_argument(
         '-y', dest="filterop", action="store_true",
@@ -105,6 +108,7 @@ def add_core_subparsers(commands):
                              help='number of the task to prioritize')
     note_parser.add_argument('note', nargs=argparse.REMAINDER,
                              help="note to add (blank removes note)")
+
 
 plugin_argparser = argparse.ArgumentParser('plugins')
 plugin_commands = plugin_argparser.add_subparsers(title='commands',
@@ -258,7 +262,7 @@ Description = Twiddles its thumbs
 """
 
 CLI_CODE = '''
-from tasker import minioncmd
+import minioncmd
 
 class {name}CLI(minioncmd.MinionCmd):
     prompt = "{lowername}> "
@@ -308,7 +312,7 @@ class {name}Plugin(basetaskerplugin.{cls}):
 
         super().activate()
 
-    def do_{name}(self, text):
+    def do_{lowername}(self, text):
         """Thumb twiddler"""
         pass
 
@@ -458,20 +462,17 @@ class ArchiveCmd(minioncmd.MinionCmd):
 
         # create a dictionary of projects, last_date
         end_dates = {}  # stores project: end_date pairs
-        open_projects = set()  # a set of open projects
-
+        open_projects = set(chain(*[task.projects
+                                    for num, task in tasks
+                                    if task.end is None]))
+        end_dates = defaultdict(set)
         for num, task in tasks:
-            self._log.debug('Projects: %s', task.projects)
-
             for proj in task.projects:
-                if task.end is None:
-                    open_projects.add(proj)
-                    continue
-                if proj not in end_dates:
-                    end_dates[proj] = task.end
-                else:
-                    end_dates[proj] = max(task.end,
-                                          end_dates[proj])
+                if task.end is not None:
+                    end_dates[proj].add(task.end)
+        end_dates = dict((proj, max(dates))
+                         for proj, dates in end_dates.items())
+
         for proj in open_projects:
             self._log.warn('Project %s is still open. Not archived.', proj)
             if proj in end_dates:
@@ -505,9 +506,6 @@ class ArchiveCmd(minioncmd.MinionCmd):
                 continue  # don't archive recently closed tasks
             if all(proj in projects_to_archive for proj in task.projects):
                 tasks_to_archive.add(num)
-            # for proj in projects_to_archive:
-                # if proj in task:
-                    # tasks_to_archive.add(num)
 
         tasks = lib.get_tasks(lib.config['Files']['task-path'])
         done = lib.get_tasks(lib.config['Files']['done-path'])

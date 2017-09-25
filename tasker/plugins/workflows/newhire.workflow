@@ -29,4 +29,9 @@ vocabulary = person
 13 = MichaelHascall
 14 = LanceTrumbull
 15 = AlexPrimeaux
+16 = BrianHall
+17 = DavidWolf
+18 = VictoriaGolden
+19 = LaurenceLapato
+20 = BertrandDechavanne
 
