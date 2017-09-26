@@ -157,15 +157,15 @@ class DashboardLib(object):
             notes = sorted(project.findall('note'),
                            key=lambda x: x.get('created'))
             if notes:
-                stuff.append((project.get('id'),
-                              project.get('status'),
-                              self.display_time(notes[-1].get('created')),
-                              notes[-1].findtext('stub')))
+                update = notes[-1].findtext('stub')
             else:
-                stuff.append((project.get('id'),
-                              project.get('status'),
-                              project.get('modified'),
-                              project.findtext('background')[:32]))
+                update = project.findtext('background')[:32]
+
+            stuff.append((project.get('id'),
+                          project.get('status'),
+                          project.get('priority'),
+                          self.display_time(project.get('modified')),
+                          update))
         return stuff
 
     def get_project_details(self, projectid, inorder=False):
@@ -248,7 +248,7 @@ class DashboardCLI(minioncmd.MinionCmd):
 
         Print a dashboard report
         """
-        headers = "ID Status Date Note".split()
+        headers = "ID Status Priority Date Note".split()
         lister.print_list(self.dashlib.get_dashboard_report(), headers)
 
     def do_new(self, text):
@@ -266,7 +266,7 @@ class DashboardCLI(minioncmd.MinionCmd):
         print("Please provide some background. Enter DONE on a single line to "
               "finish.")
         while True:
-            text = input(">")
+            text = input("> ")
             if text == 'DONE':
                 break
             background.append(text)
@@ -307,7 +307,7 @@ class DashboardCLI(minioncmd.MinionCmd):
             print("Notes:")
             for time, stub, text in details['notes']:
                 print(time, stub)
-                print(textwrap.fill(text, width=60))
+                print(textwrap.fill(text, width=60), end="\n\n")
         else:
             print("No Notes")
 
@@ -356,13 +356,13 @@ class DashboardCLI(minioncmd.MinionCmd):
         projectid = words.pop(0)
         name = ' '.join(words)
         while not name:
-            name = input("Please enter a slug for the note")
+            name = input("Please enter a slug for the note: ")
 
         background = []
         print("Please provide some background. Enter DONE on a single line to "
               "finish.")
         while True:
-            text = input(">")
+            text = input("> ")
             if text == 'DONE':
                 break
             background.append(text)
