@@ -21,7 +21,7 @@ Tasks consist of a single line of text:
     * 'datetime stamp' for the time the task was completed (if completed)
     * remaining text is the actual task
     * '# ' indicates the start of a note or comment
-  
+
 Tasks are organized by projects (words that begin with '+') and contexts (words
 that begin with '@'). Tasks may also have extensions which are key:value pairs
 wrapped in brackets (for example ``{uid:221112080316}``).
@@ -115,7 +115,7 @@ Listing Tasks
 
 The simple ``list`` command will show only currently open tasks, but you can
 filter tasks by including search terms::
-    
+
     > t
     13 (B) 2016-03-20T18:33:23 Get complete information for +HomeQuote @quote
     12 2016-03-17T22:54:20 redo +Documentation
@@ -229,17 +229,17 @@ is the first character of the new task, it will be created as a closed task::
 Marking tasks as Complete
 -------------------------
 
-You can close a task with the ``do`` command. The input string should be 
+You can close a task with the ``do`` command. The input string should be
 the TASK NUMBER and any EXTRA COMMENT::
 
     > t
     32 2016-03-24T15:30:19 unprioritized task # This should be done soon
     ---
     1 task shown
-    
+
     > t do 32 This is now done
     x 2016-03-24T15:30:19 2016-03-24T15:43:52 unprioritized task {uid:153019240316} # This should be done soon # This is now done
-    
+
     > t
     0 tasks shown
 
@@ -251,28 +251,28 @@ It is also possible to list your open and closed projects::
 
     > t projects
     No open projects.
-    
+
     > t projects --closed
-    Project             Open Closed 
+    Project             Open Closed
     ------------------- ---- ------
-    +BogusQuote         0    5      
-    +BookingsAdjustment 0    1      
-    ...     
-    +SaratogaEval       0    1      
-    +TMQuotes           0    1      
-    NO PROJECT          0    14  
+    +BogusQuote         0    5
+    +BookingsAdjustment 0    1
+    ...
+    +SaratogaEval       0    1
+    +TMQuotes           0    1
+    NO PROJECT          0    14
 
     > t contexts
     No open contexts.
-    
+
     > t contexts --closed
-    Context    Open Closed 
+    Context    Open Closed
     ---------- ---- ------
-    @bookings  0    1      
-    @orders    0    1      
-    @quote     0    19     
-    @test      0    2      
-    NO CONTEXT 0    13 
+    @bookings  0    1
+    @orders    0    1
+    @quote     0    19
+    @test      0    2
+    NO CONTEXT 0    13
 
 
 Changing Task Priorities
@@ -284,10 +284,10 @@ You can change the priority of a task by using the ``pri`` command::
     32 2016-03-24T15:30:19 unprioritized task
     ---
     1 task shown
-    
+
     > t pri 32 A This should be done soon
     (A) 2016-03-24T15:30:19 unprioritized task {uid:153019240316} # This should be done soon
-    
+
     > t
     32 (A) 2016-03-24T15:30:19 unprioritized task # This should be done soon
     ---
@@ -298,6 +298,25 @@ You can remove the proirity on a task using an underscore::
     > t pri 32 _
      2016-03-24T15:30:19 unprioritized task {uid:153019240316} # This should be done soon
 
+
+Hiding Tasks
+------------
+
+Some tasks can't be acted on for some time, and so it is helpful to hide a task
+from the list until a certain date.
+
+There are two commands to handle this:
+
+    - ``hide num YYYY-MM-DD`` Hides a task until a given date
+    - ``unhide num`` Removes the hide date from a task.
+
+You can use the ``--showhidden`` flag to the list command to all tasks despite
+the hide date.
+
+You can use the ``--hidedate YYYY-MM-DD`` to preview the output list for a
+given date. If you have a task hidden on 2017-10-05, as of October 5, that
+task will appear in the list. On October 4, it will not show up by default,
+but you can use ``--hidedate tomorrow`` to see that task.
 
 Getting Details on the Process
 ------------------------------

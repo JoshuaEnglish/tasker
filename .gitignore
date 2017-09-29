@@ -61,6 +61,8 @@ target/
 #Ipython Notebook
 .ipynb_checkpoints
 
+tasker/plugins/workflows/
+tasker/plugins/dashboards/
 tasker/tasker.ini
 error.txt
 

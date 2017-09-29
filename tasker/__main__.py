@@ -201,6 +201,16 @@ class TaskCmd(minioncmd.BossCmd):
         args = commands.choices['note'].parse_args(line.split())
         self.lib.note_task(args.tasknum, " ".join(args.note))
 
+    def do_hide(self, line):
+        """Hide a task until a certain date"""
+        args = commands.choices['hide'].parse_args(line.split())
+        self.lib.hide_task(args.tasknum, args.hidedate)
+
+    def do_unhide(self, line):
+        """Remove a hide date on a task"""
+        args = commands.choices['unhide'].parse_args(line.split())
+        self.lib.unhide_task(args.tasknum)
+
     def save_config(self):
         save_config()
 

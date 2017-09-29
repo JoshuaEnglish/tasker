@@ -17,8 +17,8 @@ from functools import partial
 import colorama
 from theme import get_color as get_theme_color
 
-__version__ = "1.4"
-__updated__ = "2017-05-11"
+__version__ = "1.6.dev"
+__updated__ = "2017-09-29"
 __history__ = """
 1.1 listing tasks is now case insensitive
 1.2 Filtering by (p) matches against the priority
@@ -26,12 +26,13 @@ __history__ = """
     a list, not as a string.
 1.4 Changed theme to an option to support multiple themes
 1.5 Fixed bug where list -c failed
-1.5 Added Show Task Hook to allow plugins to refine filtering of tasks
+1.6 Added Show Task Hook to allow plugins to refine filtering of tasks
 """
 
 
 TIMEFMT = '%Y-%m-%dT%H:%M:%S'
 IDFMT = '%H%M%S%d%m%y'
+DATEFMT = '%Y-%m-%d'
 
 re_task = re.compile(
     r"(?P<complete>x\s)?"
@@ -46,6 +47,7 @@ re_project = re.compile("\s([+][-\w]+)")
 
 re_ext = re.compile(r"\s{\w+:[^}]*}")
 re_uid = re.compile(r"\s{uid:[^}]*}")
+re_hide = re.compile(r"\s{hide:(\d{4}-\d{2}-\d{2})}")
 re_note = re.compile('\s#\s.*$')
 
 re_pri_filter = re.compile(r"~?\(([A-Z])\)")
@@ -361,7 +363,8 @@ class TaskLib(object):
         return TASK_OK, tasks[tasknum]
 
     def sort_tasks(self, by_pri=True, filters=None, filterop=None,
-                   showcomplete=None, opendate=None, closedate=None):
+                   showcomplete=None, opendate=None, closedate=None,
+                   hidedate=None):
         """sort_tasks([by_pri, filters, filteropp, showcomplete])
         Returns a list of (line, task) tuples.
         Default behavior sorts by priority.
@@ -378,6 +381,7 @@ class TaskLib(object):
             self.log.error('Bad filterop parameter in sort_tasks')
             return TASK_ERROR, "Filter Operation must by any or all"
         showcomplete = showcomplete or closedate or False
+        hidedate = hidedate or datetime.date.today()
 
         everything = [(key, val)
                       for key, val in list(self.get_tasks(
@@ -393,7 +397,8 @@ class TaskLib(object):
                 for word in filters:
                     # yea = False
                     yea = word.startswith('~')
-                    if word.lower() in task.text.lower():
+                    testword = word.replace('~', '').lower()
+                    if testword in task.text.lower():
                         # yea = True
                         yea = not yea
                     pri = re_pri_filter.match(word)
@@ -419,6 +424,18 @@ class TaskLib(object):
             self.log.info("Showing items closed on %s", closedate)
             everything = [(key, val) for key, val in everything
                           if val.end and val.end.date() == closedate]
+
+        # if the task has a hide extension and the value of that extension
+        # is greater than the current day, do not show task.
+
+        # show task unless there is a hide extension and the value is greater
+        # than the current day
+
+        everything = [(key, task) for key, task in everything
+                      if datetime.datetime.strptime(
+                          task.extensions.get('hide',
+                                              hidedate.strftime(DATEFMT)),
+                          DATEFMT).date() <= hidedate]
 
         if by_pri:
             plist, zlist, ulist = [], [], []
@@ -447,7 +464,7 @@ class TaskLib(object):
 
     def list_tasks(self, by_pri=True, filters: str = None, filterop=None,
                    showcomplete=None, showext=None,
-                   opendate=None, closedate=None):
+                   opendate=None, closedate=None, hidedate=None):
         """list_tasks([by_pri, filters, filterop, showcomplete, showuid)
         Displays a list of tasks.
         :type by_pri: Boolean
@@ -458,13 +475,16 @@ class TaskLib(object):
         :param bool showcomplete: If true, shows completed tasks
         :param bool showext: If true, shows the normally hidden
                              extensions of the task.
+        :param date opendate: If not None, filters tasks opened on opendate
+        :param date closedate: If not None, filters tasks closed on closedate
+        :param date hidedate: The date to filter extensions marked to hide
         :rtype: TASK_OK, None
         """
         showext = showext or False
         count = 0
         # colorize = self.config['Tasker'].getboolean('use-color', True)
         shown_tasks = self.sort_tasks(by_pri, filters, filterop, showcomplete,
-                                      opendate, closedate)
+                                      opendate, closedate, hidedate)
         self.log.info('Listing %s tasks %s',
                       'all' if showcomplete else 'open',
                       'by priority' if by_pri else 'by number')
@@ -585,6 +605,36 @@ class TaskLib(object):
 
         return task
 
+    def hide_task(self, tasknum, hidedate):
+        tasks = self.get_tasks(self.config['Files']['task-path'])
+        if tasknum not in tasks:
+            self.log.error('Task %s not in list', tasknum)
+            return TASK_ERROR, "Task number not in task list"
+        if tasks[tasknum].complete:
+            self.log.error('Task %s already completed. Cannot hide')
+            return TASK_ERROR, "Cannot hide closed task"
+        if 'hide' not in tasks[tasknum].extensions:
+            tasks[tasknum].text += " {hide:%s}" % hidedate.strftime(DATEFMT)
+        else:
+            tasks[tasknum].text = re_hide.sub(
+                " {hide:%s}" % hidedate.strftime(DATEFMT), tasks[tasknum].text)
+        self.write_tasks(tasks, self.config['Files']['task-path'])
+        print(tasks[tasknum])
+        return TASK_OK, tasks[tasknum]
+
+    def unhide_task(self, tasknum):
+        tasks = self.get_tasks(self.config['Files']['task-path'])
+        if tasknum not in tasks:
+            self.log.error('Task %s not in list', tasknum)
+            return TASK_ERROR, "Task number not in task list"
+        if tasks[tasknum].complete:
+            self.log.error('Task %s already completed. Cannot unhide')
+            return TASK_ERROR, "Cannot unhide completed task"
+        tasks[tasknum].text = re_hide.sub("", tasks[tasknum].text)
+        self.write_tasks(tasks, self.config['Files']['task-path'])
+        print(tasks[tasknum])
+        return TASK_OK, tasks[tasknum]
+
     def build_task_dict(self, include_archive=False, only_archive=False):
         """build_task_dict(include_archive, only_archive)
         Builds a dictionary of tasks, much like :meth:`get_tasks` but will
@@ -641,6 +691,7 @@ class TaskLib(object):
                 res[item][task.priority] += 1
 
         return res
+
 
 if __name__ == '__main__':
     task = Task.from_text("x check for approval on +OUMeridianMaps @quote")

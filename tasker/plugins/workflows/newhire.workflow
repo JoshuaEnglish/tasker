@@ -34,4 +34,10 @@ vocabulary = person
 18 = VictoriaGolden
 19 = LaurenceLapato
 20 = BertrandDechavanne
+21 = BrittanyBaird
+22 = ChristopherHiggins
+23 = ChaseClausen
+24 = ToddManning
+25 = LyleStMichel
+26 = JustinLoy
 

@@ -1,5 +1,5 @@
 <dashboard>
-<project created="2017-09-21T10:32:25" id="NGA" modified="2017-09-21T10:34:31" priority="NOW" status="WORKING">
+<project created="2017-09-21T10:32:25" id="NGA" modified="2017-09-21T10:34:31" priority="PENDING" status="WORKING">
 <name>National Gallery of Art Claim</name>
 <background>Kevin Clark is trying to process a MyComp claim for 50 APs for the National Gallery of Art.
 They were ordered through Avnet and Sysorex and Henkels and McCoy, who are listed as the 
@@ -22,4 +22,8 @@ I have a note that Chris Wade helped Kevin with the manual claim on 9/12</backgr
 <text>On 9/12 I worked with Chris on the background. They were going to file a claim.</text>
 </note>
 </project>
+<project created="2017-09-26T08:46:47" id="ApprovalPrice" modified="2017-09-26T08:48:53" priority="NOW" status="WORKING"><name /><background>Approval emails are presenting a discount 12% higher than the reseller discount on quotes.</background><note created="2017-09-26T08:48:18"><stub>TD ticket Closed</stub><text>A ticket was opened and closed with "if BMI says X, we have to honor X"
+which completely ignored the actual problem.</text></note><note created="2017-09-26T08:48:53"><stub>John checking with Paula</stub><text>John emailed Paula Mander on 9/26 at 8:20</text></note></project>
+<project created="2017-09-26T10:01:45" id="Birst" modified="2017-09-26T10:01:45" priority="NOW" status="NEW"><name /><background>Birst is not accurate from either bad rostering or duplicate transactions.</background></project>
+<project created="2017-09-27T16:50:25" id="OctoberRush" modified="2017-09-27T16:52:19" priority="PENDING" status="WORKING"><name /><background>Setup for New ISRs hired in October 2017</background><note created="2017-09-27T16:52:19"><stub>Waiting on Roster</stub><text>I emailed Matt and Kirk for the roster. Kirk is OOO.</text></note></project>
 </dashboard>

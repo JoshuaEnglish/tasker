@@ -79,6 +79,15 @@ def add_core_subparsers(commands):
 
     list_parser.add_argument('-c', dest='closedate', type=valid_date,
                              help="Lists tasks closed on a given date.")
+
+    list_parser.add_argument('--hidedate', dest='hidedate', type=valid_date,
+                             default=datetime.date.today(),
+                             help="Sets preview date for hidden tasks")
+    list_parser.add_argument('--showhidden', dest='hidedate',
+                             action="store_const",
+                             const=datetime.date.max,
+                             help="Shows all hidden tasks")
+
     list_parser.add_argument(
         'filters', nargs=argparse.REMAINDER,
         help="Only lists tasks containing these words")
@@ -108,6 +117,17 @@ def add_core_subparsers(commands):
                              help='number of the task to prioritize')
     note_parser.add_argument('note', nargs=argparse.REMAINDER,
                              help="note to add (blank removes note)")
+
+    hide_parser = commands.add_parser('hide', help='set hide date for a task')
+    hide_parser.add_argument('tasknum', type=int,
+                             help='number of the task to hide')
+    hide_parser.add_argument('hidedate', type=valid_date,
+                             help="Date in %Y-%m-%d format.")
+
+    unhide_parser = commands.add_parser('unhide',
+                                        help='Removes hide date for a task')
+    unhide_parser.add_argument('tasknum', type=int,
+                               help='number of the task to unhide')
 
 
 plugin_argparser = argparse.ArgumentParser('plugins')
