@@ -586,6 +586,10 @@ class TaskLib(object):
         print(tasks[tasknum])
         return TASK_OK, tasks[tasknum]
 
+    def write_current_tasks(self):
+        """write the current tasks to the correct file"""
+        self.write_tasks(self.tasks, self.config['Files']['task-path'])
+
     def reprioritize_task(self, task, priority):
         """reprioritize_task(task, new_priority)
         """

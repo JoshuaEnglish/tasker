@@ -50,4 +50,5 @@ vocabulary = project, TM
 37 = UOAP,THKN
 38 = L3SwitchRMA,MichaelWilson
 39 = L3IAPRMA,Michael,Wilson
+40 = SkipTest,Zaphod
 

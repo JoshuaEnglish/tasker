@@ -351,7 +351,7 @@ class WorkflowCLI(minioncmd.MinionCmd):
         new_version = re.sub(r"{ws:\d+}", "{ws:%s}" % last_step,
                              selected_victim.text)
         Task = tasks[tasknum].__class__
-        tasks[tasknum] = Task.fromtext(new_version)
+        tasks[tasknum] = Task.from_text(new_version)
         self.master.lib.tasks = tasks
         self.master.cmdqueue.append(
             "do {} Abandoned: {}".format(tasknum, reason))
@@ -371,6 +371,43 @@ class WorkflowCLI(minioncmd.MinionCmd):
             subprocess.Popen("%s %s" % (editor_path, workflow_path))
         else:
             os.startfile(workflow_path)
+
+    def do_skip(self, text):
+        "skip num - adds the next task in the workflow; leaves the task open"
+        tasknum, reason = re.match(r"(\d+)\s+(.*)", text).groups()
+        tasknum = int(tasknum)
+
+        tasks = self.master.lib.build_task_dict()
+
+        if tasknum not in tasks.keys():
+            self._log.error("Task does not exist")
+            print("Task does not exist")
+            return True
+        victim = tasks[tasknum]
+
+        if 'wn' not in victim.extensions:
+            self._log.error("Task not part of a workflow")
+            print("Task not part of a workflow")
+            return True
+
+        if 'ws' not in victim.extensions:
+            self._log.error("Task does not have step. Major failue")
+            print("Task has workflow name but no workflow step. Major issue")
+            return True
+
+        this_step = int(victim.extensions['ws'])
+        new_text = re.sub(r"\s*{ws:%s}" % this_step, "", victim.text)
+        new_text = re.sub(r"\s*{wn:%s}" % victim.extensions['wn'], "", new_text)
+        new_text = re.sub(r"\s*{wid:%s}" % victim.extensions['wid'], "", new_text)
+        print(new_text)
+        task = tasks[tasknum].__class__
+        tasks[tasknum] = task.from_text(new_text)
+        self.master.lib.tasks = tasks
+        self.master.lib.write_current_tasks()
+        self.add_workflow_task(victim.extensions['wn'],
+                               str(this_step + 1),
+                               victim.extensions['wid'])
+
 
     def help_about(self):
         """About this plugin"""
@@ -427,6 +464,13 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
             help="creates a new workflow file")
         create.add_argument('name', help="the name of the workflow to create")
         create.add_argument('--edit', help="launch the editor automatically")
+
+        skip = workflow_commands.add_parser(
+            'skip',
+            help='Triggers next task in workflow leaving current task open')
+        skip.add_argument('tasknum', type=int,
+                          help='Task number')
+        skip.add_argument('reason', nargs=argparse.REMAINDER)
 
         super().activate()
 
