@@ -17,8 +17,8 @@ from functools import partial
 import colorama
 from theme import get_color as get_theme_color
 
-__version__ = "1.6.dev"
-__updated__ = "2017-09-29"
+__version__ = "1.6"
+__updated__ = "2017-10-04"
 __history__ = """
 1.1 listing tasks is now case insensitive
 1.2 Filtering by (p) matches against the priority
@@ -26,7 +26,7 @@ __history__ = """
     a list, not as a string.
 1.4 Changed theme to an option to support multiple themes
 1.5 Fixed bug where list -c failed
-1.6 Added Show Task Hook to allow plugins to refine filtering of tasks
+1.6 Added hide extension and hide/unhide commands
 """
 
 
@@ -362,10 +362,26 @@ class TaskLib(object):
         print(tasks[tasknum])
         return TASK_OK, tasks[tasknum]
 
+    def _task_filter_func(self, filters, filterop):
+        def include_task(filters, task):
+            yeas = []
+            for word in filters:
+                yea = word.startswith("~")
+                testword = word.replace('~', '').lower()
+                if testword in task.text.lower():
+                    yea = not yea
+                pri = re_pri_filter.match(word)
+                if pri and pri.group(1) == task.priority:
+                    yea = not yea
+                yeas.append(yea)
+            return filterop(yeas)
+        return include_task
+
     def sort_tasks(self, by_pri=True, filters=None, filterop=None,
                    showcomplete=None, opendate=None, closedate=None,
                    hidedate=None):
-        """sort_tasks([by_pri, filters, filteropp, showcomplete])
+        """sort_tasks([by_pri, filters, filterop, showcomplete,
+                       showcomplete, opendate, closedate, hidedate])
         Returns a list of (line, task) tuples.
         Default behavior sorts by priority.
         Default behavior does no filtering.
@@ -390,22 +406,7 @@ class TaskLib(object):
 
         if filters:
             self.log.info('Filtering tasks by keywords')
-
-            def include_task(filters, task):
-                "return a boolean value to include the task or not"
-                yeas = []
-                for word in filters:
-                    # yea = False
-                    yea = word.startswith('~')
-                    testword = word.replace('~', '').lower()
-                    if testword in task.text.lower():
-                        # yea = True
-                        yea = not yea
-                    pri = re_pri_filter.match(word)
-                    if pri and pri.group(1) == task.priority:
-                        yea = not yea
-                    yeas.append(yea)
-                return filterop(yeas)
+            include_task = self._task_filter_func(filters, filterop)
 
             everything = [(key, val) for key, val in everything
                           if include_task(filters, val)]
@@ -578,9 +579,6 @@ class TaskLib(object):
 
         t = self.reprioritize_task(tasks[tasknum], priority)
         t.text = self.update_note(t.text, ' '.join(note))
-#        if note:
-#            text = re_note.sub('', t.text)
-#            t.text = '%s # %s' % (text, ' '.join(note).strip())
         tasks[tasknum] = t
         self.write_tasks(tasks, self.config['Files']['task-path'])
         print(tasks[tasknum])
