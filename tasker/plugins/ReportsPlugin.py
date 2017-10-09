@@ -11,6 +11,8 @@ Created on Wed Mar  9 15:12:07 2016
 import os
 import datetime
 
+from collections import Counter
+
 import argparse
 import basetaskerplugin
 import lister
@@ -37,7 +39,7 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
     def activate(self):
         self._log.debug('Activating Reports')
         self.setConfigOption('public_methods',
-                             'do_projects,do_contexts,do_today')
+                             'do_projects,do_contexts,do_today,do_status')
         self.setConfigOption('daily_report_filename',
                              "{0.year}-{0.month}-{0.day}")
 
@@ -94,11 +96,15 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
                            help="Days ago to process")
         self.today_parser = today
 
+        status = argparse.ArgumentParser(
+            'status', description="""Prints a simple status report""")
+
         # the main program will gather these parsers after activation
         self.parsers = {
             project: "Project reports",
             context: "Context reports",
-            today: "Daily report"
+            today: "Daily report",
+            status: "Status reprot"
         }
 
         super().activate()
@@ -211,3 +217,18 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
                               headers)
         else:
             print("No open {}s.".format(name))
+
+    def do_status(self, text):
+        "Print a status report"
+        tasks = self.lib.sort_tasks(by_pri=False, filters=None,
+                                    filterop=None, showcomplete=True)
+        today = datetime.datetime.today().date()
+        closed = [t for k, t in tasks if t.complete]
+        closed_today = [t for t in closed if t.end.date() == today]
+        oc_today = [t for t in closed_today if t.start.date() == today]
+        stillopen = [t for k, t in tasks if not t.complete]
+        pri = Counter([t.priority for t in stillopen])
+        print("%d open tasks. %d closed tasks." % (len(stillopen), len(closed)))
+        print("%d tasks closed today." % len(closed_today))
+        print("%d tasks opened and closed today." % len(oc_today))
+        print(pri)

@@ -1,0 +1,383 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Basic Usage &#8212; Tasker 1.4.0.2017.02.02 documentation</title>
+    
+    <link rel="stylesheet" href="_static/butterick.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.4.0.2017.02.02',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Archiving Tasks" href="archiving_tasks.html" />
+    <link rel="prev" title="Welcome to Tasker’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="archiving_tasks.html" title="Archiving Tasks"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Tasker’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.4.0.2017.02.02 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="basic-usage">
+<h1>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h1>
+<p>Tasker is a text based task manager that runs at the command line or within
+Python. It is written in Python 3.5 but will most likely run in earlier
+versions.</p>
+<p>Tasker manager manages two files: <code class="docutils literal"><span class="pre">todo.txt</span></code> and <code class="docutils literal"><span class="pre">done.txt</span></code>.  Each task is
+saved on a single line in either file. Tasker follows the task formatting rules
+set out by Gina Trapani’s <a class="reference external" href="http://github.com/ginatrapani/todo.txt-cli/wiki/The-Todo.txt-Format">Todo.txt format</a> with the addition of using
+full datetime stamps instead of just dates.</p>
+<div class="section" id="the-anatomy-of-a-task">
+<h2>The Anatomy of a Task<a class="headerlink" href="#the-anatomy-of-a-task" title="Permalink to this headline">¶</a></h2>
+<p>Tasks consist of a single line of text:</p>
+<blockquote>
+<div><ul class="simple">
+<li>‘x ‘ if the task is completed</li>
+<li>‘(p)’ if the task has a priority. Priorities are A-Z.</li>
+<li>‘datetime stamp’ for the start of the task (default to time task is created)</li>
+<li>‘datetime stamp’ for the time the task was completed (if completed)</li>
+<li>remaining text is the actual task</li>
+<li>‘# ‘ indicates the start of a note or comment</li>
+</ul>
+</div></blockquote>
+<p>Tasks are organized by projects (words that begin with ‘+’) and contexts (words
+that begin with ‘&#64;’). Tasks may also have extensions which are key:value pairs
+wrapped in brackets (for example <code class="docutils literal"><span class="pre">{uid:221112080316}</span></code>).</p>
+<p>Here is an example of a pending task:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span><span class="n">T09</span><span class="p">:</span><span class="mi">51</span><span class="p">:</span><span class="mi">38</span> <span class="n">Finish</span> <span class="o">+</span><span class="n">TaskerDocumentation</span> <span class="nd">@code</span> <span class="c1"># It&#39;s getting late</span>
+</pre></div>
+</div>
+<p>This task has a priority. It has a project (TaskerDocumentation) and a context
+(code) and a comment.</p>
+<p>Here is an example of a completed task:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">07</span><span class="n">T11</span><span class="p">:</span><span class="mi">45</span><span class="p">:</span><span class="mi">08</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span><span class="n">T21</span><span class="p">:</span><span class="mi">35</span><span class="p">:</span><span class="mi">12</span> <span class="n">Call</span> <span class="n">mom</span> <span class="nd">@phone</span>
+</pre></div>
+</div>
+<p>This task is complete and won’t appear in the task list unless requested.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Samples in this document</p>
+<p>In the command line samples, only a simple prompt <code class="docutils literal"><span class="pre">&gt;</span></code> is presented for
+the command line.</p>
+<p>The interactive prompts include their name.</p>
+<p class="last"><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">t</span> <span class="pre">list</span></code> and <code class="docutils literal"><span class="pre">tasker&gt;</span> <span class="pre">list</span></code> are the same thing, the first from the
+command line and the second from the interactive prompt.</p>
+</div>
+</div>
+<div class="section" id="basic-commands">
+<h2>Basic Commands<a class="headerlink" href="#basic-commands" title="Permalink to this headline">¶</a></h2>
+<p>The three basic commands are <code class="docutils literal"><span class="pre">list</span></code>, <code class="docutils literal"><span class="pre">add</span></code>, and <code class="docutils literal"><span class="pre">do</span></code>. If no command is
+given, the program lists all open tasks:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">tasker</span>
+<span class="mi">1</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span><span class="n">T22</span><span class="p">:</span><span class="mi">04</span><span class="p">:</span><span class="mi">30</span> <span class="n">test</span> <span class="kn">from</span> <span class="nn">cli</span>
+<span class="mi">2</span> <span class="mi">2015</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">06</span><span class="n">T19</span><span class="p">:</span><span class="mi">37</span><span class="p">:</span><span class="mi">12</span> <span class="n">test</span> <span class="n">add</span>
+<span class="o">--</span>
+<span class="mi">2</span> <span class="n">tasks</span> <span class="n">shown</span>
+
+<span class="o">&gt;</span> <span class="n">tasker</span> <span class="n">add</span> <span class="n">go</span> <span class="n">to</span> <span class="n">bed</span>
+<span class="s1">&#39;2016-04-08T22:11:12 go to bed </span><span class="si">{uid:221112080316}</span><span class="s1">&#39;</span>
+
+<span class="o">&gt;</span> <span class="n">tasker</span> <span class="nb">list</span>
+<span class="mi">1</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">04</span><span class="n">T22</span><span class="p">:</span><span class="mi">04</span><span class="p">:</span><span class="mi">30</span> <span class="n">test</span> <span class="kn">from</span> <span class="nn">cli</span>
+<span class="mi">2</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">06</span><span class="n">T19</span><span class="p">:</span><span class="mi">37</span><span class="p">:</span><span class="mi">12</span> <span class="n">test</span> <span class="n">add</span>
+<span class="mi">5</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span><span class="n">T22</span><span class="p">:</span><span class="mi">11</span><span class="p">:</span><span class="mi">12</span> <span class="n">go</span> <span class="n">to</span> <span class="n">bed</span>
+<span class="o">--</span>
+<span class="mi">3</span> <span class="n">tasks</span> <span class="n">shown</span>
+
+<span class="o">&gt;</span> <span class="n">tasker</span> <span class="n">do</span> <span class="mi">1</span>
+<span class="s1">&#39;x 2016-03-08T22:16:02 2016-03-08T22:16:01 test from cli </span><span class="si">{uid:220430040316}</span><span class="s1">&#39;</span>
+
+<span class="o">&gt;</span> <span class="n">tasker</span>
+<span class="mi">2</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">06</span><span class="n">T19</span><span class="p">:</span><span class="mi">27</span><span class="p">:</span><span class="mi">12</span> <span class="n">test</span> <span class="n">add</span>
+<span class="mi">5</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span><span class="n">T22</span><span class="p">:</span><span class="mi">11</span><span class="p">:</span><span class="mi">12</span> <span class="n">go</span> <span class="n">to</span> <span class="n">bed</span>
+<span class="o">--</span>
+<span class="mi">2</span> <span class="n">tasks</span> <span class="n">shown</span>
+</pre></div>
+</div>
+<p>Tasker adds a <code class="docutils literal"><span class="pre">uid</span></code> extension to each task it creates but does not list this
+when it prints the task list. The <code class="docutils literal"><span class="pre">uid</span></code> is used to chain tasks together.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Task Numbers</p>
+<p class="last">Task numbers are simply the line number in the current file. This provides
+a quick reference to tasks. Be warned that archiving tasks will renumber
+your files.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Tasker comes with a Windows batch file that runs the Python script
+directly. It can be used so <code class="docutils literal"><span class="pre">t</span></code> is a shortcut to Tasker.py.</p>
+</div>
+</div>
+<div class="section" id="interactive-mode">
+<h2>Interactive Mode<a class="headerlink" href="#interactive-mode" title="Permalink to this headline">¶</a></h2>
+<p>You can also run tasker in an interactive prompt:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span><span class="n">t</span> <span class="o">-</span><span class="n">i</span>
+<span class="n">tasker</span><span class="o">&gt;</span> <span class="nb">list</span>
+<span class="mi">2</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">06</span><span class="n">T19</span><span class="p">:</span><span class="mi">27</span><span class="p">:</span><span class="mi">12</span> <span class="n">test</span> <span class="n">add</span>
+<span class="mi">5</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span><span class="n">T22</span><span class="p">:</span><span class="mi">11</span><span class="p">:</span><span class="mi">12</span> <span class="n">go</span> <span class="n">to</span> <span class="n">bed</span>
+<span class="o">--</span>
+<span class="mi">2</span> <span class="n">tasks</span> <span class="n">shown</span>
+</pre></div>
+</div>
+<p>For most commands, the interactive prompt uses the same input as the command
+line interface.</p>
+</div>
+<div class="section" id="listing-tasks">
+<h2>Listing Tasks<a class="headerlink" href="#listing-tasks" title="Permalink to this headline">¶</a></h2>
+<p>The simple <code class="docutils literal"><span class="pre">list</span></code> command will show only currently open tasks, but you can
+filter tasks by including search terms:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span>
+<span class="mi">13</span> <span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">20</span><span class="n">T18</span><span class="p">:</span><span class="mi">33</span><span class="p">:</span><span class="mi">23</span> <span class="n">Get</span> <span class="n">complete</span> <span class="n">information</span> <span class="k">for</span> <span class="o">+</span><span class="n">HomeQuote</span> <span class="nd">@quote</span>
+<span class="mi">12</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">17</span><span class="n">T22</span><span class="p">:</span><span class="mi">54</span><span class="p">:</span><span class="mi">20</span> <span class="n">redo</span> <span class="o">+</span><span class="n">Documentation</span>
+<span class="mi">16</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">21</span><span class="n">T20</span><span class="p">:</span><span class="mi">57</span><span class="p">:</span><span class="mi">51</span> <span class="n">third</span> <span class="n">useless</span> <span class="n">thing</span>
+<span class="o">---</span>
+<span class="mi">3</span> <span class="n">tasks</span> <span class="n">shown</span>
+
+<span class="o">&gt;</span> <span class="n">t</span> <span class="nb">list</span> <span class="n">thing</span>
+<span class="mi">16</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">21</span><span class="n">T20</span><span class="p">:</span><span class="mi">57</span><span class="p">:</span><span class="mi">51</span> <span class="n">third</span> <span class="n">useless</span> <span class="n">thing</span>
+<span class="o">---</span>
+<span class="mi">1</span> <span class="n">tasks</span> <span class="n">shown</span>
+
+<span class="o">&gt;</span> <span class="n">t</span> <span class="nb">list</span> <span class="n">information</span>
+<span class="mi">13</span> <span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">20</span><span class="n">T18</span><span class="p">:</span><span class="mi">33</span><span class="p">:</span><span class="mi">23</span> <span class="n">Get</span> <span class="n">complete</span> <span class="n">information</span> <span class="k">for</span> <span class="o">+</span><span class="n">HomeQuote</span> <span class="nd">@quote</span>
+<span class="o">---</span>
+<span class="mi">1</span> <span class="n">tasks</span> <span class="n">shown</span>
+</pre></div>
+</div>
+<p>However, if you try to search for more than one keyword, tasker will only list
+open tasks that match all those keywords:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="nb">list</span> <span class="n">thing</span> <span class="n">information</span>
+<span class="mi">0</span> <span class="n">tasks</span> <span class="n">shown</span>
+</pre></div>
+</div>
+<p>You can use the <code class="docutils literal"><span class="pre">-y</span></code> flag to match any filter keyword:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="nb">list</span> <span class="o">-</span><span class="n">y</span> <span class="n">thing</span> <span class="n">information</span>
+<span class="mi">13</span> <span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">20</span><span class="n">T18</span><span class="p">:</span><span class="mi">33</span><span class="p">:</span><span class="mi">23</span> <span class="n">Get</span> <span class="n">complete</span> <span class="n">information</span> <span class="k">for</span> <span class="o">+</span><span class="n">HomeQuote</span> <span class="nd">@quote</span>
+<span class="mi">16</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">21</span><span class="n">T20</span><span class="p">:</span><span class="mi">57</span><span class="p">:</span><span class="mi">51</span> <span class="n">third</span> <span class="n">useless</span> <span class="n">thing</span>
+<span class="o">---</span>
+<span class="mi">2</span> <span class="n">tasks</span> <span class="n">shown</span>
+</pre></div>
+</div>
+<p>You can exclude terms with <code class="docutils literal"><span class="pre">~</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="nb">list</span> <span class="o">~</span><span class="n">thing</span>
+ <span class="mi">13</span> <span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">20</span><span class="n">T18</span><span class="p">:</span><span class="mi">33</span><span class="p">:</span><span class="mi">23</span> <span class="n">Get</span> <span class="n">complete</span> <span class="n">information</span> <span class="k">for</span> <span class="o">+</span><span class="n">HomeQuote</span> <span class="nd">@quote</span>
+ <span class="mi">12</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">17</span><span class="n">T22</span><span class="p">:</span><span class="mi">54</span><span class="p">:</span><span class="mi">20</span> <span class="n">redo</span> <span class="o">+</span><span class="n">Documentation</span>
+ <span class="o">---</span>
+ <span class="mi">2</span> <span class="n">tasks</span> <span class="n">shown</span>
+</pre></div>
+</div>
+<div class="section" id="sorting-tasks">
+<h3>Sorting Tasks<a class="headerlink" href="#sorting-tasks" title="Permalink to this headline">¶</a></h3>
+<p>The default behavior is to list tasks by priority. Using the <code class="docutils literal"><span class="pre">-n</span></code> switch will
+display tasks in numerical order:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="nb">list</span> <span class="o">-</span><span class="n">n</span>
+<span class="mi">12</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">17</span><span class="n">T22</span><span class="p">:</span><span class="mi">54</span><span class="p">:</span><span class="mi">20</span> <span class="n">redo</span> <span class="o">+</span><span class="n">Documentation</span>
+<span class="mi">13</span> <span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">20</span><span class="n">T18</span><span class="p">:</span><span class="mi">33</span><span class="p">:</span><span class="mi">23</span> <span class="n">Get</span> <span class="n">complete</span> <span class="n">information</span> <span class="k">for</span> <span class="o">+</span><span class="n">HomeQuote</span> <span class="nd">@quote</span>
+<span class="mi">16</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">21</span><span class="n">T20</span><span class="p">:</span><span class="mi">57</span><span class="p">:</span><span class="mi">51</span> <span class="n">third</span> <span class="n">useless</span> <span class="n">thing</span>
+<span class="o">---</span>
+<span class="mi">3</span> <span class="n">tasks</span> <span class="n">shown</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="showing-completed-tasks">
+<h3>Showing Completed Tasks<a class="headerlink" href="#showing-completed-tasks" title="Permalink to this headline">¶</a></h3>
+<p>The default behavior is to only list open tasks, but you can see completed
+tasks with the <code class="docutils literal"><span class="pre">-a</span></code> switch:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="nb">list</span> <span class="o">-</span><span class="n">a</span>
+<span class="mi">13</span> <span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">20</span><span class="n">T18</span><span class="p">:</span><span class="mi">33</span><span class="p">:</span><span class="mi">23</span> <span class="n">Get</span> <span class="n">complete</span> <span class="n">information</span> <span class="k">for</span> <span class="o">+</span><span class="n">HomeQuote</span> <span class="nd">@quote</span>
+<span class="mi">12</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">17</span><span class="n">T22</span><span class="p">:</span><span class="mi">54</span><span class="p">:</span><span class="mi">20</span> <span class="n">redo</span> <span class="o">+</span><span class="n">Documentation</span>
+<span class="mi">16</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">21</span><span class="n">T20</span><span class="p">:</span><span class="mi">57</span><span class="p">:</span><span class="mi">51</span> <span class="n">third</span> <span class="n">useless</span> <span class="n">thing</span>
+ <span class="mi">2</span> <span class="n">x</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">06</span><span class="n">T19</span><span class="p">:</span><span class="mi">27</span><span class="p">:</span><span class="mi">12</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">21</span><span class="n">T20</span><span class="p">:</span><span class="mi">52</span><span class="p">:</span><span class="mi">25</span> <span class="n">test</span> <span class="n">add</span> <span class="c1"># test complete</span>
+<span class="o">...</span>
+<span class="o">---</span>
+<span class="mi">16</span> <span class="n">tasks</span> <span class="n">shown</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="showing-extensions">
+<h3>Showing Extensions<a class="headerlink" href="#showing-extensions" title="Permalink to this headline">¶</a></h3>
+<p>The default behavior is to hide extensions that are used by the program to
+relate tasks to each other. You can show these extensions with the <code class="docutils literal"><span class="pre">-x</span></code>
+switch:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="nb">list</span> <span class="o">-</span><span class="n">x</span>
+<span class="mi">13</span> <span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">20</span><span class="n">T18</span><span class="p">:</span><span class="mi">33</span><span class="p">:</span><span class="mi">23</span> <span class="n">Get</span> <span class="n">complete</span> <span class="n">information</span> <span class="k">for</span> <span class="o">+</span><span class="n">HomeQuote</span> <span class="nd">@quote</span>
+       <span class="p">{</span><span class="n">wn</span><span class="p">:</span><span class="n">quote</span><span class="p">}</span> <span class="p">{</span><span class="n">ws</span><span class="p">:</span><span class="mi">2</span><span class="p">}</span> <span class="p">{</span><span class="n">wid</span><span class="p">:</span><span class="mi">5</span><span class="p">}</span> <span class="p">{</span><span class="n">uid</span><span class="p">:</span><span class="mi">183323200316</span><span class="p">}</span>
+<span class="mi">12</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">17</span><span class="n">T22</span><span class="p">:</span><span class="mi">54</span><span class="p">:</span><span class="mi">20</span> <span class="n">redo</span> <span class="o">+</span><span class="n">Documentation</span> <span class="p">{</span><span class="n">uid</span><span class="p">:</span><span class="mi">225420170316</span><span class="p">}</span>
+<span class="mi">16</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">21</span><span class="n">T20</span><span class="p">:</span><span class="mi">57</span><span class="p">:</span><span class="mi">51</span> <span class="n">third</span> <span class="n">useless</span> <span class="n">thing</span> <span class="p">{</span><span class="n">uid</span><span class="p">:</span><span class="mi">205751210316</span><span class="p">}</span>
+<span class="o">---</span>
+<span class="mi">3</span> <span class="n">tasks</span> <span class="n">shown</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The <code class="docutils literal"><span class="pre">list</span></code> command uses text wrap to a default of 78 characters.</p>
+</div>
+</div>
+</div>
+<div class="section" id="adding-tasks">
+<h2>Adding Tasks<a class="headerlink" href="#adding-tasks" title="Permalink to this headline">¶</a></h2>
+<p>The default behavior is to add whatever text you include. However, if <code class="docutils literal"><span class="pre">x</span></code>
+is the first character of the new task, it will be created as a closed task:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>&gt; t add x is this complete?
+x 2016-03-22T21:39:42 2016-03-22T21:39:42 is this complete? {uid:213942220316}
+
+&gt; t
+13 (B) 2016-03-20T18:33:23 Get complete information for +HomeQuote @quote
+12 2016-03-17T22:54:20 redo +Documentation
+16 2016-03-21T20:57:51 third useless thing
+---
+3 tasks shown
+
+&gt; t list -a complete
+17 x 2016-03-22T21:39:42 2016-03-22T21:39:42 is this complete?
+---
+1 tasks shown
+</pre></div>
+</div>
+</div>
+<div class="section" id="marking-tasks-as-complete">
+<h2>Marking tasks as Complete<a class="headerlink" href="#marking-tasks-as-complete" title="Permalink to this headline">¶</a></h2>
+<p>You can close a task with the <code class="docutils literal"><span class="pre">do</span></code> command. The input string should be
+the TASK NUMBER and any EXTRA COMMENT:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span>
+<span class="mi">32</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">24</span><span class="n">T15</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mi">19</span> <span class="n">unprioritized</span> <span class="n">task</span> <span class="c1"># This should be done soon</span>
+<span class="o">---</span>
+<span class="mi">1</span> <span class="n">task</span> <span class="n">shown</span>
+
+<span class="o">&gt;</span> <span class="n">t</span> <span class="n">do</span> <span class="mi">32</span> <span class="n">This</span> <span class="ow">is</span> <span class="n">now</span> <span class="n">done</span>
+<span class="n">x</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">24</span><span class="n">T15</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mi">19</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">24</span><span class="n">T15</span><span class="p">:</span><span class="mi">43</span><span class="p">:</span><span class="mi">52</span> <span class="n">unprioritized</span> <span class="n">task</span> <span class="p">{</span><span class="n">uid</span><span class="p">:</span><span class="mi">153019240316</span><span class="p">}</span> <span class="c1"># This should be done soon # This is now done</span>
+
+<span class="o">&gt;</span> <span class="n">t</span>
+<span class="mi">0</span> <span class="n">tasks</span> <span class="n">shown</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="list-projects-and-contexts">
+<h2>List Projects and Contexts<a class="headerlink" href="#list-projects-and-contexts" title="Permalink to this headline">¶</a></h2>
+<p>It is also possible to list your open and closed projects:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="n">projects</span>
+<span class="n">No</span> <span class="nb">open</span> <span class="n">projects</span><span class="o">.</span>
+
+<span class="o">&gt;</span> <span class="n">t</span> <span class="n">projects</span> <span class="o">--</span><span class="n">closed</span>
+<span class="n">Project</span>             <span class="n">Open</span> <span class="n">Closed</span>
+<span class="o">-------------------</span> <span class="o">----</span> <span class="o">------</span>
+<span class="o">+</span><span class="n">BogusQuote</span>         <span class="mi">0</span>    <span class="mi">5</span>
+<span class="o">+</span><span class="n">BookingsAdjustment</span> <span class="mi">0</span>    <span class="mi">1</span>
+<span class="o">...</span>
+<span class="o">+</span><span class="n">SaratogaEval</span>       <span class="mi">0</span>    <span class="mi">1</span>
+<span class="o">+</span><span class="n">TMQuotes</span>           <span class="mi">0</span>    <span class="mi">1</span>
+<span class="n">NO</span> <span class="n">PROJECT</span>          <span class="mi">0</span>    <span class="mi">14</span>
+
+<span class="o">&gt;</span> <span class="n">t</span> <span class="n">contexts</span>
+<span class="n">No</span> <span class="nb">open</span> <span class="n">contexts</span><span class="o">.</span>
+
+<span class="o">&gt;</span> <span class="n">t</span> <span class="n">contexts</span> <span class="o">--</span><span class="n">closed</span>
+<span class="n">Context</span>    <span class="n">Open</span> <span class="n">Closed</span>
+<span class="o">----------</span> <span class="o">----</span> <span class="o">------</span>
+<span class="nd">@bookings</span>  <span class="mi">0</span>    <span class="mi">1</span>
+<span class="nd">@orders</span>    <span class="mi">0</span>    <span class="mi">1</span>
+<span class="nd">@quote</span>     <span class="mi">0</span>    <span class="mi">19</span>
+<span class="nd">@test</span>      <span class="mi">0</span>    <span class="mi">2</span>
+<span class="n">NO</span> <span class="n">CONTEXT</span> <span class="mi">0</span>    <span class="mi">13</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="changing-task-priorities">
+<h2>Changing Task Priorities<a class="headerlink" href="#changing-task-priorities" title="Permalink to this headline">¶</a></h2>
+<p>You can change the priority of a task by using the <code class="docutils literal"><span class="pre">pri</span></code> command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span>
+<span class="mi">32</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">24</span><span class="n">T15</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mi">19</span> <span class="n">unprioritized</span> <span class="n">task</span>
+<span class="o">---</span>
+<span class="mi">1</span> <span class="n">task</span> <span class="n">shown</span>
+
+<span class="o">&gt;</span> <span class="n">t</span> <span class="n">pri</span> <span class="mi">32</span> <span class="n">A</span> <span class="n">This</span> <span class="n">should</span> <span class="n">be</span> <span class="n">done</span> <span class="n">soon</span>
+<span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">24</span><span class="n">T15</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mi">19</span> <span class="n">unprioritized</span> <span class="n">task</span> <span class="p">{</span><span class="n">uid</span><span class="p">:</span><span class="mi">153019240316</span><span class="p">}</span> <span class="c1"># This should be done soon</span>
+
+<span class="o">&gt;</span> <span class="n">t</span>
+<span class="mi">32</span> <span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">24</span><span class="n">T15</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mi">19</span> <span class="n">unprioritized</span> <span class="n">task</span> <span class="c1"># This should be done soon</span>
+<span class="o">---</span>
+<span class="mi">1</span> <span class="n">task</span> <span class="n">shown</span>
+</pre></div>
+</div>
+<p>You can remove the proirity on a task using an underscore:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="n">pri</span> <span class="mi">32</span> <span class="n">_</span>
+ <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">24</span><span class="n">T15</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mi">19</span> <span class="n">unprioritized</span> <span class="n">task</span> <span class="p">{</span><span class="n">uid</span><span class="p">:</span><span class="mi">153019240316</span><span class="p">}</span> <span class="c1"># This should be done soon</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="getting-details-on-the-process">
+<h2>Getting Details on the Process<a class="headerlink" href="#getting-details-on-the-process" title="Permalink to this headline">¶</a></h2>
+<p>You can get more information about what Tasker is doing using the <code class="docutils literal"><span class="pre">-v</span></code> flag
+on the command line. You can use <code class="docutils literal"><span class="pre">-vv</span></code> to get debugging information as well.</p>
+<p>If you use these flags to enter the interactive prompt, they will be in effect
+for the length of your session.</p>
+<p>You can get less information by using the <code class="docutils literal"><span class="pre">-q</span></code> flag, and even less information
+about errors with <code class="docutils literal"><span class="pre">-qq</span></code>.</p>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="archiving_tasks.html" title="Archiving Tasks"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Tasker’s documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.4.0.2017.02.02 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Joshua R English.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.
+    </div>
+  </body>
+</html>

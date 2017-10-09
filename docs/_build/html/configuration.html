@@ -1,0 +1,204 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Tasker Configuration &#8212; Tasker 1.4.0.2017.02.02 documentation</title>
+    
+    <link rel="stylesheet" href="_static/butterick.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.4.0.2017.02.02',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Managing Plugins" href="managing_plugins.html" />
+    <link rel="prev" title="Archiving Tasks" href="archiving_tasks.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="managing_plugins.html" title="Managing Plugins"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="archiving_tasks.html" title="Archiving Tasks"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.4.0.2017.02.02 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tasker-configuration">
+<h1>Tasker Configuration<a class="headerlink" href="#tasker-configuration" title="Permalink to this headline">¶</a></h1>
+<p>Tasker stores in options in a standard .ini file.</p>
+<p>The basic sections are: Tasker, Files, Plugin Management</p>
+<div class="section" id="tasker-options">
+<h2>Tasker Options<a class="headerlink" href="#tasker-options" title="Permalink to this headline">¶</a></h2>
+<p>These options define the basic behavior of Tasker. The <code class="docutils literal"><span class="pre">priority-z-last</span></code>
+option only take effect if the tasks are sorted by priority.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="23%" />
+<col width="9%" />
+<col width="68%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>wrap-width</td>
+<td>78</td>
+<td>Default character width for wrap or shorten options</td>
+</tr>
+<tr class="row-odd"><td>wrap-behavior</td>
+<td>wrap</td>
+<td>Options are wrap, shorten, or none</td>
+</tr>
+<tr class="row-even"><td>show-priority-z</td>
+<td>True</td>
+<td>Show anything with priority Z</td>
+</tr>
+<tr class="row-odd"><td>priority-z-last</td>
+<td>True</td>
+<td>List anything with a priority Z after
+unprioritized tasks</td>
+</tr>
+<tr class="row-even"><td>hidden-extensions</td>
+<td>uid</td>
+<td>Extensions that should be hidden (see note)</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Each plugin can define its own <code class="docutils literal"><span class="pre">hidden-extensions</span></code> option.</p>
+</div>
+</div>
+<div class="section" id="file-options">
+<h2>File Options<a class="headerlink" href="#file-options" title="Permalink to this headline">¶</a></h2>
+<p>These define where Tasker will look for the todo.txt and done.txt files.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="18%" />
+<col width="82%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>tasker-dir</td>
+<td>‘tasker’ inside the operating system standard
+APPDATA folder</td>
+</tr>
+<tr class="row-odd"><td>done-path</td>
+<td>%(tasker-dir)s/done.txt</td>
+</tr>
+<tr class="row-even"><td>task-path</td>
+<td>%(tasker-dir)s/todo.txt</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You can view these files in your operating system by using the poweruser
+feature. See <span class="xref std std-ref">PowerUser</span> for details.</p>
+</div>
+</div>
+<div class="section" id="plugin-management-options">
+<h2>Plugin Management Options<a class="headerlink" href="#plugin-management-options" title="Permalink to this headline">¶</a></h2>
+<p>These options are managed by the <code class="xref py py-data docutils literal"><span class="pre">manager</span></code> so there is no need to edit
+manually unless something has gone wrong.</p>
+<p>These options are lists separated by <cite>;;</cite> sequences.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="34%" />
+<col width="66%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Explanation</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>generic_plugins_to_load</td>
+<td>List of plugins to load</td>
+</tr>
+<tr class="row-odd"><td>subcommand_plugins_to_load</td>
+<td>List of plugins to load</td>
+</tr>
+<tr class="row-even"><td>newcommand_plugins_to_load</td>
+<td>List of plugins to load</td>
+</tr>
+</tbody>
+</table>
+<p>[SubCommand Plugin: Workflow]</p>
+<p>directory = (application folder)pluginsworkflows
+hidden-extensions = wid,ws,wn</p>
+<p>[NewCommand Plugin: Reports]
+public_methods = do_projects,do_contexts</p>
+<p>[NewCommand Plugin: Pending]
+public_methods = do_after
+hide_pend_ext = true
+hidden-extensions = pid</p>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="managing_plugins.html" title="Managing Plugins"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="archiving_tasks.html" title="Archiving Tasks"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.4.0.2017.02.02 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Joshua R English.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.
+    </div>
+  </body>
+</html>

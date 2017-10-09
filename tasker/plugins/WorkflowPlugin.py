@@ -396,9 +396,11 @@ class WorkflowCLI(minioncmd.MinionCmd):
             return True
 
         this_step = int(victim.extensions['ws'])
-        new_text = re.sub(r"\s*{ws:%s}" % this_step, "", victim.text)
-        new_text = re.sub(r"\s*{wn:%s}" % victim.extensions['wn'], "", new_text)
-        new_text = re.sub(r"\s*{wid:%s}" % victim.extensions['wid'], "", new_text)
+        # complete_task hook only checks for the workflow name.
+        # keeping the rest of the extensions allows to search by step as well
+        # as by project
+        new_text = re.sub(r"\s*{wn:%s}" % victim.extensions['wn'],
+                          "", victim.text)
         print(new_text)
         task = tasks[tasknum].__class__
         tasks[tasknum] = task.from_text(new_text)
@@ -407,7 +409,6 @@ class WorkflowCLI(minioncmd.MinionCmd):
         self.add_workflow_task(victim.extensions['wn'],
                                str(this_step + 1),
                                victim.extensions['wid'])
-
 
     def help_about(self):
         """About this plugin"""

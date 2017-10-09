@@ -1,0 +1,154 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Managing Plugins &#8212; Tasker 1.4.0.2017.02.02 documentation</title>
+    
+    <link rel="stylesheet" href="_static/butterick.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.4.0.2017.02.02',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The Reports Plugin" href="reports_plugin.html" />
+    <link rel="prev" title="Tasker Configuration" href="configuration.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="reports_plugin.html" title="The Reports Plugin"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="configuration.html" title="Tasker Configuration"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.4.0.2017.02.02 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="managing-plugins">
+<h1>Managing Plugins<a class="headerlink" href="#managing-plugins" title="Permalink to this headline">¶</a></h1>
+<p>Tasker is extensible, which means most of the features are provided as plugins.
+These plugins are written in Python. For more information on writing plugins,
+refer to <a class="reference internal" href="pluginprimer.html"><span class="doc">Plugin Primer</span></a>.</p>
+<p>From the command line, you can use any of the commands with:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="n">plugins</span> <span class="n">COMMAND</span>
+</pre></div>
+</div>
+<p>From the interactive prompt you can use:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">tasker</span><span class="o">&gt;</span> <span class="n">plugins</span> <span class="n">COMMAND</span>
+</pre></div>
+</div>
+<p>Or you can access the plugins interactive prompt with:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="n">plugins</span>
+<span class="n">plugins</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">tasker</span><span class="o">&gt;</span> <span class="n">plugins</span>
+<span class="n">plugins</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>There are three categories of plugins:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>Plugins that only watch for new tasks and/or completed tasks</li>
+<li>Plugins that add new commands to main program</li>
+<li>Plugins that act like subprograms</li>
+</ol>
+</div></blockquote>
+<p>The second and third type of plugin can also monitor new tasks and completed
+tasks and respond with special actions of their own.</p>
+<div class="section" id="listing-plugins">
+<h2>Listing plugins<a class="headerlink" href="#listing-plugins" title="Permalink to this headline">¶</a></h2>
+<p>Use <code class="docutils literal"><span class="pre">plugins</span> <span class="pre">list</span></code> to get a list of plugins:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="n">plugins</span> <span class="nb">list</span>
+<span class="n">Name</span>     <span class="n">Category</span>   <span class="n">Activated</span>
+<span class="o">--------</span> <span class="o">----------</span> <span class="o">---------</span>
+<span class="n">Logging</span>  <span class="n">Generic</span>    <span class="kc">False</span>
+<span class="n">Pending</span>  <span class="n">NewCommand</span> <span class="kc">True</span>
+<span class="n">Workflow</span> <span class="n">SubCommand</span> <span class="kc">True</span>
+<span class="n">Reports</span>  <span class="n">NewCommand</span> <span class="kc">True</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="listing-categories">
+<h2>Listing Categories<a class="headerlink" href="#listing-categories" title="Permalink to this headline">¶</a></h2>
+<p>Use <code class="docutils literal"><span class="pre">plugins</span> <span class="pre">categories</span></code> to get a list of available categories.</p>
+</div>
+<div class="section" id="activating-a-plugin">
+<h2>Activating a Plugin<a class="headerlink" href="#activating-a-plugin" title="Permalink to this headline">¶</a></h2>
+<p>Use <code class="docutils literal"><span class="pre">plugins</span> <span class="pre">activate</span> <span class="pre">PLUGINNAME</span></code> to activate.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Activating plugins changes the startup behavior, so if you are in
+the interactive prompt, the plugin will not be available until you restart.</p>
+</div>
+</div>
+<div class="section" id="deactivating-a-plugin">
+<h2>Deactivating a Plugin<a class="headerlink" href="#deactivating-a-plugin" title="Permalink to this headline">¶</a></h2>
+<p>Use <code class="docutils literal"><span class="pre">plugins</span> <span class="pre">deactivate</span> <span class="pre">PLUGINNAME</span></code> to deactivate.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Deactivating plugins changes the startup behavior, so if you are in
+the interactive prompt, the plugin will not be available until you restart.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="reports_plugin.html" title="The Reports Plugin"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="configuration.html" title="Tasker Configuration"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.4.0.2017.02.02 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Joshua R English.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.
+    </div>
+  </body>
+</html>

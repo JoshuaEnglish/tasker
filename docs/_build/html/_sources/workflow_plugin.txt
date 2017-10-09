@@ -1,0 +1,127 @@
+The Workflow Plugin
+===================
+
+This plugin provides a new sub program to define Workflows. A Workflow is a
+series of similar tasks that must be done for different items. Workflows can
+be assigned particular vocabularies of keywords.
+
+For example, in a sales support position, you may be required to request
+pricing quotes. This process includes two waiting periods, which makes keeping
+them on the taks list handy.
+
+ #. Log the inital request in the tracking system
+ #. Log that the sales rep has provided all the information 
+    (this is the first waiting period)
+ #. Build the quote and submit for approval (this is the second waiting period)
+ #. Check for approval from the system
+ #. Send the quote to the sales rep
+
+This is a more complicated system than creating multiple pending events using
+the ``after`` command provided by :doc:`pending_plugin`. Pending events are 
+also listed, and if you have to process numerous instances of a workflow, you
+could have several priority-Z tasks that will only clutter your todo list.
+
+The idea behind the Workflow plugin is that the next task to be done is only
+added to your task list when the previous step is completed. This minimizes
+clutter but allows you keep track of where you are over multiple parallel 
+processes.
+
+First, we'll examine what Workflows look like, then we'll discuss creating
+them.
+
+
+Examining Workflows
+--------------------
+
+Use ``t workflow list`` in the command line, or ``workflow list`` in the 
+interactive prompt, or use ``workflow`` in the interactive prompt and then
+``list``.
+
+All the examples on this page are from the interactive prompt subprogram::
+
+    > t workflow
+    workflow> list
+    Workflow list:
+    1 quote
+
+Reference workflows by name. You can get information about a workflow using
+the ``info`` command::
+
+    workflow> info quote
+    name: Quote
+    description: Tasks related to creating quotes for sales reps
+    vocabulary: project, rep
+
+The *name* and *description* provide basic information about the worflow.
+The *vocabulary* property defines the keywords Worflow uses when generating 
+the tasks. The tasks are created using Python's `string Templates`_. 
+
+Template strings work by looking for words beginning with ``$`` and replacing
+with the appropriate value. 
+
+You can list the steps for each workflow using the ``steps`` command::
+
+    workflow> steps quote
+    1: (A) Log request for +$project @quote
+    2: (B) Get complete information for +$project @quote
+    3: (A) Submit approval for +$project @quote
+    4: (A) Check for approval for +$project @quote
+    5: (A) Send views to $rep for +$project @quote
+
+And get the instances of a workflow type::
+
+    workflow> instances quote
+    1: FourthProject,AllenM
+    2: Fifth,Allen,Malarkey
+    3: HomeQuote,JeffZ
+    4: CascadiaRefresh
+
+The order of the keywords in the *vocabulary* dictate the order of actual words
+in the instances. In this example, the fourth item doesn't list a rep. The 
+fifth task of that workflow was printed as 
+``(A) send views to $rep for +CascadiaRefresh @quote``.
+
+
+Starting a new instance of a workflow
+-------------------------------------
+
+Use the ``start NAME VOCABULARY...`` command. A new instance will be created
+and the first task of that instance added to your task list. The vocabulary
+words will be matched to the workflow's vocabulary.
+
+In the quote workflow above, the command ``workflow start quote Zoomba MarkE``
+will generate a new task ``(A) Log request for +Zoomba @quote``.
+
+
+
+Creating a New Workflow
+-----------------------
+
+Use the ``create NAME`` command to create a workflow. The program will walk
+you through the process and return the full path name to the new workflow file.
+The workflow will be available immediately if you are in the interactive prompt.
+
+
+    workflow> create test
+    Please enter a description for this workflow: blabbity blah
+    When entering steps, use $<word> to define the vocabulary for this workflow.
+    Enter a blank line to complete this process.
+    Describe step number 1: Log $project from $oompaloompa
+    Describe step number 2: Send $project to Mr. Wonka
+    Describe step number 3: Return $project to $oompaloompa
+    Describe step number 4: 
+    Vocabulary: project, oompaloompa
+    [Workflow]
+    name = Test
+    description = blabbity blah
+    vocabulary = project,oompaloompa
+    
+    [Steps]
+    1 = Log $project from $oompaloompa
+    2 = Send $project to Mr. Wonka
+    3 = Return $project to $oompaloompa
+    
+    [Instances]
+
+
+.. _string Templates: https://docs.python.org/3/library/string.html#template-strings

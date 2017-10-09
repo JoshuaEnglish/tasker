@@ -1,0 +1,195 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The Workflow Plugin &#8212; Tasker 1.4.0.2017.02.02 documentation</title>
+    
+    <link rel="stylesheet" href="_static/butterick.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.4.0.2017.02.02',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Plugin Primer" href="pluginprimer.html" />
+    <link rel="prev" title="The Pending Plugin" href="pending_plugin.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pluginprimer.html" title="Plugin Primer"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pending_plugin.html" title="The Pending Plugin"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.4.0.2017.02.02 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="the-workflow-plugin">
+<h1>The Workflow Plugin<a class="headerlink" href="#the-workflow-plugin" title="Permalink to this headline">¶</a></h1>
+<p>This plugin provides a new sub program to define Workflows. A Workflow is a
+series of similar tasks that must be done for different items. Workflows can
+be assigned particular vocabularies of keywords.</p>
+<p>For example, in a sales support position, you may be required to request
+pricing quotes. This process includes two waiting periods, which makes keeping
+them on the taks list handy.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>Log the inital request in the tracking system</li>
+<li>Log that the sales rep has provided all the information
+(this is the first waiting period)</li>
+<li>Build the quote and submit for approval (this is the second waiting period)</li>
+<li>Check for approval from the system</li>
+<li>Send the quote to the sales rep</li>
+</ol>
+</div></blockquote>
+<p>This is a more complicated system than creating multiple pending events using
+the <code class="docutils literal"><span class="pre">after</span></code> command provided by <a class="reference internal" href="pending_plugin.html"><span class="doc">The Pending Plugin</span></a>. Pending events are
+also listed, and if you have to process numerous instances of a workflow, you
+could have several priority-Z tasks that will only clutter your todo list.</p>
+<p>The idea behind the Workflow plugin is that the next task to be done is only
+added to your task list when the previous step is completed. This minimizes
+clutter but allows you keep track of where you are over multiple parallel
+processes.</p>
+<p>First, we’ll examine what Workflows look like, then we’ll discuss creating
+them.</p>
+<div class="section" id="examining-workflows">
+<h2>Examining Workflows<a class="headerlink" href="#examining-workflows" title="Permalink to this headline">¶</a></h2>
+<p>Use <code class="docutils literal"><span class="pre">t</span> <span class="pre">workflow</span> <span class="pre">list</span></code> in the command line, or <code class="docutils literal"><span class="pre">workflow</span> <span class="pre">list</span></code> in the
+interactive prompt, or use <code class="docutils literal"><span class="pre">workflow</span></code> in the interactive prompt and then
+<code class="docutils literal"><span class="pre">list</span></code>.</p>
+<p>All the examples on this page are from the interactive prompt subprogram:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="n">workflow</span>
+<span class="n">workflow</span><span class="o">&gt;</span> <span class="nb">list</span>
+<span class="n">Workflow</span> <span class="nb">list</span><span class="p">:</span>
+<span class="mi">1</span> <span class="n">quote</span>
+</pre></div>
+</div>
+<p>Reference workflows by name. You can get information about a workflow using
+the <code class="docutils literal"><span class="pre">info</span></code> command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">workflow</span><span class="o">&gt;</span> <span class="n">info</span> <span class="n">quote</span>
+<span class="n">name</span><span class="p">:</span> <span class="n">Quote</span>
+<span class="n">description</span><span class="p">:</span> <span class="n">Tasks</span> <span class="n">related</span> <span class="n">to</span> <span class="n">creating</span> <span class="n">quotes</span> <span class="k">for</span> <span class="n">sales</span> <span class="n">reps</span>
+<span class="n">vocabulary</span><span class="p">:</span> <span class="n">project</span><span class="p">,</span> <span class="n">rep</span>
+</pre></div>
+</div>
+<p>The <em>name</em> and <em>description</em> provide basic information about the worflow.
+The <em>vocabulary</em> property defines the keywords Worflow uses when generating
+the tasks. The tasks are created using Python’s <a class="reference external" href="https://docs.python.org/3/library/string.html#template-strings">string Templates</a>.</p>
+<p>Template strings work by looking for words beginning with <code class="docutils literal"><span class="pre">$</span></code> and replacing
+with the appropriate value.</p>
+<p>You can list the steps for each workflow using the <code class="docutils literal"><span class="pre">steps</span></code> command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>workflow&gt; steps quote
+1: (A) Log request for +$project @quote
+2: (B) Get complete information for +$project @quote
+3: (A) Submit approval for +$project @quote
+4: (A) Check for approval for +$project @quote
+5: (A) Send views to $rep for +$project @quote
+</pre></div>
+</div>
+<p>And get the instances of a workflow type:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">workflow</span><span class="o">&gt;</span> <span class="n">instances</span> <span class="n">quote</span>
+<span class="mi">1</span><span class="p">:</span> <span class="n">FourthProject</span><span class="p">,</span><span class="n">AllenM</span>
+<span class="mi">2</span><span class="p">:</span> <span class="n">Fifth</span><span class="p">,</span><span class="n">Allen</span><span class="p">,</span><span class="n">Malarkey</span>
+<span class="mi">3</span><span class="p">:</span> <span class="n">HomeQuote</span><span class="p">,</span><span class="n">JeffZ</span>
+<span class="mi">4</span><span class="p">:</span> <span class="n">CascadiaRefresh</span>
+</pre></div>
+</div>
+<p>The order of the keywords in the <em>vocabulary</em> dictate the order of actual words
+in the instances. In this example, the fourth item doesn’t list a rep. The
+fifth task of that workflow was printed as
+<code class="docutils literal"><span class="pre">(A)</span> <span class="pre">send</span> <span class="pre">views</span> <span class="pre">to</span> <span class="pre">$rep</span> <span class="pre">for</span> <span class="pre">+CascadiaRefresh</span> <span class="pre">&#64;quote</span></code>.</p>
+</div>
+<div class="section" id="starting-a-new-instance-of-a-workflow">
+<h2>Starting a new instance of a workflow<a class="headerlink" href="#starting-a-new-instance-of-a-workflow" title="Permalink to this headline">¶</a></h2>
+<p>Use the <code class="docutils literal"><span class="pre">start</span> <span class="pre">NAME</span> <span class="pre">VOCABULARY...</span></code> command. A new instance will be created
+and the first task of that instance added to your task list. The vocabulary
+words will be matched to the workflow’s vocabulary.</p>
+<p>In the quote workflow above, the command <code class="docutils literal"><span class="pre">workflow</span> <span class="pre">start</span> <span class="pre">quote</span> <span class="pre">Zoomba</span> <span class="pre">MarkE</span></code>
+will generate a new task <code class="docutils literal"><span class="pre">(A)</span> <span class="pre">Log</span> <span class="pre">request</span> <span class="pre">for</span> <span class="pre">+Zoomba</span> <span class="pre">&#64;quote</span></code>.</p>
+</div>
+<div class="section" id="creating-a-new-workflow">
+<h2>Creating a New Workflow<a class="headerlink" href="#creating-a-new-workflow" title="Permalink to this headline">¶</a></h2>
+<p>Use the <code class="docutils literal"><span class="pre">create</span> <span class="pre">NAME</span></code> command to create a workflow. The program will walk
+you through the process and return the full path name to the new workflow file.
+The workflow will be available immediately if you are in the interactive prompt.</p>
+<blockquote>
+<div><p>workflow&gt; create test
+Please enter a description for this workflow: blabbity blah
+When entering steps, use $&lt;word&gt; to define the vocabulary for this workflow.
+Enter a blank line to complete this process.
+Describe step number 1: Log $project from $oompaloompa
+Describe step number 2: Send $project to Mr. Wonka
+Describe step number 3: Return $project to $oompaloompa
+Describe step number 4:
+Vocabulary: project, oompaloompa
+[Workflow]
+name = Test
+description = blabbity blah
+vocabulary = project,oompaloompa</p>
+<p>[Steps]
+1 = Log $project from $oompaloompa
+2 = Send $project to Mr. Wonka
+3 = Return $project to $oompaloompa</p>
+<p>[Instances]</p>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pluginprimer.html" title="Plugin Primer"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pending_plugin.html" title="The Pending Plugin"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.4.0.2017.02.02 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Joshua R English.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.
+    </div>
+  </body>
+</html>

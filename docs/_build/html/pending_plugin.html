@@ -1,0 +1,135 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The Pending Plugin &#8212; Tasker 1.4.0.2017.02.02 documentation</title>
+    
+    <link rel="stylesheet" href="_static/butterick.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.4.0.2017.02.02',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The Workflow Plugin" href="workflow_plugin.html" />
+    <link rel="prev" title="The Reports Plugin" href="reports_plugin.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="workflow_plugin.html" title="The Workflow Plugin"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="reports_plugin.html" title="The Reports Plugin"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.4.0.2017.02.02 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="the-pending-plugin">
+<h1>The Pending Plugin<a class="headerlink" href="#the-pending-plugin" title="Permalink to this headline">¶</a></h1>
+<p>This plugin provides the <code class="docutils literal"><span class="pre">after</span></code> command to the top level of the program.</p>
+<p>The <code class="docutils literal"><span class="pre">after</span></code> command creates a new task to be completed after a given task:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span>
+<span class="mi">33</span> <span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">25</span><span class="n">T09</span><span class="p">:</span><span class="mi">09</span><span class="p">:</span><span class="mi">02</span> <span class="n">order</span> <span class="n">a</span> <span class="n">television</span> <span class="nd">@shopping</span> <span class="o">+</span><span class="n">LivingRoomUpdate</span>
+<span class="o">---</span>
+<span class="mi">1</span> <span class="n">task</span> <span class="n">shown</span>
+
+<span class="o">&gt;</span> <span class="n">t</span> <span class="n">after</span> <span class="mi">33</span> <span class="n">post</span> <span class="nd">@craigslist</span> <span class="n">ad</span> <span class="k">for</span> <span class="n">old</span> <span class="n">television</span>
+<span class="p">(</span><span class="n">Z</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">25</span><span class="n">T09</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mi">16</span> <span class="n">research</span> <span class="n">Sony</span> <span class="ow">and</span> <span class="n">LG</span> <span class="n">televisions</span> <span class="nd">@shopping</span> <span class="o">+</span><span class="n">LivingRoomUpdate</span> <span class="p">{</span><span class="n">pend</span><span class="p">:</span><span class="mi">090902250316</span><span class="p">}</span> <span class="p">{</span><span class="n">uid</span><span class="p">:</span><span class="mi">091016250316</span><span class="p">}</span>
+
+<span class="o">&gt;</span> <span class="n">t</span>
+<span class="mi">33</span> <span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">25</span><span class="n">T09</span><span class="p">:</span><span class="mi">09</span><span class="p">:</span><span class="mi">02</span> <span class="n">order</span> <span class="n">a</span> <span class="n">television</span> <span class="nd">@shopping</span> <span class="o">+</span><span class="n">LivingRoomUpdate</span>
+<span class="mi">34</span> <span class="p">(</span><span class="n">Z</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">25</span><span class="n">T09</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mi">16</span> <span class="n">post</span> <span class="nd">@craigslist</span> <span class="n">ad</span> <span class="k">for</span> <span class="n">old</span> <span class="n">television</span> <span class="nd">@shopping</span>
+       <span class="o">+</span><span class="n">LivingRoomUpdate</span>
+<span class="o">---</span>
+<span class="mi">2</span> <span class="n">tasks</span> <span class="n">shown</span>
+</pre></div>
+</div>
+<p>The new task is given a priority of Z and gets the same contexts and projects
+as the original task.</p>
+<p>Once the first task is complete, the pending task in reprioritized:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="n">do</span> <span class="mi">33</span>
+<span class="n">x</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">25</span><span class="n">T09</span><span class="p">:</span><span class="mi">09</span><span class="p">:</span><span class="mi">02</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">25</span><span class="n">T09</span><span class="p">:</span><span class="mi">16</span><span class="p">:</span><span class="mi">24</span> <span class="n">order</span> <span class="n">a</span> <span class="n">television</span> <span class="nd">@shopping</span> <span class="o">+</span><span class="n">LivingRoomUpdate</span> <span class="p">{</span><span class="n">uid</span><span class="p">:</span><span class="mi">090902250316</span><span class="p">}</span>
+
+<span class="o">&gt;</span> <span class="n">t</span>
+<span class="mi">34</span> <span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">25</span><span class="n">T09</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mi">16</span> <span class="n">post</span> <span class="nd">@craigslist</span> <span class="n">ad</span> <span class="k">for</span> <span class="n">old</span> <span class="n">television</span> <span class="nd">@shopping</span>
+       <span class="o">+</span><span class="n">LivingRoomUpdate</span>
+<span class="o">---</span>
+<span class="mi">1</span> <span class="n">task</span> <span class="n">shown</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you use the <code class="docutils literal"><span class="pre">after</span></code> command on an unprionitized taks, the pending
+task will appear in the list first, because priotized tasks appear before
+unprioritized tasks</p>
+</div>
+<p>If you deactivate this plugin, the pended tasks will remain, but they will not
+automatically be updated when needed.</p>
+<p>You can create multiple pended tasks off of a single task.</p>
+<div class="section" id="under-the-hood">
+<h2>Under the hood<a class="headerlink" href="#under-the-hood" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">after</span></code> command adds the <code class="docutils literal"><span class="pre">pend</span></code> extension to the new task. The value is
+the <code class="docutils literal"><span class="pre">uid</span></code> value of the old extension. As tasks are completed, this plugin
+checks the <code class="docutils literal"><span class="pre">uid</span></code> value and if it matches the <code class="docutils literal"><span class="pre">pend</span></code> value, it will
+reprioritize the pended task.</p>
+</div>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="workflow_plugin.html" title="The Workflow Plugin"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="reports_plugin.html" title="The Reports Plugin"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.4.0.2017.02.02 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Joshua R English.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.
+    </div>
+  </body>
+</html>

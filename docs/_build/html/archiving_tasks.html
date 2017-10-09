@@ -1,0 +1,147 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Archiving Tasks &#8212; Tasker 1.4.0.2017.02.02 documentation</title>
+    
+    <link rel="stylesheet" href="_static/butterick.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.4.0.2017.02.02',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Tasker Configuration" href="configuration.html" />
+    <link rel="prev" title="Basic Usage" href="basic_usage.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="configuration.html" title="Tasker Configuration"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="basic_usage.html" title="Basic Usage"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.4.0.2017.02.02 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="archiving-tasks">
+<h1>Archiving Tasks<a class="headerlink" href="#archiving-tasks" title="Permalink to this headline">¶</a></h1>
+<p>Tasker reads your todo file every time it runs, and it enumerates your tasks
+and after a few weeks of heavy use you may end up with:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span><span class="n">t</span>
+<span class="mi">134</span> <span class="n">Call</span> <span class="n">that</span> <span class="n">guy</span> <span class="n">about</span> <span class="o">+</span><span class="n">ThatThing</span>
+<span class="mi">150</span> <span class="n">Hide</span> <span class="n">the</span> <span class="nd">@evidence</span> <span class="o">+</span><span class="n">ThatThing</span>
+<span class="o">---</span>
+<span class="mi">2</span> <span class="n">tasks</span> <span class="n">shown</span>
+</pre></div>
+</div>
+<p>In order to keep your task list small and fast and low-indexed, it is useful
+to archive tasks. The <code class="docutils literal"><span class="pre">archive</span></code> command can take care of this. By default,
+tasks that were recently completed will not be archived:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="nb">list</span> <span class="o">-</span><span class="n">a</span> <span class="n">TestProject</span>
+<span class="mi">37</span> <span class="n">x</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">24</span><span class="n">T14</span><span class="p">:</span><span class="mi">26</span><span class="p">:</span><span class="mi">12</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">24</span><span class="n">T14</span><span class="p">:</span><span class="mi">26</span><span class="p">:</span><span class="mi">30</span> <span class="n">This</span> <span class="ow">is</span> <span class="n">a</span> <span class="o">+</span><span class="n">TestProject</span> <span class="n">thing</span>
+<span class="o">---</span>
+<span class="mi">1</span> <span class="n">task</span> <span class="n">shown</span>
+
+<span class="o">&gt;</span> <span class="n">t</span> <span class="n">archive</span> <span class="n">project</span> <span class="n">TestProject</span>
+<span class="mi">2016</span><span class="o">-</span><span class="mi">0324</span> <span class="mi">14</span><span class="p">:</span><span class="mi">59</span><span class="p">:</span><span class="mi">28</span> <span class="n">WARNING</span><span class="p">:</span> <span class="n">Project</span> <span class="o">+</span><span class="n">TestProject</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">old</span> <span class="n">enough</span> <span class="n">to</span> <span class="n">archive</span> <span class="p">(</span><span class="n">archive</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>However, if the last task in the project is old enough, they will be archived:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="nb">list</span> <span class="o">-</span><span class="n">a</span> <span class="n">FourthProject</span>
+<span class="mi">4</span> <span class="n">x</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">09</span><span class="n">T14</span><span class="p">:</span><span class="mi">09</span><span class="p">:</span><span class="mi">13</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">08</span><span class="n">T14</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">16</span> <span class="n">Log</span> <span class="n">request</span> <span class="k">for</span> <span class="o">+</span><span class="n">FourthProject</span>
+      <span class="nd">@quote</span> <span class="c1"># No comment</span>
+<span class="mi">6</span> <span class="n">x</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">09</span><span class="n">T14</span><span class="p">:</span><span class="mi">19</span><span class="p">:</span><span class="mi">51</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">09</span><span class="n">T14</span><span class="p">:</span><span class="mi">16</span><span class="p">:</span><span class="mi">20</span> <span class="n">Get</span> <span class="n">complete</span> <span class="n">information</span> <span class="k">for</span>
+      <span class="o">+</span><span class="n">FourthProject</span> <span class="nd">@quote</span>
+<span class="mi">7</span> <span class="n">x</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">09</span><span class="n">T14</span><span class="p">:</span><span class="mi">47</span><span class="p">:</span><span class="mi">00</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">09</span><span class="n">T14</span><span class="p">:</span><span class="mi">19</span><span class="p">:</span><span class="mi">51</span> <span class="n">Submit</span> <span class="n">approval</span> <span class="k">for</span> <span class="o">+</span><span class="n">FourthProject</span>
+      <span class="nd">@quote</span>
+<span class="mi">8</span> <span class="n">x</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">09</span><span class="n">T14</span><span class="p">:</span><span class="mi">47</span><span class="p">:</span><span class="mi">00</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">09</span><span class="n">T14</span><span class="p">:</span><span class="mi">54</span><span class="p">:</span><span class="mi">54</span> <span class="n">Check</span> <span class="k">for</span> <span class="n">approval</span> <span class="k">for</span>
+      <span class="o">+</span><span class="n">FourthProject</span> <span class="nd">@quote</span>
+<span class="mi">9</span> <span class="n">x</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">09</span><span class="n">T14</span><span class="p">:</span><span class="mi">54</span><span class="p">:</span><span class="mi">54</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">10</span><span class="n">T10</span><span class="p">:</span><span class="mi">05</span><span class="p">:</span><span class="mi">06</span> <span class="n">Send</span> <span class="n">views</span> <span class="n">to</span> <span class="n">AllenM</span> <span class="k">for</span>
+      <span class="o">+</span><span class="n">FourthProject</span> <span class="nd">@quote</span>
+<span class="o">--</span>
+<span class="mi">5</span> <span class="n">tasks</span> <span class="n">shown</span>
+
+<span class="o">&gt;</span> <span class="n">t</span> <span class="n">archive</span> <span class="n">project</span> <span class="n">FourthProject</span>
+<span class="n">Archived</span> <span class="mi">5</span> <span class="n">tasks</span>
+
+<span class="o">&gt;</span> <span class="n">t</span> <span class="nb">list</span> <span class="o">-</span><span class="n">a</span> <span class="n">FourthProject</span>
+<span class="mi">0</span> <span class="n">tasks</span> <span class="n">shown</span>
+</pre></div>
+</div>
+<p>And this renumbers the task file:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="nb">list</span> <span class="o">-</span><span class="n">a</span> <span class="n">TestProject</span>
+<span class="mi">32</span> <span class="n">x</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">24</span><span class="n">T14</span><span class="p">:</span><span class="mi">26</span><span class="p">:</span><span class="mi">12</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">03</span><span class="o">-</span><span class="mi">24</span><span class="n">T14</span><span class="p">:</span><span class="mi">26</span><span class="p">:</span><span class="mi">30</span> <span class="n">This</span> <span class="ow">is</span> <span class="n">a</span> <span class="o">+</span><span class="n">TestProject</span> <span class="n">thing</span>
+<span class="o">---</span>
+<span class="mi">1</span> <span class="n">task</span> <span class="n">shown</span>
+</pre></div>
+</div>
+<p>The task number when from 37 to 32. Again, these numbers are meaningless except
+as temporary identifiers.</p>
+<p>You can also adjust the threshold for archiving tasks. The default is three
+days, but you can ajust this:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">t</span> <span class="n">archive</span> <span class="n">project</span> <span class="o">--</span><span class="n">days</span> <span class="mi">0</span> <span class="n">TestProject</span>
+<span class="n">Archived</span> <span class="mi">1</span> <span class="n">tasks</span>
+</pre></div>
+</div>
+<p>You can also list several projects. Only those old enough will be archived.</p>
+</div>
+
+
+          </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="configuration.html" title="Tasker Configuration"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="basic_usage.html" title="Basic Usage"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Tasker 1.4.0.2017.02.02 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Joshua R English.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.
+    </div>
+  </body>
+</html>

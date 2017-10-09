@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-setup(name='t',
+setup(name='tasker',
       version='1.0',
       description='Extensible command line todo-manager',
       url='https://github.com/JoshuaEnglish/tasker',
@@ -10,4 +10,9 @@ setup(name='t',
       author_email="josh@joshuarenglish.com",
       license="GNU3",
       packages=["tasker", ],
-      zip_safe=False, requires=['yapsy', 'colorama'])
+      zip_safe=False,
+      requires=['yapsy', 'colorama'],
+      entry_points={
+        'console_scripts': ['t=tasker.__main__:main'],
+      }
+      )

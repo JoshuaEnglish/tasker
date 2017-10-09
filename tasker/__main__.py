@@ -84,7 +84,7 @@ def save_config():
 
 parser = argparse.ArgumentParser(
     't',
-    description="Extensile text-based todo manager",
+    description="Extensible text-based todo manager",
     usage='t [main options] command [command options] [command arguments]',
     epilog='For more information use the --manual flag'
 )
