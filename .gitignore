@@ -53,7 +53,7 @@ coverage.xml
 *.log
 
 # Sphinx documentation
-book/_build/
+docs/_build/
 
 # PyBuilder
 target/
@@ -67,5 +67,5 @@ tasker/tasker.ini
 error.txt
 
 # VIM
-.swp
+*.swp
 *~
