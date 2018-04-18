@@ -400,10 +400,9 @@ class WorkflowCLI(minioncmd.MinionCmd):
         # keeping the rest of the extensions allows to search by step as well
         # as by project
         new_text = re.sub(r"\s*{wn:%s}" % victim.extensions['wn'],
-                          "", victim.text)
+                          "", str(victim))
         print(new_text)
-        task = tasks[tasknum].__class__
-        tasks[tasknum] = task.from_text(new_text)
+        tasks[tasknum] = victim.from_text(new_text)
         self.master.lib.tasks = tasks
         self.master.lib.write_current_tasks()
         self.add_workflow_task(victim.extensions['wn'],

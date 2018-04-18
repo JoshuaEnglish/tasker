@@ -56,4 +56,16 @@ vocabulary = person
 40 = JonTerzenbach
 41 = ChrisMcIntosh
 42 = RandyGastelum
+43 = JasonDiaz
+44 = ECMathews
+45 = MitchellRehkopf
+46 = JackRose
+47 = MatthewWalworth
+48 = AndoShin
+49 = SamGerwe
+50 = CharisJensen
+51 = AlexisVazquez
+52 = ChrisFowkesHire
+53 = RossHeringXfer
+54 = PetraBergarp
 

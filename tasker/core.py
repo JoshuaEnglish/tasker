@@ -25,7 +25,7 @@ __history__ = """
 1.2 archive by number should work now
 1.3 Updated stock plugin code for plugin creation
 1.4 Can now filter tasks by open date
-1.5 ???
+1.5 Archive task now handles projects with hidden tasks
 """
 
 
@@ -429,7 +429,7 @@ class ArchiveCmd(minioncmd.MinionCmd):
         """Archive tasks by number"""
         lib = self.master.lib
         args = archive_number_parser.parse_args(text.split())
-        tasks = lib.sort_tasks(showcomplete=True)
+        tasks = lib.sort_tasks(showcomplete=True, hidedate=datetime.date.max)
 
         tasks_to_archive = []
 
@@ -476,7 +476,8 @@ class ArchiveCmd(minioncmd.MinionCmd):
         args = archive_project_parser.parse_args(text.split())
         tasks = lib.sort_tasks(filters=args.projects,
                                filterop=any,
-                               showcomplete=True)
+                               showcomplete=True,
+                               hidedate=datetime.date.max)
         # tasks is a list of tuples
         self._log.info('Found %d candidates to archive', len(tasks))
 

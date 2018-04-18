@@ -14,8 +14,10 @@ split_ANSI_escape_sequences = re.compile(r"""
     (?P<col>(\x1b\[[;\d]*[A-Za-z])*)(?P<text>.*)
     """, re.VERBOSE).match
 
+
 def split_ANSI(s):
     return split_ANSI_escape_sequences(s).groupdict()
+
 
 def print_list(things, headers):
     headers = [h.strip() for h in headers]
@@ -39,10 +41,9 @@ def print_list(things, headers):
         print('')
 
 
-
 if __name__ == '__main__':
     import colorama
-    #colorama.init(autoreset=True)
+    colorama.init(autoreset=True)
 
     first = 'Here %s0 45' % (colorama.Fore.RED + colorama.Style.BRIGHT)
     last = "%sa 1 2" % (colorama.Style.RESET_ALL)

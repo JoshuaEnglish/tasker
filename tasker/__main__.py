@@ -297,7 +297,7 @@ def main():
     args = parser.parse_args(sys.argv[1:])
     log.setLevel(30 - (args.verbose - args.quiet) * 10)
     screen_handler.setLevel(30 - (args.verbose - args.quiet) * 10)
-    log.debug(args)
+    log.info(args)
 
     config.set('Tasker', 'wrap-behavior', args.wrap)
     config.set('Tasker', 'wrap-width', str(args.width))

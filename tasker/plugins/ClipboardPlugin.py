@@ -19,7 +19,8 @@ class ClipboardPlugin(basetaskerplugin.NewCommandPlugin):
     def activate(self):
         self._log.debug('Activating Clipboard')
         # edit the following line
-        self.setConfigOption('public_methods', 'do_clip')
+        if not self.hasConfigOption('public_methods'):
+            self.setConfigOption('public_methods', 'do_clip')
 
         # define argument parsers
         self.clip_parser = clipboard = argparse.ArgumentParser('clip')

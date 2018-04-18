@@ -3,7 +3,7 @@
 About Quotidia
 ==============
 
-Quotidia allows you to schedule tasks to appear in your task list 
+Quotidia allows you to schedule tasks to appear in your task list
 under certain time-given constraints. For example, a reminder to
 pay rent on the first of each month, or to run a report every Monday.
 
@@ -14,13 +14,12 @@ Day Filter: SMTWRFY - any letter matching the days it should run
 Time Filter: first time the task should be listed (hold off on this idea)
 Last Addition: datetime stamp of the last time this item was added.
 
-Basic idea: On load, this should scan the quotidia and see if today matches
-a day the quotidium should be run. Then compare the last addition time to the
-current time. If it has appeared in the last 24 hours ... hold on. That won't work
-if I don't launch the program until the afternoon on Monday, then everything will
-be delayed until the next afternoon. I just need to check if the thing was run 
-on the same day as today. This can be a day check.
-"""
+Basic idea: On load, this should scan the quotidia and see if today matches a
+day the quotidium should be run. Then compare the last addition time to the
+current time. If it has appeared in the last 24 hours ... hold on. That won't
+work if I don't launch the program until the afternoon on Monday, then
+everything will be delayed until the next afternoon. I just need to check if
+the thing was run on the same day as today. This can be a day check.  """
 
 import glob
 import os
@@ -28,7 +27,6 @@ import argparse
 import re
 
 from configparser import ConfigParser
-from string import Template
 
 import basetaskerplugin
 import minioncmd
@@ -67,8 +65,6 @@ class QuotidiaCLI(minioncmd.MinionCmd):
 
         self._quotidia_dir = local_dir
 
-
-    
     def do_list(self, text):
         """Usage: list
 
@@ -91,7 +87,6 @@ class QuotidiaCLI(minioncmd.MinionCmd):
         for key, val in self.quotidia[text]['Quotidia'].items():
             print(key, val, sep=": ")
         print()
-
 
     def do_create(self, text):
         """Usage: create NAME
@@ -116,27 +111,26 @@ class QuotidiaCLI(minioncmd.MinionCmd):
             print("Quotidia %s already existis" % newname)
             return None
 
-        keep_going = True
         """QID: System generated quote ID
 Text to add: including the Priority, if any
 Day Filter: SMTWRFY - any letter matching the days it should run
 Time Filter: first time the task should be listed (hold off on this idea)
 Last Addition: datetime stamp of the last time this item was added."""
         text = input("Please enter the text for this quotidia: ")
-        
+
         day_ok = False
         while not day_ok:
-            days = input("Please enter the days to run")
-        
+            days = input("Please enter the days to run: [SMTWRFY]")
+            day_ok = re.match(r"^S?M?T?W?R?F?Y?$")
 
         cp = ConfigParser()
         cp.add_section('Quotidia')
         cp.set('Quotidia', 'name', newname.title())
         cp.set('Quotidia', 'task', text)
+        cp.set('Quotidia', 'days', days)
 
- 
         fname = "%s.quotidia" % newname.lower()
-        fpath = os.path.join(self._workflow_dir, fname)
+        fpath = os.path.join(self._quotidia_dir, fname)
         with open(fpath, 'w') as fp:
             cp.write(fp)
 
@@ -145,10 +139,10 @@ Last Addition: datetime stamp of the last time this item was added."""
         print()
         print("Created new quotidia in", fpath)
 
-
     def help_about(self):
         """About this plugin"""
         print(CLI_ABOUT)
+
 
 class Quotidia(basetaskerplugin.SubCommandPlugin):
     def activate(self):
@@ -161,39 +155,47 @@ class Quotidia(basetaskerplugin.SubCommandPlugin):
             self.setConfigOption('hidden-extensions', 'qid')
 
         self.cli_name = 'quotidia'
-        self.cli = QuotidiaCLI() # needs to be an instance
+        self.cli = QuotidiaCLI()  # needs to be an instance
 
         parser = self.parser = argparse.ArgumentParser('quotidia')
         self.helpstr = 'Quotidia commands (see `help quotidia`)'
         workflow_commands = parser.add_subparsers(title='quotidia commands',
                                                   dest='subcommand',
                                                   metavar='')
-        start_workflow = workflow_commands.add_parser('start', help='start a workflow')
-        start_workflow.add_argument('name', help="The name of the workflow to start")
-        start_workflow.add_argument('vocabulary', nargs=argparse.REMAINDER,
-                                    help="The vocabulary for the workflow instance")
+        start_workflow = workflow_commands.add_parser(
+            'start',
+            help='start a workflow')
+        start_workflow.add_argument(
+            'name',
+            help="The name of the workflow to start")
+        start_workflow.add_argument(
+            'vocabulary', nargs=argparse.REMAINDER,
+            help="The vocabulary for the workflow instance")
 #
         workflow_commands.add_parser('list', help='lists known workflows')
 
-        steps = workflow_commands.add_parser('steps',
-                                             help='displays templated steps for a given workflow')
+        steps = workflow_commands.add_parser(
+            'steps',
+            help='displays templated steps for a given workflow')
         steps.add_argument('text', nargs=argparse.REMAINDER)
 
-        instance = workflow_commands.add_parser('instances',
-                                                help='displays known instances of a workflow')
+        instance = workflow_commands.add_parser(
+            'instances',
+            help='displays known instances of a workflow')
         instance.add_argument('workflow')
 
-        info = workflow_commands.add_parser('info',
-                                            help="displays information about a workflow")
+        info = workflow_commands.add_parser(
+            'info',
+            help="displays information about a workflow")
         info.add_argument('workflow')
 
-        create = workflow_commands.add_parser('create',
-                                              help="creates a new workflow file")
+        create = workflow_commands.add_parser(
+            'create',
+            help="creates a new workflow file")
         create.add_argument('name', help="the name of the workflow to create")
         create.add_argument('--edit', help="launch the editor automatically")
 
         super().activate()
-
 
     def complete_task(self, this):
         self._log.debug('Quotidia checking completed task %s',
@@ -202,9 +204,11 @@ class Quotidia(basetaskerplugin.SubCommandPlugin):
             flow = self.cli.workflows[this.extensions['wn']]
             steps = flow['Steps']
             if this.extensions['ws'] not in steps:
-                msg = "Workflow {} does not have step {}".format(flow, this.extensions['ws'])
+                msg = "Workflow {} does not have step {}".format(
+                    flow,
+                    this.extensions['ws'])
                 self._log.error(msg)
-                print(msg) # this will cause problems down the road
+                print(msg)  # this will cause problems down the road
                 return (0, None, this)
             next_step = str(int(this.extensions['ws'])+1)
             if next_step in steps:
@@ -215,5 +219,3 @@ class Quotidia(basetaskerplugin.SubCommandPlugin):
                 except KeyError as E:
                     return(2, E, this)
         return(0, None, this)
-
-

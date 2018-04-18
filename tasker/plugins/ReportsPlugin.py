@@ -38,10 +38,12 @@ __history__ = """
 class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
     def activate(self):
         self._log.debug('Activating Reports')
-        self.setConfigOption('public_methods',
-                             'do_projects,do_contexts,do_today,do_status')
-        self.setConfigOption('daily_report_filename',
-                             "{0.year}-{0.month}-{0.day}")
+        if not self.hasConfigOption('public_methods'):
+            self.setConfigOption('public_methods',
+                                 'do_projects,do_contexts,do_today,do_status')
+        if not self.hasConfigOption('daily_report_filename'):
+            self.setConfigOption('daily_report_filename',
+                                 "{0.year}-{0.month}-{0.day}")
 
         # this is a case where we need to add multiple commands to the main
         # argument parser
