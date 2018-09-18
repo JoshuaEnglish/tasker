@@ -68,5 +68,6 @@ tasker/tasker.ini
 error.txt
 
 # VIM
+#.swo
 *.swp
 *~
