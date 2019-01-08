@@ -47,7 +47,7 @@ screen_handler = logging.StreamHandler()
 
 error_handler = logging.FileHandler('error.txt')
 error_handler.setLevel(logging.DEBUG)
-extra_info = ('%(asctime)s %(levelname)s:\n\t[%(pathname)s\%(filename)s:'
+extra_info = ('%(asctime)s %(levelname)s:\n\t[%(pathname)s\\%(filename)s:'
               '%(lineno)s]\n\t%(message)s (%(name)s)')
 normal_info = '%(asctime)s %(levelname)s: %(message)s (%(name)s)'
 formatter = logging.Formatter(
@@ -109,9 +109,11 @@ parser.add_argument('--width', type=int,
                     default=config['Tasker'].getint('wrap-width'),
                     help="Width to wrap or shorten text when printing")
 
-parser.add_argument('-z', action='store_false',
-                    default=config['Tasker'].getboolean('priority-z-last'),
-                    dest='showz', help='Hides Z-priority tasks')
+parser.add_argument('-z', action='store_const',
+                    default=config['Tasker'].getboolean('show-priority-z'),
+                    dest='showz',
+                    const=not config['Tasker'].getboolean('show-priority-z'),
+                    help='Toggles visibility of Z-priority tasks')
 parser.add_argument('-l', action='store_false', default=True,
                     dest='integrate',
                     help='Shows Z-priority tasks before unprioritized tasks')

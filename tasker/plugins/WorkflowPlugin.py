@@ -65,6 +65,7 @@ import glob
 import os
 import argparse
 import re
+import textwrap
 
 from configparser import ConfigParser
 from string import Template
@@ -411,9 +412,17 @@ class WorkflowCLI(minioncmd.MinionCmd):
 
     def help_about(self):
         """About this plugin"""
-        print("""These commands allow you to create sequential tasks for projects that
-are the same process but for different contexts: processing orders for
-different customers or verifying lists of data that are the same form.""")
+        about = textwrap.dedent("""These commands allow you to create
+                                sequential tasks for projects that are the same
+                                process but for different contexts: processing
+                                orders for different customers or verifying
+                                lists of data that are the same form.""")
+        print(
+            textwrap.fill(about,
+                          width=self.master.config.getint('Tasker',
+                                                          'wrap-width'),
+                          replace_whitespace=True,
+                          drop_whitespace=True))
 
 
 class Workflow(basetaskerplugin.SubCommandPlugin):
