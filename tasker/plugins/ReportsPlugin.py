@@ -24,13 +24,14 @@ todo = """
 Create a timed report
 """
 
-__version__ = '1.3'
-__updated__ = '2017-08-25'
+__version__ = '1.4'
+__updated__ = '2019-01-09'
 __history__ = """
 1.1 -- today report to the screen is wrapped
 1.2 -- today report allows optional numbers of days ago
 1.3 -- projects report now has --nowait option that hides projects/contexts if
        all open tasks are in priority Z
+1.4 -- status report pluralizes correctly
 
 """
 
@@ -67,10 +68,14 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
                            default=False, dest='only_active',
                            help="Only list projects without a (Z) priority")
 
+        group.add_argument('--showhidden', action='store_true',
+                           default=False, dest='show_hidden',
+                           help="Shows projects with only hidden tasks")
+
         project = argparse.ArgumentParser(
             'projects', parents=[common_opts],
             description="""Print a list of current projects with the number of
-        open and closed tasks.
+        open, hidden, and closed tasks.
         """
         )
         self.project_parser = project
@@ -78,7 +83,7 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         context = argparse.ArgumentParser(
             'contexts', parents=[common_opts],
             description="""Print a list of current contexts with the number """
-                        """of open and closed tasks""")
+                        """of open, hidden, and closed tasks""")
         self.context_parser = context
 
         today = argparse.ArgumentParser(
@@ -181,7 +186,7 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
                     fp.write("%s\n" % (task))
 
     def print_counts(self, name, include_closed=False, include_archive=False,
-                     only_archive=False, only_active=False):
+                     only_archive=False, only_active=False, show_hidden=False):
         """Print a list of report, noting number of open and closed tasks.
 
         :param str name:
@@ -189,6 +194,7 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         :param bool include_archive: Include archived tasks
         :param bool only_archive: Only show archived tasks
         :param bool only_active: Don't include projects that are priority Z
+        :param bool show_hidden: Show projects that have all hidden tasks
         """
 
         show_closed = any((include_closed, include_archive, only_archive))
@@ -202,18 +208,22 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
             """Tuplize a count"""
             return (self.lib.get_color('open') + str(k),
                     str(counts[k]['open']),
+                    str(counts[k]['hidden']),
                     str(counts[k]['closed'])
                     )
 
         def f(k):
             """Determine if a count should be in the list"""
-            yahsure = counts[k]['open'] or show_closed
+            ok = counts[k]['open'] or show_closed
             if only_active:
-                yahsure = yahsure and (counts[k]['Z'] != counts[k]['open'])
-            return yahsure
+                ok = ok and (counts[k]['Z'] != counts[k]['open'])
+            if not show_hidden:
+                ok = ok and (counts[k]['hidden'] < counts[k]['open'])
+            return ok
 
         if show_list or show_closed:
-            headers = "{} Open Closed".format(name.title()).split()
+            print("show_hidden:", show_hidden)
+            headers = "{} Open Hidden Closed".format(name.title()).split()
             lister.print_list([s(count) for count in sorted(counts)
                                if f(count)],
                               headers)
@@ -230,7 +240,11 @@ class ReportsPlugin(basetaskerplugin.NewCommandPlugin):
         oc_today = [t for t in closed_today if t.start.date() == today]
         stillopen = [t for k, t in tasks if not t.complete]
         pri = Counter([t.priority for t in stillopen])
-        print("%d open tasks. %d closed tasks." % (len(stillopen), len(closed)))
-        print("%d tasks closed today." % len(closed_today))
-        print("%d tasks opened and closed today." % len(oc_today))
+        print("%d open task%s. %d closed task%s." %
+              (len(stillopen), "" if len(stillopen) == 1 else "s",
+               len(closed), "" if len(closed) == 1 else "s"))
+        print("%d task%s closed today." %
+              (len(closed_today), "" if len(closed_today) == 1 else "s"))
+        print("%d task%s opened and closed today." %
+              (len(oc_today), "" if len(oc_today) == 1 else "s"))
         print(pri)

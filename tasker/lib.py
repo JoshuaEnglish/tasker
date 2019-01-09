@@ -42,13 +42,13 @@ re_task = re.compile(
     r"(?P<text>.*)"
 )
 
-re_context = re.compile("\s([@][-\w]+)")
-re_project = re.compile("\s([+][-\w]+)")
+re_context = re.compile(r"\s([@][-\w]+)")
+re_project = re.compile(r"\s([+][-\w]+)")
 
 re_ext = re.compile(r"\s{\w+:[^}]*}")
 re_uid = re.compile(r"\s{uid:[^}]*}")
 re_hide = re.compile(r"\s{hide:(\d{4}-\d{2}-\d{2})}")
-re_note = re.compile('\s#\s.*$')
+re_note = re.compile(r'\s#\s.*$')
 
 re_pri_filter = re.compile(r"~?\(([A-Z])\)")
 
@@ -56,7 +56,7 @@ TASK_OK = 0
 TASK_ERROR = 1
 TASK_EXTENSION_ERROR = 2
 
-re_color = re.compile("""
+re_color = re.compile(r"""
 (?P<style>bright|dim|normal)\s
 (?P<fore>black|blue|cyan|green|lightblack|magenta|red|reset|white|yellow)\s
 on\s(?P<back>black|blue|cyan|green|lightblack|magenta|red|reset|white|yellow)
@@ -149,6 +149,16 @@ class Task(object):
 
         return cls(complete, priority, start, end, task,
                    context, projects, edict)
+
+    @property
+    def is_hidden(self):
+        "Returns true if the hidden flag exists and shows a future date"
+        if 'hide' not in self.extensions:
+            return False
+        hide_date = datetime.datetime.strptime(self.extensions['hide'],
+                                               DATEFMT)
+        today = datetime.datetime.now()
+        return today < hide_date
 
 
 class TaskLib(object):
@@ -687,12 +697,17 @@ class TaskLib(object):
 
             key = 'closed' if task.complete else 'open'
 
+
             if not items:
                 res[nothing][key] += 1
+                if task.is_hidden:
+                    res[nothing]['hidden'] += 1
 
             for item in items:
                 res[item][key] += 1
                 res[item][task.priority] += 1
+                if task.is_hidden:
+                    res[item]['hidden'] += 1
 
         return res
 
