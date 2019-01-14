@@ -140,7 +140,7 @@ class BossCmd(ExtHelpCmd):
         If this method is not overridden, it prints an error message and
         returns.
         """
-        print("*** Unknown %s syntax: %s" % (self.__class__.__name, line),
+        print("*** Unknown %s syntax: %s" % (self.__class__.__name__, line),
               file=self.stdout)
 
     def add_minion(self, name, cmder):
