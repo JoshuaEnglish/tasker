@@ -1,0 +1,7 @@
+Tasker Upgrades
+===============
+
+#. --showhidden flag should unhide the {hide: extension
+#. Add command to add a context or project to a todo
+#. When in the interactive cli, using a -h flag quits the system. This
+   should be preventable or re-routable to the `help` command
