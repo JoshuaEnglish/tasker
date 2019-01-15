@@ -31,6 +31,10 @@ class PowerCmd(minioncmd.MinionCmd):
     doc_leader = "Power User Help"
     _log = logging.getLogger('poweruser')
 
+    def do_opencodebase(self, line):
+        """Opens the folder containing the tasker code"""
+        os.startfile('.')
+
     def do_queue(self, line):
         """Lists all items in the command queue."""
         if not self.master.cmdqueue:
@@ -77,8 +81,6 @@ class PowerCmd(minioncmd.MinionCmd):
         Usage: openfolder"""
         os.startfile(self.config['Files']['tasker-dir'])
 
-
-
     def do_python(self, line):
         """Jump into Python.
         Namespace consists of 'boss' (the BossCmd object),
@@ -95,4 +97,3 @@ class PowerCmd(minioncmd.MinionCmd):
 
         code.interact("Tasker Python Session", local=namespace)
         return None
-
