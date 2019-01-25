@@ -172,7 +172,9 @@ class TaskCmd(minioncmd.BossCmd):
         self.lib = lib
 
     def do_list(self, line):
-        """Lists tasks [-nayx] [-o DATE] [-c DATE] [FILTERS]"""
+        """Lists tasks [-nayx] [-o DATE] [-c DATE] [FILTERS]
+        Can use ~word to filter out tasks containing that word
+        """
         args = commands.choices['list'].parse_args(line.split())
         args.filterop = any if args.filterop else all
         self.lib.list_tasks(**vars(args))

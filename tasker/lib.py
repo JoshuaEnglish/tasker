@@ -115,7 +115,10 @@ class Task(object):
             raise ValueError('Task did not parse')
         complete = bool(match.group('complete'))
 
-        priority = match.group('priority')[1] if match.group('priority') else ''
+        if match.group('priority'):
+            priority = match.group('priority')[1]
+        else:
+            priority = ''
 
         if match.group('start'):
             start = datetime.datetime.strptime(match.group('start').strip(),
@@ -159,6 +162,21 @@ class Task(object):
                                                DATEFMT)
         today = datetime.datetime.now()
         return today < hide_date
+
+
+def include_task(filterop, filters, task):
+    "return a boolean value to include the task or not"
+    yeas = []
+    for word in filters:
+        yea = word.startswith('~')
+        testword = word.replace('~', '').lower()
+        if testword in task.text.lower():
+            yea = not yea
+        pri = re_pri_filter.match(word)
+        if pri and pri.group(1) == task.priority:
+            yea = not yea
+        yeas.append(yea)
+    return filterop(yeas)
 
 
 class TaskLib(object):
@@ -260,18 +278,6 @@ class TaskLib(object):
             extensions.remove(ext)
 
         self.config['Tasker']['hidden_extensions'] = ','.join(extensions)
-
-    def parse_task(self, text):
-        """Deprecated. No longer implemented. This method exists
-        just to catch old code.
-        """
-        raise NotImplementedError("Please use the task object from here on out")
-
-    def graft(self, complete, priority, start, end, text):
-        """Deprecated. No longer implemented. This method exists
-        just to catch old code.
-        """
-        raise NotImplementedError("Please use the Task object from here on out")
 
     def get_tasks(self, path):
         """Get tasks from either todo.txt or done.txt
@@ -392,7 +398,7 @@ class TaskLib(object):
         filterop = filterop if filterop in (all, any) else all
         if filterop not in (any, all):
             self.log.error('Bad filterop parameter in sort_tasks')
-            return TASK_ERROR, "Filter Operation must by any or all"
+            return TASK_ERROR, "Filter Operation must by 'any' or 'all'."
         showcomplete = showcomplete or closedate or False
         hidedate = hidedate or datetime.date.today()
 
@@ -403,25 +409,8 @@ class TaskLib(object):
 
         if filters:
             self.log.info('Filtering tasks by keywords')
-
-            def include_task(filters, task):
-                "return a boolean value to include the task or not"
-                yeas = []
-                for word in filters:
-                    # yea = False
-                    yea = word.startswith('~')
-                    testword = word.replace('~', '').lower()
-                    if testword in task.text.lower():
-                        # yea = True
-                        yea = not yea
-                    pri = re_pri_filter.match(word)
-                    if pri and pri.group(1) == task.priority:
-                        yea = not yea
-                    yeas.append(yea)
-                return filterop(yeas)
-
             everything = [(key, val) for key, val in everything
-                          if include_task(filters, val)]
+                          if include_task(filterop, filters, val)]
 
         if not self.config['Tasker'].getboolean('show-priority-z', True):
             self.log.info("Hiding priority Z tasks")
@@ -689,7 +678,8 @@ class TaskLib(object):
         elif kind == 'CONTEXT':
             getter = attrgetter('contexts')
         else:
-            raise ValueError("Should pass 'project' or 'context' to get_counts")
+            raise ValueError(
+                "Should pass 'project' or 'context' to get_counts")
         res = defaultdict(Counter)
         nothing = 'NO {}'.format(kind)
 
@@ -699,7 +689,6 @@ class TaskLib(object):
             items = getter(task)  # projects and contexts are lists
 
             key = 'closed' if task.complete else 'open'
-
 
             if not items:
                 res[nothing][key] += 1

@@ -91,7 +91,7 @@ def add_core_subparsers(commands):
 
     list_parser.add_argument(
         'filters', nargs=argparse.REMAINDER,
-        help="Only lists tasks containing these words")
+        help="Only lists tasks containing these words (or ~word to exclude)")
 
     add_parser = commands.add_parser('add', help="add a task")
     add_parser.add_argument('-d', '--done', action="store_true",
@@ -408,8 +408,6 @@ archive_number_parser.add_argument('numbers',
                                    nargs=argparse.REMAINDER,
                                    type=int)
 
-# todo: Isolate the code writing the todo and done files (DRY)
-
 
 class ArchiveCmd(minioncmd.MinionCmd):
     prompt = "archive> "
@@ -463,13 +461,7 @@ class ArchiveCmd(minioncmd.MinionCmd):
             done[next_done] = tasks[key]
             next_done += 1
             tasks.pop(key)
-
-        lib.write_tasks(tasks, lib.config['Files']['task-path'])
-        lib.write_tasks(done, lib.config['Files']['done-path'])
-
-        msg = "Archived {} tasks".format(len(tasks_to_archive))
-        self._log.info(msg)
-        print(msg)
+        self.clean_up(tasks_to_archive)
 
     def do_project(self, text):
         """Archive tasks in a given project if all tasks are closed"""
@@ -483,7 +475,6 @@ class ArchiveCmd(minioncmd.MinionCmd):
         self._log.info('Found %d candidates to archive', len(tasks))
 
         # create a dictionary of projects, last_date
-        end_dates = {}  # stores project: end_date pairs
         open_projects = set(chain(*[task.projects
                                     for num, task in tasks
                                     if task.end is None]))
@@ -529,6 +520,10 @@ class ArchiveCmd(minioncmd.MinionCmd):
             if all(proj in projects_to_archive for proj in task.projects):
                 tasks_to_archive.add(num)
 
+        self.clean_up(tasks_to_archive)
+
+    def clean_up(self, tasks_to_archive):
+        lib = self.master.lib
         tasks = lib.get_tasks(lib.config['Files']['task-path'])
         done = lib.get_tasks(lib.config['Files']['done-path'])
 

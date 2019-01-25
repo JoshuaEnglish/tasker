@@ -375,7 +375,11 @@ class WorkflowCLI(minioncmd.MinionCmd):
 
     def do_skip(self, text):
         "skip num - adds the next task in the workflow; leaves the task open"
-        tasknum, reason = re.match(r"(\d+)\s+(.*)", text).groups()
+        try:
+            tasknum, reason = re.match(r"(\d+)\s+(.*)", text).groups()
+        except AttributeError:
+            print("Please provide a reason for skipping this step")
+            return False
         tasknum = int(tasknum)
 
         tasks = self.master.lib.build_task_dict()
@@ -388,7 +392,7 @@ class WorkflowCLI(minioncmd.MinionCmd):
 
         if 'wn' not in victim.extensions:
             self._log.error("Task not part of a workflow")
-            print("Task not part of a workflow")
+            print("Task not part of a workflow or already skipped")
             return True
 
         if 'ws' not in victim.extensions:
