@@ -121,7 +121,7 @@ parser.add_argument('-l', action='store_false', default=True,
 theme = parser.add_mutually_exclusive_group()
 theme.add_argument('-t', '--theme', action='store', dest='theme',
                    default='default', help="Sets color theme")
-theme.add_argument('-n' '--no-color', action='store_const', dest='theme',
+theme.add_argument('-n', '--no-color', action='store_const', dest='theme',
                    const='none', help="Removes color output")
 
 feedback = parser.add_mutually_exclusive_group()

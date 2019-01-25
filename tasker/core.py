@@ -83,6 +83,7 @@ def add_core_subparsers(commands):
     list_parser.add_argument('--hidedate', dest='hidedate', type=valid_date,
                              default=datetime.date.today(),
                              help="Sets preview date for hidden tasks")
+
     list_parser.add_argument('--showhidden', dest='hidedate',
                              action="store_const",
                              const=datetime.date.max,

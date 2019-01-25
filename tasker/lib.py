@@ -315,10 +315,13 @@ class TaskLib(object):
         return ok, msg, this
 
     def add_task(self, text):
+        """Adds a task to the current file"""
+        if not hasattr(self, 'tasks') or self.tasks is None:
+            tasks = self.tasks = self.get_tasks(
+                self.config['Files']['task-path'])
+        else:
+            tasks = self.tasks
         this = Task.from_text(text)
-
-        # if c and not e:
-        #     e = datetime.datetime.now()
 
         err, msg, this = self.run_hooks('add_task', this)
         if err:
@@ -327,7 +330,7 @@ class TaskLib(object):
 
         with open(self.config['Files']['task-path'], 'a') as fp:
             fp.write('{}{}'.format(this, '\n'))
-        print(this)
+        print(len(tasks)+1, this)
         return TASK_OK, str(this)
 
     def add_done(self, text):
