@@ -12,7 +12,7 @@ import argparse
 import datetime
 import logging
 
-from collections import defaultdict
+# from collections import defaultdict
 from itertools import chain
 
 import minioncmd
@@ -380,6 +380,45 @@ class {name}Plugin(basetaskerplugin.{cls}):
 
 '''
 
+
+class Limiter(dict):
+    '''Dict subclass for keeping a maximum or minimum values for each key
+
+    Limiters can be given a default mapping.
+
+    The default function of a limiter is max.
+    '''
+
+    def __init__(*args, **kwds):
+
+        if not args:
+            raise TypeError("descriptor __init of 'Limiter' object "
+                            "needs an argument")
+        self, *args = args
+        if len(args) > 1:
+            raise TypeError("expected at most 1 argument, got %d" % len(args))
+
+        super(Limiter, self).__init__()
+        self._func = kwds.pop('func', max)
+        self.update(*args, **kwds)
+
+    def __missing__(self, key):
+        return None
+
+    def __delitem__(self, elem):
+        'like dict.__delitem__() but does not raise KeyError'
+        if elem in self:
+            super().__delitem__(elem)
+
+    def __setitem__(self, elem, value):
+        if value is None:
+            return None
+        if elem in self:
+            super().__setitem__(elem, self._func(self[elem], value))
+        else:
+            super().__setitem__(elem, value)
+
+
 archive_argparser = argparse.ArgumentParser('archive')
 
 archive_commands = archive_argparser.add_subparsers(title='commands',
@@ -389,6 +428,9 @@ archive_commands = archive_argparser.add_subparsers(title='commands',
 archive_parent = argparse.ArgumentParser(add_help=False)
 archive_parent.add_argument('--days', type=int, default=7,
                             help='minimum age of closed tasks to archive')
+archive_parent.add_argument(
+    '--force', default=False,
+    action="store_true", help='force archive of older tasks in open projects')
 
 archive_project_parser = archive_commands.add_parser('project',
                                                      help='Archive by project',
@@ -478,18 +520,22 @@ class ArchiveCmd(minioncmd.MinionCmd):
         open_projects = set(chain(*[task.projects
                                     for num, task in tasks
                                     if task.end is None]))
-        end_dates = defaultdict(set)
+        # end_dates = defaultdict(set)
+        end_dates = Limiter()
         for num, task in tasks:
             for proj in task.projects:
-                if task.end is not None:
-                    end_dates[proj].add(task.end)
-        end_dates = dict((proj, max(dates))
-                         for proj, dates in end_dates.items())
+                end_dates[proj] = task.end  # will ignore None
+                # if task.end is not None:
+                #    end_dates[proj].add(task.end)
+                #    end_dates[proj] = task.end
+        # end_dates = dict((proj, max(dates))
+        #                  for proj, dates in end_dates.items())
 
         for proj in open_projects:
             self._log.warn('Project %s is still open. Not archived.', proj)
-            if proj in end_dates:
-                del end_dates[proj]
+            end_dates.pop(proj, None)
+            # if proj in end_dates:
+            #    del end_dates[proj]
 
         if not end_dates:
             self._log.info("No projects to archive")
@@ -501,9 +547,11 @@ class ArchiveCmd(minioncmd.MinionCmd):
         tasks_to_archive = set()
 
         now = datetime.datetime.now()
+        archive_date = now - datetime.timedelta(days=args.days)
         for proj in end_dates:
-            delta = now - end_dates[proj]
-            if delta.days >= args.days:
+            if end_dates[proj] < archive_date:
+                # delta = now - end_dates[proj]
+                # if delta.days >= args.days:
                 projects_to_archive.append(proj)
             else:
                 self._log.warn('Project %s is not old enough to archive', proj)

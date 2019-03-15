@@ -308,6 +308,13 @@ class TaskLib(object):
         return TASK_OK, "{:d} Tasks written".format(len(task_dict))
 
     def run_hooks(self, func_name, this):
+        """Checks all plugins for hook actions.
+        Passes the Task object as the sole parameter.
+        Expects three-tuple in return:
+            ok (either TASK_OK or TASK_NOT_OK)
+            msg (string text)
+            task (the task object which may or may not be altered)
+        """
         ok = TASK_OK
         msg = ""
         for plugin in self.manager.getAllPlugins():
@@ -318,6 +325,8 @@ class TaskLib(object):
                                                  plugin.name, func_name)
                 func = getattr(plugin.plugin_object, func_name)
                 ok, msg, this = func(this)
+                if ok != TASK_OK:
+                    return ok, msg, this
         return ok, msg, this
 
     def add_task(self, text):
@@ -535,7 +544,7 @@ class TaskLib(object):
 
     def get_color(self, pri):
         color = self.theme.get(pri, colorama.Style.RESET_ALL)
-        self.log.debug('getting color for %s (%s)', pri, color)
+        # self.log.debug('getting color for %s (%s)', pri, color)
         return color
 
     def note_task(self, tasknum, note=None):
