@@ -609,12 +609,15 @@ class TaskLib(object):
             return task
 
         np = priority.strip()
-        match = re.match(r'^[A-Z]$', np)
+        match = re.match(r'^[A-Z_]$', np)
         if not match:
             self.log.error("New priority must be A-Z")
             return task
 
-        task.priority = match.group()
+        if match.group() == '_':
+            task.priority = ''
+        else:
+            task.priority = match.group()
 
         self.log.info("Reprioritized task: %s", task)
 
