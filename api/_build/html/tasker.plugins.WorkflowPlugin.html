@@ -1,29 +1,17 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
+    <meta charset="utf-8" />
     <title>tasker.plugins.WorkflowPlugin module &#8212; tasker  documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="tasker.__main__ module" href="tasker.__main__.html" />
@@ -34,25 +22,260 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
-  <div class="section" id="tasker-plugins-workflowplugin-module">
-<h1>tasker.plugins.WorkflowPlugin module<a class="headerlink" href="#tasker-plugins-workflowplugin-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tasker.plugins.WorkflowPlugin">
+<span id="tasker-plugins-workflowplugin-module"></span><h1>tasker.plugins.WorkflowPlugin module<a class="headerlink" href="#module-tasker.plugins.WorkflowPlugin" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="about-workflow">
+<h2>About Workflow<a class="headerlink" href="#about-workflow" title="Permalink to this headline">¶</a></h2>
+<p>These commands allow you to create sequential tasks for projects that
+are the same process but for different contexts: processing orders for
+different customers or verifying lists of data that are the same form.</p>
+<div class="section" id="using-workflows">
+<h3>Using Workflows<a class="headerlink" href="#using-workflows" title="Permalink to this headline">¶</a></h3>
+<p>The inspiration for this was a quoting processing for sales support:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Sales rep requests a pricing quote</p></li>
+<li><p>Support rep verifies all information</p></li>
+<li><p>Support rep creates the quote</p></li>
+<li><p>Support rep submit quote for pricing</p></li>
+<li><p>Pricing returns quote to support rep</p></li>
+<li><p>Support rep returns pricing to sales rep</p></li>
+</ol>
+</div></blockquote>
+<p>The support rep also had to log each of these steps in a separate job tracker.</p>
+<p>Using the quote as a project name and giving all of these steps a &#64;pricing
+context, the following workflow was created:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><ol class="upperalpha simple">
+<li><p>Log &#64;pricing request for +$project</p></li>
+</ol>
+</li>
+<li><ol class="upperalpha simple" start="2">
+<li><p>Confirm +$project information with $salesrep &#64;pricing</p></li>
+</ol>
+</li>
+<li><ol class="upperalpha simple">
+<li><p>Submit +$project to &#64;pricing team</p></li>
+</ol>
+</li>
+<li><ol class="upperalpha simple">
+<li><p>Check for +$project &#64;pricing approval</p></li>
+</ol>
+</li>
+<li><ol class="upperalpha simple">
+<li><p>Send +$project &#64;pricing to $salesrep</p></li>
+</ol>
+</li>
+</ol>
+</div></blockquote>
+<p>(The support rep was comfortable using the &#64;pricing context in the middle
+of a sentence. It’s a style choice.)</p>
+<p>In practice, as sales rep Jane Schmo contacts the support rep for a pricing
+quote on the Giganta Corp Land Grab, the rep starts things in tasker with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tasker</span><span class="o">&gt;</span> <span class="n">workflow</span> <span class="n">start</span> <span class="n">GigantaLandGrab</span> <span class="n">JSchmo</span>
+<span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="n">Log</span> <span class="nd">@pricing</span> <span class="n">request</span> <span class="k">for</span> <span class="o">+</span><span class="n">GigantaLandGrab</span>
+
+<span class="n">tasker</span><span class="o">&gt;</span> <span class="nb">list</span>
+<span class="mi">1</span> <span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="n">Log</span> <span class="nd">@pricing</span> <span class="n">request</span> <span class="k">for</span> <span class="o">+</span><span class="n">GigantaLandGrab</span>
+</pre></div>
+</div>
+<p>(There are extensions being written to the file. They are hidden by default.)</p>
+<p>From there, as each step is completed, the sales rep doesn’t need to return
+to the workflow command, but treat these as normal tasks:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tasker</span><span class="o">&gt;</span> <span class="n">do</span> <span class="mi">1</span>
+<span class="n">x</span> <span class="n">Log</span> <span class="nd">@pricing</span> <span class="n">request</span> <span class="k">for</span> <span class="o">+</span><span class="n">GigantaLandGrab</span>
+<span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="n">Confirm</span> <span class="o">+</span><span class="n">GigantaLandGrab</span> <span class="n">information</span> <span class="k">with</span> <span class="n">JSchmo</span> <span class="nd">@pricing</span>
+
+<span class="n">tasker</span><span class="o">&gt;</span> <span class="nb">list</span>
+<span class="mi">2</span> <span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="n">Confirm</span> <span class="o">+</span><span class="n">GigantaLandGrab</span> <span class="n">information</span> <span class="k">with</span> <span class="n">JSchmo</span> <span class="nd">@pricing</span>
+</pre></div>
+</div>
+<p>When the last task in the workflow is marked as complete, no new tasks are
+added at runtime.</p>
+</div>
+<div class="section" id="creating-workflows">
+<h3>Creating Workflows<a class="headerlink" href="#creating-workflows" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="tasker.plugins.WorkflowPlugin.Workflow">
+<em class="property">class </em><code class="descclassname">tasker.plugins.WorkflowPlugin.</code><code class="descname">Workflow</code><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#Workflow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.Workflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">basetaskerplugin.SubCommandPlugin</span></code></p>
+<dl class="method">
+<dt id="tasker.plugins.WorkflowPlugin.Workflow.activate">
+<code class="descname">activate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#Workflow.activate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.Workflow.activate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called at plugin activation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.WorkflowPlugin.Workflow.complete_task">
+<code class="descname">complete_task</code><span class="sig-paren">(</span><em>this</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#Workflow.complete_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.Workflow.complete_task" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI">
+<em class="property">class </em><code class="descclassname">tasker.plugins.WorkflowPlugin.</code><code class="descname">WorkflowCLI</code><span class="sig-paren">(</span><em>completekey='tab'</em>, <em>stdin=None</em>, <em>stdout=None</em>, <em>workflow_dir=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#WorkflowCLI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">minioncmd.MinionCmd</span></code></p>
+<dl class="method">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.add_workflow_task">
+<code class="descname">add_workflow_task</code><span class="sig-paren">(</span><em>flow</em>, <em>stepnum</em>, <em>flow_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#WorkflowCLI.add_workflow_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.add_workflow_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a new task to the task manager based on the workflow.
+This method is called during the <cite>do_complete</cite> hook.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>flow</strong> (<em>str</em>) – name of the workflow to follow</p></li>
+<li><p><strong>stepnum</strong> (<em>int/str</em>) – number of the step</p></li>
+<li><p><strong>flow_id</strong> (<em>int</em>) – the instance Id for the workflow</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.do_abandon">
+<code class="descname">do_abandon</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#WorkflowCLI.do_abandon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.do_abandon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Usage: abandon TASKNUM REASON+</p>
+<p>Abandons an established workflow.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.do_create">
+<code class="descname">do_create</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#WorkflowCLI.do_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.do_create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Usage: create NAME</p>
+<p>Create a new workflow. A wizard collects the necessary information.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.do_edit">
+<code class="descname">do_edit</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#WorkflowCLI.do_edit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.do_edit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Opens the workflow file in the default editor</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.do_info">
+<code class="descname">do_info</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#WorkflowCLI.do_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.do_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Usage: info NAME</p>
+<p>Print the details of a given workflow.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.do_instances">
+<code class="descname">do_instances</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#WorkflowCLI.do_instances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.do_instances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Usage: instances NAME</p>
+<p>Prints a list of known instances.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.do_list">
+<code class="descname">do_list</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#WorkflowCLI.do_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.do_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Usage: list</p>
+<p>List current workflows</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.do_skip">
+<code class="descname">do_skip</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#WorkflowCLI.do_skip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.do_skip" title="Permalink to this definition">¶</a></dt>
+<dd><p>skip num - adds the next task in the workflow; leaves the task open</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.do_start">
+<code class="descname">do_start</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#WorkflowCLI.do_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.do_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Usage: start NAME VOCABULARY+</p>
+<p>Add the first step of a workflow to the task list.
+The first word in text should be the name of the workflow.
+Subsequent words are paired with the workflow’s vocabulary to
+fill out the step template.</p>
+<p>Call info NAME to get relevant vocabulary.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.do_steps">
+<code class="descname">do_steps</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#WorkflowCLI.do_steps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.do_steps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Usage: steps NAME</p>
+<p>Print the step templates of a given workflow.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.doc_leader">
+<code class="descname">doc_leader</code><em class="property"> = 'Workflow Help\n\n    Create and use pre-programmed tasks to generate sequentially without\n    clogging up the Z-priority list\n    '</em><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.doc_leader" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.help_about">
+<code class="descname">help_about</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#WorkflowCLI.help_about"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.help_about" title="Permalink to this definition">¶</a></dt>
+<dd><p>About this plugin</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.minion_header">
+<code class="descname">minion_header</code><em class="property"> = 'Other subcommands (type &lt;topic&gt; help)'</em><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.minion_header" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowCLI.prompt">
+<code class="descname">prompt</code><em class="property"> = 'workflow&gt;'</em><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowCLI.prompt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tasker.plugins.WorkflowPlugin.WorkflowLib">
+<em class="property">class </em><code class="descclassname">tasker.plugins.WorkflowPlugin.</code><code class="descname">WorkflowLib</code><a class="reference internal" href="_modules/tasker/plugins/WorkflowPlugin.html#WorkflowLib"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.WorkflowPlugin.WorkflowLib" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+</div>
+</div>
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">tasker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="tasker.html">tasker package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="tasker.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="tasker.plugins.html">tasker.plugins package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="tasker.plugins.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tasker.plugins.html#module-tasker.plugins">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#module-tasker">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
@@ -65,23 +288,24 @@
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/tasker.plugins.WorkflowPlugin.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -90,8 +314,8 @@
       &copy;2017, Josh English.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/tasker.plugins.WorkflowPlugin.txt"

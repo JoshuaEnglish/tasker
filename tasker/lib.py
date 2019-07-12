@@ -311,6 +311,7 @@ class TaskLib(object):
         """Checks all plugins for hook actions.
         Passes the Task object as the sole parameter.
         Expects three-tuple in return:
+
             ok (either TASK_OK or TASK_NOT_OK)
             msg (string text)
             task (the task object which may or may not be altered)
@@ -347,15 +348,6 @@ class TaskLib(object):
             fp.write('{}{}'.format(this, '\n'))
         print(len(tasks)+1, this)
         return TASK_OK, str(this)
-
-    def add_done(self, text):
-        """Adds a completed task. Uses the entry time as start and close
-        :param text: Text of the completed task
-
-        Depracated: Use ``t add x ...`` in the CLI. If a task text begins with
-        ``x `` then the task will be created as closed
-        """
-        raise NotImplementedError("If you get this, something has gone wrong.")
 
     def complete_task(self, tasknum, comment=None):
         """Completes an open task if task is not already closed.
@@ -478,9 +470,10 @@ class TaskLib(object):
                    opendate=None, closedate=None, hidedate=None):
         """list_tasks([by_pri, filters, filterop, showcomplete, showuid)
         Displays a list of tasks.
+
         :type by_pri: Boolean
         :param bool by_pri: If true, sorts by priority,
-                       if false, sorts by order in file
+                            if false, sorts by order in file
         :param str filters: Words to filter the list
         :param func filterop: all or any (the functions, not strings
         :param bool showcomplete: If true, shows completed tasks
@@ -611,7 +604,7 @@ class TaskLib(object):
         np = priority.strip()
         match = re.match(r'^[A-Z_]$', np)
         if not match:
-            self.log.error("New priority must be A-Z")
+            self.log.error("New priority must be A-Z or _")
             return task
 
         if match.group() == '_':

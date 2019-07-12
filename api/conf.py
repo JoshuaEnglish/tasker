@@ -17,9 +17,11 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, 'C:\Users\jenglish\Desktop\GitPortable\Data\home\tasker\tasker')
+import os
+import sys
+a = os.path.join(__file__, '../../tasker')
+print(a, os.path.abspath(a))
+sys.path.insert(0, os.path.abspath(a))
 
 
 # -- General configuration ------------------------------------------------

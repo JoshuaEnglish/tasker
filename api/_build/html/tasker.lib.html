@@ -1,29 +1,17 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
+    <meta charset="utf-8" />
     <title>tasker.lib module &#8212; tasker  documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="tasker.lister module" href="tasker.lister.html" />
@@ -34,25 +22,328 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
-  <div class="section" id="tasker-lib-module">
-<h1>tasker.lib module<a class="headerlink" href="#tasker-lib-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tasker.lib">
+<span id="tasker-lib-module"></span><h1>tasker.lib module<a class="headerlink" href="#module-tasker.lib" title="Permalink to this headline">¶</a></h1>
+<p>Created on Thu Mar 17 14:28:15 2016</p>
+<p>&#64;author: jenglish</p>
+<dl class="class">
+<dt id="tasker.lib.Task">
+<em class="property">class </em><code class="descclassname">tasker.lib.</code><code class="descname">Task</code><span class="sig-paren">(</span><em>complete</em>, <em>priority</em>, <em>start</em>, <em>end</em>, <em>text</em>, <em>contexts</em>, <em>projects</em>, <em>extensions</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#Task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.Task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Simple container for parsed tasks</p>
+<dl class="attribute">
+<dt id="tasker.lib.Task.complete">
+<code class="descname">complete</code><a class="headerlink" href="#tasker.lib.Task.complete" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.lib.Task.contexts">
+<code class="descname">contexts</code><a class="headerlink" href="#tasker.lib.Task.contexts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.lib.Task.end">
+<code class="descname">end</code><a class="headerlink" href="#tasker.lib.Task.end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.lib.Task.extensions">
+<code class="descname">extensions</code><a class="headerlink" href="#tasker.lib.Task.extensions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="tasker.lib.Task.from_text">
+<em class="property">classmethod </em><code class="descname">from_text</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#Task.from_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.Task.from_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a parsed task from a line of text.
+If text starts with <em>x</em> and no end time is given, current time
+will be used as end time.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.lib.Task.is_hidden">
+<code class="descname">is_hidden</code><a class="headerlink" href="#tasker.lib.Task.is_hidden" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if the hidden flag exists and shows a future date</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.lib.Task.priority">
+<code class="descname">priority</code><a class="headerlink" href="#tasker.lib.Task.priority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.lib.Task.projects">
+<code class="descname">projects</code><a class="headerlink" href="#tasker.lib.Task.projects" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.lib.Task.start">
+<code class="descname">start</code><a class="headerlink" href="#tasker.lib.Task.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.lib.Task.text">
+<code class="descname">text</code><a class="headerlink" href="#tasker.lib.Task.text" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tasker.lib.TaskLib">
+<em class="property">class </em><code class="descclassname">tasker.lib.</code><code class="descname">TaskLib</code><span class="sig-paren">(</span><em>config=None</em>, <em>manager=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="tasker.lib.TaskLib.add_task">
+<code class="descname">add_task</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.add_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.add_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a task to the current file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.build_task_dict">
+<code class="descname">build_task_dict</code><span class="sig-paren">(</span><em>include_archive</em>, <em>only_archive</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.build_task_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.build_task_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a dictionary of tasks, much like <a class="reference internal" href="#tasker.lib.TaskLib.get_tasks" title="tasker.lib.TaskLib.get_tasks"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_tasks()</span></code></a> but will
+read either file, or both.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.complete_task">
+<code class="descname">complete_task</code><span class="sig-paren">(</span><em>tasknum</em>, <em>comment=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.complete_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.complete_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Completes an open task if task is not already closed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.get_color">
+<code class="descname">get_color</code><span class="sig-paren">(</span><em>pri</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.get_color"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.get_color" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.get_counts">
+<code class="descname">get_counts</code><span class="sig-paren">(</span><em>kind</em>, <em>include_archive</em>, <em>only_archive</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.get_counts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.get_counts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of <code class="xref py py-class docutils literal notranslate"><span class="pre">collections.Counter</span></code> objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kind</strong> (<em>str</em>) – ‘project’ or ‘context’</p></li>
+<li><p><strong>include_archive</strong> (<em>bool</em>) – passed to <a class="reference internal" href="#tasker.lib.TaskLib.build_task_dict" title="tasker.lib.TaskLib.build_task_dict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">build_task_dict()</span></code></a></p></li>
+<li><p><strong>only_archive</strong> (<em>bool</em>) – passet to <a class="reference internal" href="#tasker.lib.TaskLib.build_task_dict" title="tasker.lib.TaskLib.build_task_dict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">build_task_dict()</span></code></a></p></li>
+</ul>
+</dd>
+</dl>
+<p>The resulting dictionary looks like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;+SomeProject&#39;</span><span class="p">:</span> <span class="n">Counter</span><span class="p">({</span><span class="s1">&#39;open&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;closed&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.get_extensions_to_hide">
+<code class="descname">get_extensions_to_hide</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.get_extensions_to_hide"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.get_extensions_to_hide" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compile a list of all extensions from the config file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.get_tasks">
+<code class="descname">get_tasks</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.get_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.get_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get tasks from either todo.txt or done.txt</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> – path to the file to read</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>dictionary of line number, task instance pairs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.hide_extension">
+<code class="descname">hide_extension</code><span class="sig-paren">(</span><em>ext</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.hide_extension"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.hide_extension" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds the extension to tasker’s list of hidden extensions.
+Hidden extensions will not appear in task lists.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.hide_task">
+<code class="descname">hide_task</code><span class="sig-paren">(</span><em>tasknum</em>, <em>hidedate</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.hide_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.hide_task" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.list_tasks">
+<code class="descname">list_tasks</code><span class="sig-paren">(</span><em>[by_pri, filters, filterop, showcomplete, showuid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.list_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.list_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays a list of tasks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>by_pri</strong> (<em>bool</em>) – If true, sorts by priority,
+if false, sorts by order in file</p></li>
+<li><p><strong>filters</strong> (<em>str</em>) – Words to filter the list</p></li>
+<li><p><strong>filterop</strong> (<em>func</em>) – all or any (the functions, not strings</p></li>
+<li><p><strong>showcomplete</strong> (<em>bool</em>) – If true, shows completed tasks</p></li>
+<li><p><strong>showext</strong> (<em>bool</em>) – If true, shows the normally hidden
+extensions of the task.</p></li>
+<li><p><strong>opendate</strong> (<em>date</em>) – If not None, filters tasks opened on opendate</p></li>
+<li><p><strong>closedate</strong> (<em>date</em>) – If not None, filters tasks closed on closedate</p></li>
+<li><p><strong>hidedate</strong> (<em>date</em>) – The date to filter extensions marked to hide</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>TASK_OK, None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.note_task">
+<code class="descname">note_task</code><span class="sig-paren">(</span><em>tasknum</em>, <em>note=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.note_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.note_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the note on a task by task number.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.prioritize_task">
+<code class="descname">prioritize_task</code><span class="sig-paren">(</span><em>tasknum</em>, <em>priority</em>, <em>note=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.prioritize_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.prioritize_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>prioritize_task(tasknum, new_pri [,note]</p>
+<p>Change the priority of a task. Will do nothing if task is closed.
+New priority can be A-Z but should be A-W.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tasknum</strong> (<em>int</em>) – Number of task to update</p></li>
+<li><p><strong>priority</strong> (<em>str</em>) – New priority character</p></li>
+<li><p><strong>note</strong> (<em>str</em>) – Optional note to append</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.reprioritize_task">
+<code class="descname">reprioritize_task</code><span class="sig-paren">(</span><em>task</em>, <em>new_priority</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.reprioritize_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.reprioritize_task" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.run_hooks">
+<code class="descname">run_hooks</code><span class="sig-paren">(</span><em>func_name</em>, <em>this</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.run_hooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.run_hooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks all plugins for hook actions.
+Passes the Task object as the sole parameter.
+Expects three-tuple in return:</p>
+<blockquote>
+<div><p>ok (either TASK_OK or TASK_NOT_OK)
+msg (string text)
+task (the task object which may or may not be altered)</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.set_theme">
+<code class="descname">set_theme</code><span class="sig-paren">(</span><em>theme_name=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.set_theme"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.set_theme" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.show_extension">
+<code class="descname">show_extension</code><span class="sig-paren">(</span><em>ext</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.show_extension"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.show_extension" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the extension from tasker’s list of hidden extensions.
+Does not issue an error if the extension is not in the list</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.sort_tasks">
+<code class="descname">sort_tasks</code><span class="sig-paren">(</span><span class="optional">[</span><em>by_pri</em>, <em>filters</em>, <em>filteropp</em>, <em>showcomplete</em><span class="optional">]</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.sort_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.sort_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of (line, task) tuples.
+Default behavior sorts by priority.
+Default behavior does no filtering.
+Default filter operation is all (all must match).
+Default behavior does not list completed tasks
+Default behavior does not look in the done.txt file.
+To filter, provide a list of strings to filter by.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.unhide_task">
+<code class="descname">unhide_task</code><span class="sig-paren">(</span><em>tasknum</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.unhide_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.unhide_task" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.update_note">
+<code class="descname">update_note</code><span class="sig-paren">(</span><em>text</em>, <em>note=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.update_note"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.update_note" title="Permalink to this definition">¶</a></dt>
+<dd><p>updates the note from a line of text. If note is None or blank,
+removes the note from the text entirely.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.write_current_tasks">
+<code class="descname">write_current_tasks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.write_current_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.write_current_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>write the current tasks to the correct file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.lib.TaskLib.write_tasks">
+<code class="descname">write_tasks</code><span class="sig-paren">(</span><em>task_dict</em>, <em>local_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#TaskLib.write_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.TaskLib.write_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes the working task_dictionary to the appropriate file
+:param dict task_dict: dictionary of (line: task) pairs
+:param filepath local_path: file path to write to</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="tasker.lib.include_task">
+<code class="descclassname">tasker.lib.</code><code class="descname">include_task</code><span class="sig-paren">(</span><em>filterop</em>, <em>filters</em>, <em>task</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/lib.html#include_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.lib.include_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>return a boolean value to include the task or not</p>
+</dd></dl>
+
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">tasker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="tasker.html">tasker package</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="tasker.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="tasker.__main__.html">tasker.__main__ module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.basetaskerplugin.html">tasker.basetaskerplugin module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.core.html">tasker.core module</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">tasker.lib module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.lister.html">tasker.lister module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.manager.html">tasker.manager module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.minioncmd.html">tasker.minioncmd module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.powercmd.html">tasker.powercmd module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.theme.html">tasker.theme module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#module-tasker">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
@@ -63,23 +354,24 @@
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/tasker.lib.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -88,8 +380,8 @@
       &copy;2017, Josh English.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/tasker.lib.txt"

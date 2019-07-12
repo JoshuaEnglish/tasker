@@ -1,29 +1,17 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
+    <meta charset="utf-8" />
     <title>tasker.plugins.ClipboardPlugin module &#8212; tasker  documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="tasker.plugins.LoggingPlugin module" href="tasker.plugins.LoggingPlugin.html" />
@@ -34,25 +22,122 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
-  <div class="section" id="tasker-plugins-clipboardplugin-module">
-<h1>tasker.plugins.ClipboardPlugin module<a class="headerlink" href="#tasker-plugins-clipboardplugin-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tasker.plugins.ClipboardPlugin">
+<span id="tasker-plugins-clipboardplugin-module"></span><h1>tasker.plugins.ClipboardPlugin module<a class="headerlink" href="#module-tasker.plugins.ClipboardPlugin" title="Permalink to this headline">¶</a></h1>
+<p>ClipboardPlugin</p>
+<p>Adds the clip command to the cli.</p>
+<p>Created on 2017-01-25T16:26:34.706840</p>
+<p>&#64;author: Josh English</p>
+<dl class="class">
+<dt id="tasker.plugins.ClipboardPlugin.ClipboardPlugin">
+<em class="property">class </em><code class="descclassname">tasker.plugins.ClipboardPlugin.</code><code class="descname">ClipboardPlugin</code><a class="reference internal" href="_modules/tasker/plugins/ClipboardPlugin.html#ClipboardPlugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.ClipboardPlugin.ClipboardPlugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">basetaskerplugin.NewCommandPlugin</span></code></p>
+<dl class="method">
+<dt id="tasker.plugins.ClipboardPlugin.ClipboardPlugin.activate">
+<code class="descname">activate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/ClipboardPlugin.html#ClipboardPlugin.activate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.ClipboardPlugin.ClipboardPlugin.activate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called at plugin activation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.ClipboardPlugin.ClipboardPlugin.add_task">
+<code class="descname">add_task</code><span class="sig-paren">(</span><em>this</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/ClipboardPlugin.html#ClipboardPlugin.add_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.ClipboardPlugin.ClipboardPlugin.add_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hook method called when adding tasks</p>
+<p>This method can access the the TaskLib instance through the
+<code class="docutils literal notranslate"><span class="pre">self.lib</span></code> property.</p>
+<dl>
+<dt>Args:</dt><dd><p>this: the <code class="xref py py-class docutils literal notranslate"><span class="pre">Task</span></code> being added</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: (code, message, this)</p>
+<p>code is 0 for TASK_OK or 2 for TASK_EXT_ERROR
+message is a string explaining the error (empty string if code
+is 0)
+this is the task, either as passed or if edited</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.ClipboardPlugin.ClipboardPlugin.complete_task">
+<code class="descname">complete_task</code><span class="sig-paren">(</span><em>this</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/ClipboardPlugin.html#ClipboardPlugin.complete_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.ClipboardPlugin.ClipboardPlugin.complete_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hook method called when completing tasks
+This method can access the the TaskLib instance through the
+<code class="docutils literal notranslate"><span class="pre">self.lib</span></code> property.
+Args:</p>
+<blockquote>
+<div><p>this: the <code class="xref py py-class docutils literal notranslate"><span class="pre">Task</span></code> being added</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>tuple: (code, message, this)
+code is 0 for TASK_OK or 2 for TASK_EXT_ERROR
+message is a string explaining the error (empty string if code
+is 0)
+this is the task, either as passed or if edited</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.ClipboardPlugin.ClipboardPlugin.do_clip">
+<code class="descname">do_clip</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/ClipboardPlugin.html#ClipboardPlugin.do_clip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.ClipboardPlugin.ClipboardPlugin.do_clip" title="Permalink to this definition">¶</a></dt>
+<dd><p>copies a task to the clipboard by number</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.ClipboardPlugin.ClipboardPlugin.help_clipping">
+<code class="descname">help_clipping</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/ClipboardPlugin.html#ClipboardPlugin.help_clipping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.ClipboardPlugin.ClipboardPlugin.help_clipping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clipping allows you to use {p} in a task and have it be replaced
+with the contents of the clipboard.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">tasker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="tasker.html">tasker package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="tasker.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="tasker.plugins.html">tasker.plugins package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="tasker.plugins.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tasker.plugins.html#module-tasker.plugins">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#module-tasker">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
@@ -65,23 +150,24 @@
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/tasker.plugins.ClipboardPlugin.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -90,8 +176,8 @@
       &copy;2017, Josh English.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/tasker.plugins.ClipboardPlugin.txt"

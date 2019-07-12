@@ -1,29 +1,17 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
+    <meta charset="utf-8" />
     <title>tasker.minioncmd module &#8212; tasker  documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="tasker.powercmd module" href="tasker.powercmd.html" />
@@ -34,25 +22,235 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
-  <div class="section" id="tasker-minioncmd-module">
-<h1>tasker.minioncmd module<a class="headerlink" href="#tasker-minioncmd-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tasker.minioncmd">
+<span id="tasker-minioncmd-module"></span><h1>tasker.minioncmd module<a class="headerlink" href="#module-tasker.minioncmd" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="minioncmd">
+<h2>minioncmd<a class="headerlink" href="#minioncmd" title="Permalink to this headline">¶</a></h2>
+<p>This module defines two subclasses of the cmd.Cmd class.</p>
+<p><a class="reference internal" href="#tasker.minioncmd.BossCmd" title="tasker.minioncmd.BossCmd"><code class="xref py py-class docutils literal notranslate"><span class="pre">BossCmd</span></code></a> is for the top level command line interpreter.
+<a class="reference internal" href="#tasker.minioncmd.MinionCmd" title="tasker.minioncmd.MinionCmd"><code class="xref py py-class docutils literal notranslate"><span class="pre">MinionCmd</span></code></a> is for sub programs that have their own prompts and command
+structure. MinionCmd instances can transfer control to other instances, or
+return to the main BossCmd instance.</p>
+<p>Both <a class="reference internal" href="#tasker.minioncmd.BossCmd" title="tasker.minioncmd.BossCmd"><code class="xref py py-class docutils literal notranslate"><span class="pre">BossCmd</span></code></a> and <a class="reference internal" href="#tasker.minioncmd.MinionCmd" title="tasker.minioncmd.MinionCmd"><code class="xref py py-class docutils literal notranslate"><span class="pre">MinionCmd</span></code></a> inherit from <a class="reference internal" href="#tasker.minioncmd.ExtHelpCmd" title="tasker.minioncmd.ExtHelpCmd"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtHelpCmd</span></code></a>
+which enhances the basic <a class="reference internal" href="#tasker.minioncmd.ExtHelpCmd.do_help" title="tasker.minioncmd.ExtHelpCmd.do_help"><code class="xref py py-meth docutils literal notranslate"><span class="pre">do_help()</span></code></a> method.</p>
+<dl class="class">
+<dt id="tasker.minioncmd.BossCmd">
+<em class="property">class </em><code class="descclassname">tasker.minioncmd.</code><code class="descname">BossCmd</code><span class="sig-paren">(</span><em>completekey='tab'</em>, <em>stdin=None</em>, <em>stdout=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#BossCmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.BossCmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tasker.minioncmd.ExtHelpCmd" title="tasker.minioncmd.ExtHelpCmd"><code class="xref py py-class docutils literal notranslate"><span class="pre">tasker.minioncmd.ExtHelpCmd</span></code></a></p>
+<p>Command line tool for managing subprograms.</p>
+<dl class="method">
+<dt id="tasker.minioncmd.BossCmd.add_minion">
+<code class="descname">add_minion</code><span class="sig-paren">(</span><em>name</em>, <em>minion</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#BossCmd.add_minion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.BossCmd.add_minion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds the minion to the current instance of BossCmd. This method
+can be called automatically when creating an instance of MinionCmd.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.minioncmd.BossCmd.default">
+<code class="descname">default</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#BossCmd.default"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.BossCmd.default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called on an input line when the command prefix is not recognized.</p>
+<p>If this method is not overridden, it prints an error message and
+returns.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.minioncmd.BossCmd.do_quit">
+<code class="descname">do_quit</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#BossCmd.do_quit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.BossCmd.do_quit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Quits the program</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.minioncmd.BossCmd.doc_leader">
+<code class="descname">doc_leader</code><em class="property"> = 'Help for BossCmd'</em><a class="headerlink" href="#tasker.minioncmd.BossCmd.doc_leader" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.minioncmd.BossCmd.exit_called_from_minion">
+<code class="descname">exit_called_from_minion</code><em class="property"> = None</em><a class="headerlink" href="#tasker.minioncmd.BossCmd.exit_called_from_minion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flag to detect when minions call to quit the program</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.minioncmd.BossCmd.inloop">
+<code class="descname">inloop</code><em class="property"> = None</em><a class="headerlink" href="#tasker.minioncmd.BossCmd.inloop" title="Permalink to this definition">¶</a></dt>
+<dd><p>flag to determine if the BossCmd instance is in the middle of a
+loop or not (if not, assume a call to onecmd)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.minioncmd.BossCmd.minions">
+<code class="descname">minions</code><em class="property"> = None</em><a class="headerlink" href="#tasker.minioncmd.BossCmd.minions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary of minion_name: MinionCmd instance</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.minioncmd.BossCmd.onecmd">
+<code class="descname">onecmd</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#BossCmd.onecmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.BossCmd.onecmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process a single command and process the cmdqueue
+:rtype: boolean</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.minioncmd.BossCmd.postcmd">
+<code class="descname">postcmd</code><span class="sig-paren">(</span><em>stop</em>, <em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#BossCmd.postcmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.BossCmd.postcmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hook method executed just after a command dispatch is finished.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.minioncmd.BossCmd.postloop">
+<code class="descname">postloop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#BossCmd.postloop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.BossCmd.postloop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the instance <code class="docutils literal notranslate"><span class="pre">inloop</span></code> property to <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.minioncmd.BossCmd.preloop">
+<code class="descname">preloop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#BossCmd.preloop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.BossCmd.preloop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the instance <code class="docutils literal notranslate"><span class="pre">inloop</span></code> property to <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.minioncmd.BossCmd.process_queue">
+<code class="descname">process_queue</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#BossCmd.process_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.BossCmd.process_queue" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.minioncmd.BossCmd.prompt">
+<code class="descname">prompt</code><em class="property"> = 'Boss&gt; '</em><a class="headerlink" href="#tasker.minioncmd.BossCmd.prompt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.minioncmd.BossCmd.switchers">
+<code class="descname">switchers</code><em class="property"> = None</em><a class="headerlink" href="#tasker.minioncmd.BossCmd.switchers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary of minion name: switch_to_minion function calls to be
+dynamically applied to minions</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tasker.minioncmd.ExtHelpCmd">
+<em class="property">class </em><code class="descclassname">tasker.minioncmd.</code><code class="descname">ExtHelpCmd</code><span class="sig-paren">(</span><em>completekey='tab'</em>, <em>stdin=None</em>, <em>stdout=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#ExtHelpCmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.ExtHelpCmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">cmd.Cmd</span></code></p>
+<p>Extended Help Cmd. Subclass of cmd.Cmd that creates an extra layer
+of topics to refer to minions in a separate topic group.</p>
+<dl class="method">
+<dt id="tasker.minioncmd.ExtHelpCmd.do_help">
+<code class="descname">do_help</code><span class="sig-paren">(</span><em>arg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#ExtHelpCmd.do_help"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.ExtHelpCmd.do_help" title="Permalink to this definition">¶</a></dt>
+<dd><p>List available commands with “help” or detailed help with
+“help cmd”.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.minioncmd.ExtHelpCmd.doc_header">
+<code class="descname">doc_header</code><em class="property"> = 'Local commands (type help &lt;command&gt;)'</em><a class="headerlink" href="#tasker.minioncmd.ExtHelpCmd.doc_header" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.minioncmd.ExtHelpCmd.minion_header">
+<code class="descname">minion_header</code><em class="property"> = 'Minion commands (type &lt;command&gt; help)'</em><a class="headerlink" href="#tasker.minioncmd.ExtHelpCmd.minion_header" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tasker.minioncmd.MinionCmd">
+<em class="property">class </em><code class="descclassname">tasker.minioncmd.</code><code class="descname">MinionCmd</code><span class="sig-paren">(</span><em>name</em>, <em>master=None</em>, <em>completekey='tab'</em>, <em>stdin=None</em>, <em>stdout=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#MinionCmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.MinionCmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tasker.minioncmd.ExtHelpCmd" title="tasker.minioncmd.ExtHelpCmd"><code class="xref py py-class docutils literal notranslate"><span class="pre">tasker.minioncmd.ExtHelpCmd</span></code></a></p>
+<p>The MinionCmd object provides methods for connecting minions to the boss.</p>
+<dl class="method">
+<dt id="tasker.minioncmd.MinionCmd.default">
+<code class="descname">default</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#MinionCmd.default"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.MinionCmd.default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called on an input line when the command prefix is not recognized.</p>
+<p>If this method is not overridden, it prints an error message and
+returns.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.minioncmd.MinionCmd.do_done">
+<code class="descname">do_done</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#MinionCmd.do_done"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.MinionCmd.do_done" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exits the sub program and returns to the main program</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.minioncmd.MinionCmd.do_quit">
+<code class="descname">do_quit</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#MinionCmd.do_quit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.MinionCmd.do_quit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exits the entire program</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.minioncmd.MinionCmd.doc_leader">
+<code class="descname">doc_leader</code><em class="property"> = 'Help for MinionCmd'</em><a class="headerlink" href="#tasker.minioncmd.MinionCmd.doc_leader" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.minioncmd.MinionCmd.minion_header">
+<code class="descname">minion_header</code><em class="property"> = 'Other minions (type &lt;topic&gt; help)'</em><a class="headerlink" href="#tasker.minioncmd.MinionCmd.minion_header" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.minioncmd.MinionCmd.onecmd">
+<code class="descname">onecmd</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/minioncmd.html#MinionCmd.onecmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.minioncmd.MinionCmd.onecmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process a single command and process the cmdqueue
+:rtype: boolean</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">tasker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="tasker.html">tasker package</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="tasker.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="tasker.__main__.html">tasker.__main__ module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.basetaskerplugin.html">tasker.basetaskerplugin module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.core.html">tasker.core module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.lib.html">tasker.lib module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.lister.html">tasker.lister module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.manager.html">tasker.manager module</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">tasker.minioncmd module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#minioncmd">minioncmd</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.powercmd.html">tasker.powercmd module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.theme.html">tasker.theme module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#module-tasker">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
@@ -63,23 +261,24 @@
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/tasker.minioncmd.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -88,8 +287,8 @@
       &copy;2017, Josh English.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/tasker.minioncmd.txt"

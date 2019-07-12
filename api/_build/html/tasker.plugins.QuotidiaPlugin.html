@@ -1,29 +1,17 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
+    <meta charset="utf-8" />
     <title>tasker.plugins.QuotidiaPlugin module &#8212; tasker  documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="tasker.plugins.RegexPlugin module" href="tasker.plugins.RegexPlugin.html" />
@@ -34,25 +22,228 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
-  <div class="section" id="tasker-plugins-quotidiaplugin-module">
-<h1>tasker.plugins.QuotidiaPlugin module<a class="headerlink" href="#tasker-plugins-quotidiaplugin-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tasker.plugins.QuotidiaPlugin">
+<span id="tasker-plugins-quotidiaplugin-module"></span><h1>tasker.plugins.QuotidiaPlugin module<a class="headerlink" href="#module-tasker.plugins.QuotidiaPlugin" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="about-quotidia">
+<h2>About Quotidia<a class="headerlink" href="#about-quotidia" title="Permalink to this headline">¶</a></h2>
+<p>Quotidia allows you to schedule tasks to appear in your task list
+under certain time-given constraints. For example, a reminder to
+pay rent on the first of each month, or to run a report every Monday.</p>
+<p>Each quotidium needs the following attributes:
+QID: System generated quote ID
+Text to add: including the Priority, if any
+Day Filter: SMTWRFY - any letter matching the days it should run
+Time Filter: first time the task should be listed (hold off on this idea)
+Last Addition: datetime stamp of the last time this item was added.</p>
+<p>Basic idea: On load, this should scan the quotidia and see if today matches a
+day the quotidium should be run. Then compare the last addition time to the
+current time. If it has appeared in the last 24 hours … hold on. That won’t
+work if I don’t launch the program until the afternoon on Monday, then
+everything will be delayed until the next afternoon. I just need to check if
+the thing was run on the same day as today. This can be a day check.</p>
+<dl class="class">
+<dt id="tasker.plugins.QuotidiaPlugin.Quotidia">
+<em class="property">class </em><code class="descclassname">tasker.plugins.QuotidiaPlugin.</code><code class="descname">Quotidia</code><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#Quotidia"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.Quotidia" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">basetaskerplugin.SubCommandPlugin</span></code></p>
+<dl class="method">
+<dt id="tasker.plugins.QuotidiaPlugin.Quotidia.activate">
+<code class="descname">activate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#Quotidia.activate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.Quotidia.activate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called at plugin activation.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaCLI">
+<em class="property">class </em><code class="descclassname">tasker.plugins.QuotidiaPlugin.</code><code class="descname">QuotidiaCLI</code><span class="sig-paren">(</span><em>completekey='tab'</em>, <em>stdin=None</em>, <em>stdout=None</em>, <em>quotidia_dir=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaCLI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaCLI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">minioncmd.MinionCmd</span></code></p>
+<dl class="method">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaCLI.do_create">
+<code class="descname">do_create</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaCLI.do_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaCLI.do_create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Usage: create NAME</p>
+<p>Create a new quotidia. A wizard collects the necessary information.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaCLI.do_info">
+<code class="descname">do_info</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaCLI.do_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaCLI.do_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Usage: info NAME</p>
+<p>Print the details of a given quotidia.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaCLI.do_list">
+<code class="descname">do_list</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaCLI.do_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaCLI.do_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Usage: list</p>
+<p>List current quotidia</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaCLI.do_run">
+<code class="descname">do_run</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaCLI.do_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaCLI.do_run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process the available quotidia</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaCLI.doc_leader">
+<code class="descname">doc_leader</code><em class="property"> = 'Quotidia Help\n\n    Create and use pre-programmed tasks to generate sequentially without\n    clogging up the Z-priority list\n    '</em><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaCLI.doc_leader" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaCLI.help_about">
+<code class="descname">help_about</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaCLI.help_about"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaCLI.help_about" title="Permalink to this definition">¶</a></dt>
+<dd><p>About this plugin</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaCLI.minion_header">
+<code class="descname">minion_header</code><em class="property"> = 'Other subcommands (type &lt;topic&gt; help)'</em><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaCLI.minion_header" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaCLI.prompt">
+<code class="descname">prompt</code><em class="property"> = 'quotidia&gt; '</em><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaCLI.prompt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaEncoder">
+<em class="property">class </em><code class="descclassname">tasker.plugins.QuotidiaPlugin.</code><code class="descname">QuotidiaEncoder</code><span class="sig-paren">(</span><em>*</em>, <em>skipkeys=False</em>, <em>ensure_ascii=True</em>, <em>check_circular=True</em>, <em>allow_nan=True</em>, <em>sort_keys=False</em>, <em>indent=None</em>, <em>separators=None</em>, <em>default=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaEncoder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaEncoder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">json.encoder.JSONEncoder</span></code></p>
+<dl class="method">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaEncoder.default">
+<code class="descname">default</code><span class="sig-paren">(</span><em>quotidia</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaEncoder.default"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaEncoder.default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement this method in a subclass such that it returns
+a serializable object for <code class="docutils literal notranslate"><span class="pre">o</span></code>, or calls the base implementation
+(to raise a <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>).</p>
+<p>For example, to support arbitrary iterators, you could
+implement default like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">iterable</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+    <span class="c1"># Let the base class default method raise the TypeError</span>
+    <span class="k">return</span> <span class="n">JSONEncoder</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaLib">
+<em class="property">class </em><code class="descclassname">tasker.plugins.QuotidiaPlugin.</code><code class="descname">QuotidiaLib</code><span class="sig-paren">(</span><em>directory</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaLib"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaLib" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaLib.add_quotidia">
+<code class="descname">add_quotidia</code><span class="sig-paren">(</span><em>qid</em>, <em>text</em>, <em>days</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaLib.add_quotidia"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaLib.add_quotidia" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaLib.get_quotidia">
+<code class="descname">get_quotidia</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaLib.get_quotidia"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaLib.get_quotidia" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaLib.get_todays_quotidia">
+<code class="descname">get_todays_quotidia</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaLib.get_todays_quotidia"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaLib.get_todays_quotidia" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaLib.process_quotidia">
+<code class="descname">process_quotidia</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaLib.process_quotidia"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaLib.process_quotidia" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaLib.quotidia">
+<code class="descname">quotidia</code><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaLib.quotidia" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.QuotidiaPlugin.QuotidiaLib.run_quotidia">
+<code class="descname">run_quotidia</code><span class="sig-paren">(</span><em>qid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#QuotidiaLib.run_quotidia"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.QuotidiaLib.run_quotidia" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tasker.plugins.QuotidiaPlugin.Quotidium">
+<em class="property">class </em><code class="descclassname">tasker.plugins.QuotidiaPlugin.</code><code class="descname">Quotidium</code><span class="sig-paren">(</span><em>qid: str</em>, <em>text: str</em>, <em>days: str</em>, <em>history=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#Quotidium"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.Quotidium" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="tasker.plugins.QuotidiaPlugin.Quotidium.as_dict">
+<code class="descname">as_dict</code><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.Quotidium.as_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.plugins.QuotidiaPlugin.Quotidium.last_run">
+<code class="descname">last_run</code><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.Quotidium.last_run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.plugins.QuotidiaPlugin.Quotidium.task_text">
+<code class="descname">task_text</code><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.Quotidium.task_text" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="tasker.plugins.QuotidiaPlugin.load_quotidia">
+<code class="descclassname">tasker.plugins.QuotidiaPlugin.</code><code class="descname">load_quotidia</code><span class="sig-paren">(</span><em>dct</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/QuotidiaPlugin.html#load_quotidia"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.QuotidiaPlugin.load_quotidia" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">tasker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="tasker.html">tasker package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="tasker.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="tasker.plugins.html">tasker.plugins package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="tasker.plugins.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tasker.plugins.html#module-tasker.plugins">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#module-tasker">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
@@ -65,23 +256,24 @@
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/tasker.plugins.QuotidiaPlugin.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -90,8 +282,8 @@
       &copy;2017, Josh English.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/tasker.plugins.QuotidiaPlugin.txt"

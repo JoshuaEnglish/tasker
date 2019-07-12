@@ -1,29 +1,17 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
+    <meta charset="utf-8" />
     <title>tasker.plugins.LoggingPlugin module &#8212; tasker  documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="tasker.plugins.PendingPlugin module" href="tasker.plugins.PendingPlugin.html" />
@@ -34,25 +22,87 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
-  <div class="section" id="tasker-plugins-loggingplugin-module">
-<h1>tasker.plugins.LoggingPlugin module<a class="headerlink" href="#tasker-plugins-loggingplugin-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tasker.plugins.LoggingPlugin">
+<span id="tasker-plugins-loggingplugin-module"></span><h1>tasker.plugins.LoggingPlugin module<a class="headerlink" href="#module-tasker.plugins.LoggingPlugin" title="Permalink to this headline">¶</a></h1>
+<p>About Logging</p>
+<p>This is a sample plugin that demonstrates the two ways plugin “hook” methods
+are called.</p>
+<p>All hook methods must return a tuple of (0, “”, task_object) or
+(2, “error message”, task_object)</p>
+<dl class="class">
+<dt id="tasker.plugins.LoggingPlugin.Logging">
+<em class="property">class </em><code class="descclassname">tasker.plugins.LoggingPlugin.</code><code class="descname">Logging</code><a class="reference internal" href="_modules/tasker/plugins/LoggingPlugin.html#Logging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.LoggingPlugin.Logging" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">basetaskerplugin.TaskerPlugin</span></code></p>
+<dl class="method">
+<dt id="tasker.plugins.LoggingPlugin.Logging.activate">
+<code class="descname">activate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/LoggingPlugin.html#Logging.activate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.LoggingPlugin.Logging.activate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called at plugin activation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.LoggingPlugin.Logging.add_task">
+<code class="descname">add_task</code><span class="sig-paren">(</span><em>this</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/LoggingPlugin.html#Logging.add_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.LoggingPlugin.Logging.add_task" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.LoggingPlugin.Logging.complete_task">
+<code class="descname">complete_task</code><span class="sig-paren">(</span><em>this</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/LoggingPlugin.html#Logging.complete_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.LoggingPlugin.Logging.complete_task" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tasker.plugins.LoggingPlugin.Logging.print_name">
+<code class="descname">print_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/plugins/LoggingPlugin.html#Logging.print_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.plugins.LoggingPlugin.Logging.print_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">tasker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="tasker.html">tasker package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="tasker.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="tasker.plugins.html">tasker.plugins package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="tasker.plugins.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tasker.plugins.html#module-tasker.plugins">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#module-tasker">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
@@ -65,23 +115,24 @@
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/tasker.plugins.LoggingPlugin.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -90,8 +141,8 @@
       &copy;2017, Josh English.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/tasker.plugins.LoggingPlugin.txt"

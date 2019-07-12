@@ -1,0 +1,815 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>tasker.lib &#8212; tasker  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for tasker.lib</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Thu Mar 17 14:28:15 2016</span>
+
+<span class="sd">@author: jenglish</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">textwrap</span>
+
+<span class="kn">from</span> <span class="nn">operator</span> <span class="k">import</span> <span class="n">itemgetter</span><span class="p">,</span> <span class="n">attrgetter</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">Counter</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
+
+<span class="kn">import</span> <span class="nn">colorama</span>
+<span class="kn">from</span> <span class="nn">theme</span> <span class="k">import</span> <span class="n">get_color</span> <span class="k">as</span> <span class="n">get_theme_color</span>
+
+<span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;1.6.dev&quot;</span>
+<span class="n">__updated__</span> <span class="o">=</span> <span class="s2">&quot;2017-09-29&quot;</span>
+<span class="n">__history__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">1.1 listing tasks is now case insensitive</span>
+<span class="s2">1.2 Filtering by (p) matches against the priority</span>
+<span class="s2">1.3 Fixed bug where notes added in TaskLib.prioritize_task were added as</span>
+<span class="s2">    a list, not as a string.</span>
+<span class="s2">1.4 Changed theme to an option to support multiple themes</span>
+<span class="s2">1.5 Fixed bug where list -c failed</span>
+<span class="s2">1.6 Added Show Task Hook to allow plugins to refine filtering of tasks</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+
+<span class="n">TIMEFMT</span> <span class="o">=</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%S&#39;</span>
+<span class="n">IDFMT</span> <span class="o">=</span> <span class="s1">&#39;%H%M%S</span><span class="si">%d</span><span class="s1">%m%y&#39;</span>
+<span class="n">DATEFMT</span> <span class="o">=</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span>
+
+<span class="n">re_task</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">&quot;(?P&lt;complete&gt;x\s)?&quot;</span>
+    <span class="sa">r</span><span class="s2">&quot;(?P&lt;priority&gt;[(][A-Z][)]\s)?&quot;</span>
+    <span class="sa">r</span><span class="s2">&quot;(?P&lt;start&gt;\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">T\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">\s)?&quot;</span>
+    <span class="sa">r</span><span class="s2">&quot;(?P&lt;end&gt;\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">T\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">\s)?&quot;</span>
+    <span class="sa">r</span><span class="s2">&quot;(?P&lt;text&gt;.*)&quot;</span>
+<span class="p">)</span>
+
+<span class="n">re_context</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s([@][-\w]+)&quot;</span><span class="p">)</span>
+<span class="n">re_project</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s([+][-\w]+)&quot;</span><span class="p">)</span>
+
+<span class="n">re_ext</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s{\w+:[^}]*}&quot;</span><span class="p">)</span>
+<span class="n">re_uid</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s</span><span class="si">{uid:[^}</span><span class="s2">]*}&quot;</span><span class="p">)</span>
+<span class="n">re_hide</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s{hide:(\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">)}&quot;</span><span class="p">)</span>
+<span class="n">re_note</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\s#\s.*$&#39;</span><span class="p">)</span>
+
+<span class="n">re_pri_filter</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;~?\(([A-Z])\)&quot;</span><span class="p">)</span>
+
+<span class="n">TASK_OK</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">TASK_ERROR</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">TASK_EXTENSION_ERROR</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="n">re_color</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">(?P&lt;style&gt;bright|dim|normal)\s</span>
+<span class="s2">(?P&lt;fore&gt;black|blue|cyan|green|lightblack|magenta|red|reset|white|yellow)\s</span>
+<span class="s2">on\s(?P&lt;back&gt;black|blue|cyan|green|lightblack|magenta|red|reset|white|yellow)</span>
+<span class="s2">&quot;&quot;&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">VERBOSE</span> <span class="o">+</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+
+
+<span class="c1"># todo: add note as a slot for further processing</span>
+<div class="viewcode-block" id="Task"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.Task">[docs]</a><span class="k">class</span> <span class="nc">Task</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simple container for parsed tasks&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;complete&#39;</span><span class="p">,</span> <span class="s1">&#39;priority&#39;</span><span class="p">,</span> <span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="s1">&#39;end&#39;</span><span class="p">,</span> <span class="s1">&#39;text&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;contexts&#39;</span><span class="p">,</span> <span class="s1">&#39;projects&#39;</span><span class="p">,</span> <span class="s1">&#39;extensions&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">complete</span><span class="p">,</span> <span class="n">priority</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span>
+                 <span class="n">contexts</span><span class="p">,</span> <span class="n">projects</span><span class="p">,</span> <span class="n">extensions</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">complete</span> <span class="o">=</span> <span class="n">complete</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="n">priority</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">end</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contexts</span> <span class="o">=</span> <span class="n">contexts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">projects</span> <span class="o">=</span> <span class="n">projects</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extensions</span> <span class="o">=</span> <span class="n">extensions</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;(</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">priority</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">TIMEFMT</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">TIMEFMT</span><span class="p">))</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+
+    <span class="c1"># __contains__ allows for filtering tasks by content</span>
+    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">searchtext</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">searchtext</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+    <span class="c1"># __lt__ is required for sorting tasks</span>
+    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">str</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Task.from_text"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.Task.from_text">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_text</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;from_text(text)</span>
+<span class="sd">        Returns a parsed task from a line of text.</span>
+<span class="sd">        If text starts with *x* and no end time is given, current time</span>
+<span class="sd">        will be used as end time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re_task</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Task did not parse&#39;</span><span class="p">)</span>
+        <span class="n">complete</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;complete&#39;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;priority&#39;</span><span class="p">):</span>
+            <span class="n">priority</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;priority&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">priority</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">):</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                                               <span class="n">TIMEFMT</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">):</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                                             <span class="n">TIMEFMT</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">complete</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">end</span><span class="p">:</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+        <span class="n">task</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;text&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+        <span class="n">context</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">re_context</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">text</span><span class="p">)]</span>
+        <span class="n">projects</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">re_project</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">text</span><span class="p">)]</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="n">re_ext</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">edict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="o">=</span> <span class="n">ext</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; {&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;}&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="n">edict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s1">&#39;uid&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">edict</span><span class="p">:</span>
+            <span class="n">edict</span><span class="p">[</span><span class="s1">&#39;uid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">start</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">IDFMT</span><span class="p">)</span>
+            <span class="n">task</span> <span class="o">+=</span> <span class="s2">&quot; {uid:</span><span class="si">%s</span><span class="s2">}&quot;</span> <span class="o">%</span> <span class="n">edict</span><span class="p">[</span><span class="s1">&#39;uid&#39;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">complete</span><span class="p">,</span> <span class="n">priority</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span>
+                   <span class="n">context</span><span class="p">,</span> <span class="n">projects</span><span class="p">,</span> <span class="n">edict</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_hidden</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s2">&quot;Returns true if the hidden flag exists and shows a future date&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;hide&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extensions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">hide_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extensions</span><span class="p">[</span><span class="s1">&#39;hide&#39;</span><span class="p">],</span>
+                                               <span class="n">DATEFMT</span><span class="p">)</span>
+        <span class="n">today</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">today</span> <span class="o">&lt;</span> <span class="n">hide_date</span></div>
+
+
+<div class="viewcode-block" id="include_task"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.include_task">[docs]</a><span class="k">def</span> <span class="nf">include_task</span><span class="p">(</span><span class="n">filterop</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+    <span class="s2">&quot;return a boolean value to include the task or not&quot;</span>
+    <span class="n">yeas</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">:</span>
+        <span class="n">yea</span> <span class="o">=</span> <span class="n">word</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">)</span>
+        <span class="n">testword</span> <span class="o">=</span> <span class="n">word</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">testword</span> <span class="ow">in</span> <span class="n">task</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+            <span class="n">yea</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">yea</span>
+        <span class="n">pri</span> <span class="o">=</span> <span class="n">re_pri_filter</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pri</span> <span class="ow">and</span> <span class="n">pri</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">task</span><span class="o">.</span><span class="n">priority</span><span class="p">:</span>
+            <span class="n">yea</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">yea</span>
+        <span class="n">yeas</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">yea</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">filterop</span><span class="p">(</span><span class="n">yeas</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TaskLib"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib">[docs]</a><span class="k">class</span> <span class="nc">TaskLib</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">manager</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">manager</span> <span class="o">=</span> <span class="n">manager</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">extension_hiders</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;tasklib&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_textwrapper</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;tasker-dir&#39;</span><span class="p">]):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;tasker-dir&#39;</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Default file not found, resetting&quot;</span><span class="p">)</span>
+                <span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;tasker-dir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                                                  <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;APPDATA&#39;</span><span class="p">],</span>
+                                                  <span class="s1">&#39;tasker&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;tasker-dir&#39;</span><span class="p">]):</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;tasker-dir&#39;</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;task-path&#39;</span><span class="p">,</span> <span class="s1">&#39;done-path&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="n">path</span><span class="p">]):</span>
+                <span class="n">fd</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="n">path</span><span class="p">],</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+                <span class="n">fd</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">theme</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="TaskLib.set_theme"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.set_theme">[docs]</a>    <span class="k">def</span> <span class="nf">set_theme</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theme_name</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">theme_name</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">theme_name</span> <span class="o">=</span> <span class="n">theme_name</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">theme_name</span> <span class="o">==</span> <span class="s1">&#39;None&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">theme</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">return</span>
+
+        <span class="n">config_name</span> <span class="o">=</span> <span class="s1">&#39;Theme: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">theme_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">has_section</span><span class="p">(</span><span class="n">config_name</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Setting &#39;</span><span class="si">%s</span><span class="s2">&#39; color theme&quot;</span><span class="p">,</span> <span class="n">theme_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">theme</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="o">.</span><span class="n">title</span><span class="p">(),</span> <span class="n">get_theme_color</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">items</span><span class="p">(</span><span class="n">config_name</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Setting default color theme&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">theme</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;A&quot;</span><span class="p">:</span> <span class="n">colorama</span><span class="o">.</span><span class="n">Fore</span><span class="o">.</span><span class="n">RED</span> <span class="o">+</span> <span class="n">colorama</span><span class="o">.</span><span class="n">Style</span><span class="o">.</span><span class="n">BRIGHT</span><span class="p">,</span>
+                <span class="s2">&quot;B&quot;</span><span class="p">:</span> <span class="n">colorama</span><span class="o">.</span><span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span><span class="p">,</span>
+                <span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="n">colorama</span><span class="o">.</span><span class="n">Fore</span><span class="o">.</span><span class="n">GREEN</span><span class="p">,</span>
+                <span class="s2">&quot;P&quot;</span><span class="p">:</span> <span class="n">colorama</span><span class="o">.</span><span class="n">Fore</span><span class="o">.</span><span class="n">CYAN</span> <span class="o">+</span> <span class="n">colorama</span><span class="o">.</span><span class="n">Style</span><span class="o">.</span><span class="n">BRIGHT</span><span class="p">,</span>
+                <span class="s2">&quot;Z&quot;</span><span class="p">:</span> <span class="n">colorama</span><span class="o">.</span><span class="n">Fore</span><span class="o">.</span><span class="n">LIGHTBLACK_EX</span>
+                <span class="p">}</span></div>
+
+<div class="viewcode-block" id="TaskLib.get_extensions_to_hide"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.get_extensions_to_hide">[docs]</a>    <span class="k">def</span> <span class="nf">get_extensions_to_hide</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get_extensions_to_hide()</span>
+<span class="sd">        Compile a list of all extensions from the config file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ext_list</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="n">section</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hidden-extensions&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+                             <span class="k">for</span> <span class="n">section</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">])</span>
+        <span class="n">ext_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">ext</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">ext_list</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">ext</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">ext_list</span></div>
+
+<div class="viewcode-block" id="TaskLib.hide_extension"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.hide_extension">[docs]</a>    <span class="k">def</span> <span class="nf">hide_extension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ext</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;hide_extension(ext)</span>
+<span class="sd">        Adds the extension to tasker&#39;s list of hidden extensions.</span>
+<span class="sd">        Hidden extensions will not appear in task lists.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Cannot add hidden extension: No configuration&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">extensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Tasker&#39;</span><span class="p">][</span><span class="s1">&#39;hidden_extensions&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">]</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="n">ext</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">ext</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
+            <span class="n">extensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Tasker&#39;</span><span class="p">][</span><span class="s1">&#39;hidden_extensions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">extensions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TaskLib.show_extension"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.show_extension">[docs]</a>    <span class="k">def</span> <span class="nf">show_extension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ext</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;show_extension(ext)</span>
+<span class="sd">        Removes the extension from tasker&#39;s list of hidden extensions.</span>
+<span class="sd">        Does not issue an error if the extension is not in the list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Cannot add hidden extension: No configuration&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">extensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Tasker&#39;</span><span class="p">][</span><span class="s1">&#39;hidden_extensions&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">]</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="n">ext</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
+            <span class="n">extensions</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Tasker&#39;</span><span class="p">][</span><span class="s1">&#39;hidden_extensions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">extensions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TaskLib.get_tasks"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.get_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get tasks from either todo.txt or done.txt</span>
+
+<span class="sd">        :param path: path to the file to read</span>
+<span class="sd">        :rtype: dict</span>
+<span class="sd">        :return: dictionary of line number, task instance pairs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">fp</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                    <span class="n">res</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">Task</span><span class="o">.</span><span class="n">from_text</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+                    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="TaskLib.write_tasks"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.write_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">write_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_dict</span><span class="p">,</span> <span class="n">local_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;write_tasks(task_dict, local_path)</span>
+<span class="sd">        Writes the working task_dictionary to the appropriate file</span>
+<span class="sd">        :param dict task_dict: dictionary of (line: task) pairs</span>
+<span class="sd">        :param filepath local_path: file path to write to</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Writing tasks to </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">local_path</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">linenum</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">task_dict</span><span class="p">):</span>
+                <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">task_dict</span><span class="p">[</span><span class="n">linenum</span><span class="p">],</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">TASK_OK</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{:d}</span><span class="s2"> Tasks written&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">task_dict</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TaskLib.run_hooks"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.run_hooks">[docs]</a>    <span class="k">def</span> <span class="nf">run_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func_name</span><span class="p">,</span> <span class="n">this</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Checks all plugins for hook actions.</span>
+<span class="sd">        Passes the Task object as the sole parameter.</span>
+<span class="sd">        Expects three-tuple in return:</span>
+
+<span class="sd">            ok (either TASK_OK or TASK_NOT_OK)</span>
+<span class="sd">            msg (string text)</span>
+<span class="sd">            task (the task object which may or may not be altered)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ok</span> <span class="o">=</span> <span class="n">TASK_OK</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">plugin</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">getAllPlugins</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">plugin</span><span class="o">.</span><span class="n">is_activated</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plugin</span><span class="o">.</span><span class="n">plugin_object</span><span class="p">,</span> <span class="n">func_name</span><span class="p">):</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;hooks&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Calling </span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+                                                 <span class="n">plugin</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">func_name</span><span class="p">)</span>
+                <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">plugin</span><span class="o">.</span><span class="n">plugin_object</span><span class="p">,</span> <span class="n">func_name</span><span class="p">)</span>
+                <span class="n">ok</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">this</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">this</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ok</span> <span class="o">!=</span> <span class="n">TASK_OK</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">ok</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">this</span>
+        <span class="k">return</span> <span class="n">ok</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">this</span></div>
+
+<div class="viewcode-block" id="TaskLib.add_task"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.add_task">[docs]</a>    <span class="k">def</span> <span class="nf">add_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds a task to the current file&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;tasks&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span>
+        <span class="n">this</span> <span class="o">=</span> <span class="n">Task</span><span class="o">.</span><span class="n">from_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+        <span class="n">err</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">this</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_hooks</span><span class="p">(</span><span class="s1">&#39;add_task&#39;</span><span class="p">,</span> <span class="n">this</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">err</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">err</span><span class="p">,</span> <span class="n">msg</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">],</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">this</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">this</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">TASK_OK</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">this</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TaskLib.complete_task"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.complete_task">[docs]</a>    <span class="k">def</span> <span class="nf">complete_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tasknum</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Completes an open task if task is not already closed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check if self.tasks has been established</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;tasks&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span>
+
+        <span class="k">if</span> <span class="n">tasknum</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span>
+            <span class="k">return</span> <span class="n">TASK_ERROR</span><span class="p">,</span> <span class="s2">&quot;Task number not in task list&quot;</span>
+        <span class="k">if</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span><span class="o">.</span><span class="n">complete</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span>
+            <span class="k">return</span> <span class="n">TASK_ERROR</span><span class="p">,</span> <span class="s2">&quot;Task already completed&quot;</span>
+
+        <span class="n">this</span> <span class="o">=</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span>
+        <span class="n">this</span><span class="o">.</span><span class="n">complete</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">this</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">comment</span><span class="p">:</span>
+            <span class="n">this</span><span class="o">.</span><span class="n">text</span> <span class="o">+=</span> <span class="s2">&quot; # </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">comment</span><span class="p">)</span>
+        <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span> <span class="o">=</span> <span class="n">this</span>
+
+        <span class="n">err</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">this</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_hooks</span><span class="p">(</span><span class="s1">&#39;complete_task&#39;</span><span class="p">,</span> <span class="n">this</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">err</span><span class="p">,</span> <span class="n">msg</span>
+        <span class="c1"># End hooks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tasks</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">TASK_OK</span><span class="p">,</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="TaskLib.sort_tasks"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.sort_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">sort_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">by_pri</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filterop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">showcomplete</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">opendate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">closedate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">hidedate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;sort_tasks([by_pri, filters, filteropp, showcomplete])</span>
+<span class="sd">        Returns a list of (line, task) tuples.</span>
+<span class="sd">        Default behavior sorts by priority.</span>
+<span class="sd">        Default behavior does no filtering.</span>
+<span class="sd">        Default filter operation is all (all must match).</span>
+<span class="sd">        Default behavior does not list completed tasks</span>
+<span class="sd">        Default behavior does not look in the done.txt file.</span>
+<span class="sd">        To filter, provide a list of strings to filter by.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">filters</span> <span class="o">=</span> <span class="n">filters</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">filterop</span> <span class="o">=</span> <span class="n">filterop</span> <span class="k">if</span> <span class="n">filterop</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">all</span><span class="p">,</span> <span class="nb">any</span><span class="p">)</span> <span class="k">else</span> <span class="nb">all</span>
+        <span class="k">if</span> <span class="n">filterop</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">any</span><span class="p">,</span> <span class="nb">all</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Bad filterop parameter in sort_tasks&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">TASK_ERROR</span><span class="p">,</span> <span class="s2">&quot;Filter Operation must by &#39;any&#39; or &#39;all&#39;.&quot;</span>
+        <span class="n">showcomplete</span> <span class="o">=</span> <span class="n">showcomplete</span> <span class="ow">or</span> <span class="n">closedate</span> <span class="ow">or</span> <span class="kc">False</span>
+        <span class="n">hidedate</span> <span class="o">=</span> <span class="n">hidedate</span> <span class="ow">or</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+
+        <span class="n">everything</span> <span class="o">=</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+                      <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+                      <span class="k">if</span> <span class="p">(</span><span class="n">showcomplete</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">val</span><span class="o">.</span><span class="n">complete</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="n">filters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Filtering tasks by keywords&#39;</span><span class="p">)</span>
+            <span class="n">everything</span> <span class="o">=</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">everything</span>
+                          <span class="k">if</span> <span class="n">include_task</span><span class="p">(</span><span class="n">filterop</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">val</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Tasker&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s1">&#39;show-priority-z&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Hiding priority Z tasks&quot;</span><span class="p">)</span>
+            <span class="n">everything</span> <span class="o">=</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">everything</span>
+                          <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">priority</span> <span class="o">!=</span> <span class="s2">&quot;Z&quot;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">opendate</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Showing items opened on </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">opendate</span><span class="p">)</span>
+            <span class="n">everything</span> <span class="o">=</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">everything</span>
+                          <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">==</span> <span class="n">opendate</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">closedate</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Showing items closed on </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">closedate</span><span class="p">)</span>
+            <span class="n">everything</span> <span class="o">=</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">everything</span>
+                          <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">end</span> <span class="ow">and</span> <span class="n">val</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">==</span> <span class="n">closedate</span><span class="p">]</span>
+
+        <span class="c1"># if the task has a hide extension and the value of that extension</span>
+        <span class="c1"># is greater than the current day, do not show task.</span>
+
+        <span class="c1"># show task unless there is a hide extension and the value is greater</span>
+        <span class="c1"># than the current day</span>
+
+        <span class="n">everything</span> <span class="o">=</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">everything</span>
+                      <span class="k">if</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span>
+                          <span class="n">task</span><span class="o">.</span><span class="n">extensions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hide&#39;</span><span class="p">,</span>
+                                              <span class="n">hidedate</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATEFMT</span><span class="p">)),</span>
+                          <span class="n">DATEFMT</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">hidedate</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">by_pri</span><span class="p">:</span>
+            <span class="n">plist</span><span class="p">,</span> <span class="n">zlist</span><span class="p">,</span> <span class="n">ulist</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">everything</span><span class="p">:</span>
+                <span class="n">pri</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">priority</span>
+                <span class="k">if</span> <span class="n">pri</span> <span class="ow">and</span> <span class="n">pri</span> <span class="o">!=</span> <span class="s1">&#39;Z&#39;</span><span class="p">:</span>
+                    <span class="n">plist</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">pri</span><span class="p">:</span>
+                    <span class="n">ulist</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">zlist</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+
+            <span class="n">getter</span> <span class="o">=</span> <span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Tasker&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s1">&#39;priority-z-last&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+                <span class="n">stuff</span> <span class="o">=</span> <span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">plist</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">getter</span><span class="p">)</span> <span class="o">+</span>
+                         <span class="nb">sorted</span><span class="p">(</span><span class="n">ulist</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">getter</span><span class="p">)</span> <span class="o">+</span>
+                         <span class="nb">sorted</span><span class="p">(</span><span class="n">zlist</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">getter</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">stuff</span> <span class="o">=</span> <span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">plist</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">getter</span><span class="p">)</span> <span class="o">+</span>
+                         <span class="nb">sorted</span><span class="p">(</span><span class="n">zlist</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">getter</span><span class="p">)</span> <span class="o">+</span>
+                         <span class="nb">sorted</span><span class="p">(</span><span class="n">ulist</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">getter</span><span class="p">))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">stuff</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">everything</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">stuff</span></div>
+
+<div class="viewcode-block" id="TaskLib.list_tasks"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.list_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">list_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">by_pri</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filters</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">filterop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">showcomplete</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">showext</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">opendate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">closedate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hidedate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;list_tasks([by_pri, filters, filterop, showcomplete, showuid)</span>
+<span class="sd">        Displays a list of tasks.</span>
+
+<span class="sd">        :type by_pri: Boolean</span>
+<span class="sd">        :param bool by_pri: If true, sorts by priority,</span>
+<span class="sd">                            if false, sorts by order in file</span>
+<span class="sd">        :param str filters: Words to filter the list</span>
+<span class="sd">        :param func filterop: all or any (the functions, not strings</span>
+<span class="sd">        :param bool showcomplete: If true, shows completed tasks</span>
+<span class="sd">        :param bool showext: If true, shows the normally hidden</span>
+<span class="sd">                             extensions of the task.</span>
+<span class="sd">        :param date opendate: If not None, filters tasks opened on opendate</span>
+<span class="sd">        :param date closedate: If not None, filters tasks closed on closedate</span>
+<span class="sd">        :param date hidedate: The date to filter extensions marked to hide</span>
+<span class="sd">        :rtype: TASK_OK, None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">showext</span> <span class="o">=</span> <span class="n">showext</span> <span class="ow">or</span> <span class="kc">False</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># colorize = self.config[&#39;Tasker&#39;].getboolean(&#39;use-color&#39;, True)</span>
+        <span class="n">shown_tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_tasks</span><span class="p">(</span><span class="n">by_pri</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">filterop</span><span class="p">,</span> <span class="n">showcomplete</span><span class="p">,</span>
+                                      <span class="n">opendate</span><span class="p">,</span> <span class="n">closedate</span><span class="p">,</span> <span class="n">hidedate</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Listing </span><span class="si">%s</span><span class="s1"> tasks </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;all&#39;</span> <span class="k">if</span> <span class="n">showcomplete</span> <span class="k">else</span> <span class="s1">&#39;open&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;by priority&#39;</span> <span class="k">if</span> <span class="n">by_pri</span> <span class="k">else</span> <span class="s1">&#39;by number&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_extensions_to_hide</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">ext</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extension_hiders</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">extension_hiders</span><span class="p">[</span><span class="n">ext</span><span class="p">]</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s{</span><span class="si">%s</span><span class="s2">:[^}]*}&quot;</span> <span class="o">%</span> <span class="n">ext</span><span class="p">)</span>
+
+        <span class="n">wrap_width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Tasker&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">getint</span><span class="p">(</span><span class="s1">&#39;wrap-width&#39;</span><span class="p">,</span> <span class="mi">78</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_textwrapper</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_textwrapper</span> <span class="o">=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">TextWrapper</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="n">wrap_width</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">shown_tasks</span><span class="p">:</span>
+            <span class="n">maxid</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">shown_tasks</span><span class="p">])</span>
+            <span class="n">idlen</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">maxid</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_textwrapper</span><span class="o">.</span><span class="n">subsequent_indent</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span> <span class="o">*</span> <span class="p">(</span><span class="n">idlen</span><span class="o">+</span><span class="mi">5</span><span class="p">)</span>
+            <span class="n">wrap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Tasker&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wrap-behavior&#39;</span><span class="p">,</span> <span class="s1">&#39;none&#39;</span><span class="p">)</span>
+            <span class="n">wrapfunc</span> <span class="o">=</span> <span class="nb">str</span>
+            <span class="k">if</span> <span class="n">wrap</span> <span class="o">==</span> <span class="s1">&#39;wrap&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Wrapping long lines of each task&quot;</span><span class="p">)</span>
+                <span class="n">wrapfunc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_textwrapper</span><span class="o">.</span><span class="n">fill</span>
+            <span class="k">elif</span> <span class="n">wrap</span> <span class="o">==</span> <span class="s1">&#39;shorten&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Shortening each task&quot;</span><span class="p">)</span>
+                <span class="n">wrapfunc</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">textwrap</span><span class="o">.</span><span class="n">shorten</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">wrap_width</span><span class="p">,</span>
+                                   <span class="n">placeholder</span><span class="o">=</span><span class="s1">&#39;...&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">wrap</span> <span class="o">==</span> <span class="s1">&#39;none&#39;</span><span class="p">:</span>
+                <span class="n">wrapfunc</span> <span class="o">=</span> <span class="nb">str</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Unknown textwrap preference </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">wrap</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">shown_tasks</span><span class="p">:</span>
+                <span class="n">pri</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">priority</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">showext</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extension_hiders</span><span class="p">:</span>
+                        <span class="n">task</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extension_hiders</span><span class="p">[</span><span class="n">ext</span><span class="p">]</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                                                                   <span class="n">task</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">((</span><span class="s2">&quot;</span><span class="si">{3}</span><span class="s2">{1:</span><span class="si">{0}</span><span class="s2">d} </span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idlen</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span>
+                                                <span class="n">wrapfunc</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">task</span><span class="p">)),</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">get_color</span><span class="p">(</span><span class="n">pri</span><span class="p">))))</span>
+                <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{0}{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">colorama</span><span class="o">.</span><span class="n">Fore</span><span class="o">.</span><span class="n">RESET</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="o">*</span><span class="p">(</span><span class="n">idlen</span><span class="o">+</span><span class="mi">1</span><span class="p">)))</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">{:d}</span><span class="s2"> task</span><span class="si">{:s}</span><span class="s2"> shown&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;s&#39;</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">TASK_OK</span><span class="p">,</span> <span class="n">msg</span></div>
+
+<div class="viewcode-block" id="TaskLib.get_color"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.get_color">[docs]</a>    <span class="k">def</span> <span class="nf">get_color</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pri</span><span class="p">):</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theme</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pri</span><span class="p">,</span> <span class="n">colorama</span><span class="o">.</span><span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="p">)</span>
+        <span class="c1"># self.log.debug(&#39;getting color for %s (%s)&#39;, pri, color)</span>
+        <span class="k">return</span> <span class="n">color</span></div>
+
+<div class="viewcode-block" id="TaskLib.note_task"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.note_task">[docs]</a>    <span class="k">def</span> <span class="nf">note_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tasknum</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Updates the note on a task by task number.&quot;&quot;&quot;</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">tasknum</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Task </span><span class="si">%s</span><span class="s1"> not in list&#39;</span><span class="p">,</span> <span class="n">tasknum</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">TASK_ERROR</span><span class="p">,</span> <span class="s2">&quot;Task number not in task list&quot;</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_note</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">note</span><span class="p">)</span>
+        <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tasks</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">tasknum</span><span class="p">,</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">TASK_OK</span><span class="p">,</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="TaskLib.update_note"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.update_note">[docs]</a>    <span class="k">def</span> <span class="nf">update_note</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;updates the note from a line of text. If note is None or blank,</span>
+<span class="sd">        removes the note from the text entirely.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">note</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> # </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">re_note</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">),</span> <span class="n">note</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">re_note</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TaskLib.prioritize_task"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.prioritize_task">[docs]</a>    <span class="k">def</span> <span class="nf">prioritize_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tasknum</span><span class="p">,</span> <span class="n">priority</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;prioritize_task(tasknum, new_pri [,note]</span>
+
+<span class="sd">        Change the priority of a task. Will do nothing if task is closed.</span>
+<span class="sd">        New priority can be A-Z but should be A-W.</span>
+
+<span class="sd">        :param int tasknum: Number of task to update</span>
+<span class="sd">        :param str priority: New priority character</span>
+<span class="sd">        :param str note: Optional note to append</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">tasknum</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Task </span><span class="si">%s</span><span class="s1"> not in list&#39;</span><span class="p">,</span> <span class="n">tasknum</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">TASK_ERROR</span><span class="p">,</span> <span class="s2">&quot;Task number not in task list&quot;</span>
+        <span class="k">if</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span><span class="o">.</span><span class="n">complete</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Task </span><span class="si">%s</span><span class="s1"> already completed&#39;</span><span class="p">,</span> <span class="n">tasknum</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">TASK_ERROR</span><span class="p">,</span> <span class="s2">&quot;Task already completed&quot;</span>
+
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reprioritize_task</span><span class="p">(</span><span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">],</span> <span class="n">priority</span><span class="p">)</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_note</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">note</span><span class="p">))</span>
+<span class="c1">#        if note:</span>
+<span class="c1">#            text = re_note.sub(&#39;&#39;, t.text)</span>
+<span class="c1">#            t.text = &#39;%s # %s&#39; % (text, &#39; &#39;.join(note).strip())</span>
+        <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tasks</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">TASK_OK</span><span class="p">,</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="TaskLib.write_current_tasks"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.write_current_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">write_current_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;write the current tasks to the correct file&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tasks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="TaskLib.reprioritize_task"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.reprioritize_task">[docs]</a>    <span class="k">def</span> <span class="nf">reprioritize_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">priority</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;reprioritize_task(task, new_priority)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">complete</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Cannot reprioritize completed task&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">task</span>
+
+        <span class="n">np</span> <span class="o">=</span> <span class="n">priority</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^[A-Z_]$&#39;</span><span class="p">,</span> <span class="n">np</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;New priority must be A-Z or _&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">task</span>
+
+        <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;_&#39;</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reprioritized task: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">task</span></div>
+
+<div class="viewcode-block" id="TaskLib.hide_task"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.hide_task">[docs]</a>    <span class="k">def</span> <span class="nf">hide_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tasknum</span><span class="p">,</span> <span class="n">hidedate</span><span class="p">):</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">tasknum</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Task </span><span class="si">%s</span><span class="s1"> not in list&#39;</span><span class="p">,</span> <span class="n">tasknum</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">TASK_ERROR</span><span class="p">,</span> <span class="s2">&quot;Task number not in task list&quot;</span>
+        <span class="k">if</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span><span class="o">.</span><span class="n">complete</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Task </span><span class="si">%s</span><span class="s1"> already completed. Cannot hide&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">TASK_ERROR</span><span class="p">,</span> <span class="s2">&quot;Cannot hide closed task&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;hide&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span><span class="o">.</span><span class="n">extensions</span><span class="p">:</span>
+            <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span><span class="o">.</span><span class="n">text</span> <span class="o">+=</span> <span class="s2">&quot; {hide:</span><span class="si">%s</span><span class="s2">}&quot;</span> <span class="o">%</span> <span class="n">hidedate</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATEFMT</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">re_hide</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
+                <span class="s2">&quot; {hide:</span><span class="si">%s</span><span class="s2">}&quot;</span> <span class="o">%</span> <span class="n">hidedate</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATEFMT</span><span class="p">),</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tasks</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">TASK_OK</span><span class="p">,</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="TaskLib.unhide_task"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.unhide_task">[docs]</a>    <span class="k">def</span> <span class="nf">unhide_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tasknum</span><span class="p">):</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">tasknum</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Task </span><span class="si">%s</span><span class="s1"> not in list&#39;</span><span class="p">,</span> <span class="n">tasknum</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">TASK_ERROR</span><span class="p">,</span> <span class="s2">&quot;Task number not in task list&quot;</span>
+        <span class="k">if</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span><span class="o">.</span><span class="n">complete</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Task </span><span class="si">%s</span><span class="s1"> already completed. Cannot unhide&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">TASK_ERROR</span><span class="p">,</span> <span class="s2">&quot;Cannot unhide completed task&quot;</span>
+        <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">re_hide</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tasks</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">TASK_OK</span><span class="p">,</span> <span class="n">tasks</span><span class="p">[</span><span class="n">tasknum</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="TaskLib.build_task_dict"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.build_task_dict">[docs]</a>    <span class="k">def</span> <span class="nf">build_task_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_archive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">only_archive</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;build_task_dict(include_archive, only_archive)</span>
+<span class="sd">        Builds a dictionary of tasks, much like :meth:`get_tasks` but will</span>
+<span class="sd">        read either file, or both.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">only_archive</span><span class="p">:</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;done-path&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">include_archive</span><span class="p">:</span>
+                <span class="n">done</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;done-path&#39;</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">done</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">tasks</span><span class="p">[</span><span class="s1">&#39;x</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
+        <span class="k">return</span> <span class="n">tasks</span></div>
+
+<div class="viewcode-block" id="TaskLib.get_counts"><a class="viewcode-back" href="../../tasker.lib.html#tasker.lib.TaskLib.get_counts">[docs]</a>    <span class="k">def</span> <span class="nf">get_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">include_archive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">only_archive</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get_counts(kind, include_archive, only_archive)</span>
+<span class="sd">        Returns a dictionary of :class:`collections.Counter` objects.</span>
+
+
+<span class="sd">        :param str kind: &#39;project&#39; or &#39;context&#39;</span>
+<span class="sd">        :param bool include_archive: passed to :meth:`build_task_dict`</span>
+<span class="sd">        :param bool only_archive: passet to :meth:`build_task_dict`</span>
+
+<span class="sd">        The resulting dictionary looks like::</span>
+
+<span class="sd">            {&#39;+SomeProject&#39;: Counter({&#39;open&#39;: 2, &#39;closed&#39;: 1})}</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="n">kind</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;PROJECT&#39;</span><span class="p">:</span>
+            <span class="n">getter</span> <span class="o">=</span> <span class="n">attrgetter</span><span class="p">(</span><span class="s1">&#39;projects&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;CONTEXT&#39;</span><span class="p">:</span>
+            <span class="n">getter</span> <span class="o">=</span> <span class="n">attrgetter</span><span class="p">(</span><span class="s1">&#39;contexts&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Should pass &#39;project&#39; or &#39;context&#39; to get_counts&quot;</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">Counter</span><span class="p">)</span>
+        <span class="n">nothing</span> <span class="o">=</span> <span class="s1">&#39;NO </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+
+        <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_task_dict</span><span class="p">(</span><span class="n">include_archive</span><span class="p">,</span> <span class="n">only_archive</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="n">getter</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>  <span class="c1"># projects and contexts are lists</span>
+
+            <span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;closed&#39;</span> <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">complete</span> <span class="k">else</span> <span class="s1">&#39;open&#39;</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">items</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="n">nothing</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">is_hidden</span><span class="p">:</span>
+                    <span class="n">res</span><span class="p">[</span><span class="n">nothing</span><span class="p">][</span><span class="s1">&#39;hidden&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">res</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">task</span><span class="o">.</span><span class="n">priority</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">is_hidden</span><span class="p">:</span>
+                    <span class="n">res</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="s1">&#39;hidden&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">res</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">task</span> <span class="o">=</span> <span class="n">Task</span><span class="o">.</span><span class="n">from_text</span><span class="p">(</span><span class="s2">&quot;x check for approval on +OUMeridianMaps @quote&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">complete</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">tasker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tasker.html">tasker package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Josh English.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

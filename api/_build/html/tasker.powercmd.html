@@ -1,29 +1,17 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
+    <meta charset="utf-8" />
     <title>tasker.powercmd module &#8212; tasker  documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="tasker.theme module" href="tasker.theme.html" />
@@ -34,25 +22,133 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
-  <div class="section" id="tasker-powercmd-module">
-<h1>tasker.powercmd module<a class="headerlink" href="#tasker-powercmd-module" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-tasker.powercmd">
+<span id="tasker-powercmd-module"></span><h1>tasker.powercmd module<a class="headerlink" href="#module-tasker.powercmd" title="Permalink to this headline">¶</a></h1>
+<p>PowerCmd</p>
+<p>Undocumented Power User features.
+This allows for more powerful under the hood commands in the prompt that
+would not be available normally.</p>
+<p>It is a minioncmd with no argument parser.</p>
+<p>Access by typing tasker.py –power. This will begin the interactive prompt.</p>
+<dl class="class">
+<dt id="tasker.powercmd.PowerCmd">
+<em class="property">class </em><code class="descclassname">tasker.powercmd.</code><code class="descname">PowerCmd</code><span class="sig-paren">(</span><em>name</em>, <em>master=None</em>, <em>completekey='tab'</em>, <em>stdin=None</em>, <em>stdout=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/powercmd.html#PowerCmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.powercmd.PowerCmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">minioncmd.MinionCmd</span></code></p>
+<p>PluginCmd(name [,master, manager, completekey, stdin, stout])
+Poweruser interactive prompt commands.</p>
+<dl class="method">
+<dt id="tasker.powercmd.PowerCmd.do_items">
+<code class="descname">do_items</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/powercmd.html#PowerCmd.do_items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.powercmd.PowerCmd.do_items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists items in a given section.
+Usage: items [section]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.powercmd.PowerCmd.do_opencodebase">
+<code class="descname">do_opencodebase</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/powercmd.html#PowerCmd.do_opencodebase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.powercmd.PowerCmd.do_opencodebase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Opens the folder containing the tasker code</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.powercmd.PowerCmd.do_openfolder">
+<code class="descname">do_openfolder</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/powercmd.html#PowerCmd.do_openfolder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.powercmd.PowerCmd.do_openfolder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Opens the tasker file directory.
+Usage: openfolder</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.powercmd.PowerCmd.do_python">
+<code class="descname">do_python</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/powercmd.html#PowerCmd.do_python"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.powercmd.PowerCmd.do_python" title="Permalink to this definition">¶</a></dt>
+<dd><p>Jump into Python.
+Namespace consists of ‘boss’ (the BossCmd object),
+‘config’ (the application ConfigParser instance),
+‘lib’ (the Tasker Library instance), and
+‘manager’ (the Plugins Manager).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.powercmd.PowerCmd.do_queue">
+<code class="descname">do_queue</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/powercmd.html#PowerCmd.do_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.powercmd.PowerCmd.do_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists all items in the command queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.powercmd.PowerCmd.do_sections">
+<code class="descname">do_sections</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/powercmd.html#PowerCmd.do_sections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.powercmd.PowerCmd.do_sections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists the configuration sections.
+Usage: sections</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tasker.powercmd.PowerCmd.do_set">
+<code class="descname">do_set</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tasker/powercmd.html#PowerCmd.do_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tasker.powercmd.PowerCmd.do_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a configuration option.
+Usage: SECTION OPTION VALUE</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.powercmd.PowerCmd.doc_leader">
+<code class="descname">doc_leader</code><em class="property"> = 'Power User Help'</em><a class="headerlink" href="#tasker.powercmd.PowerCmd.doc_leader" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tasker.powercmd.PowerCmd.prompt">
+<code class="descname">prompt</code><em class="property"> = 'power&gt; '</em><a class="headerlink" href="#tasker.powercmd.PowerCmd.prompt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">tasker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="tasker.html">tasker package</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="tasker.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="tasker.__main__.html">tasker.__main__ module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.basetaskerplugin.html">tasker.basetaskerplugin module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.core.html">tasker.core module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.lib.html">tasker.lib module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.lister.html">tasker.lister module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.manager.html">tasker.manager module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.minioncmd.html">tasker.minioncmd module</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">tasker.powercmd module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tasker.theme.html">tasker.theme module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tasker.html#module-tasker">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
@@ -63,23 +159,24 @@
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/tasker.powercmd.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -88,8 +185,8 @@
       &copy;2017, Josh English.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/tasker.powercmd.txt"

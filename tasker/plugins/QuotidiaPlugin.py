@@ -21,22 +21,132 @@ work if I don't launch the program until the afternoon on Monday, then
 everything will be delayed until the next afternoon. I just need to check if
 the thing was run on the same day as today. This can be a day check.  """
 
-import glob
 import os
 import argparse
+import datetime
+import json
+import pathlib
 import re
+import logging
 
 from configparser import ConfigParser
 
 import basetaskerplugin
 import minioncmd
 
-QUOTIDIA = os.path.join(os.path.dirname(__file__), 'quotidia')
+LOG = logging.getLogger("quotidia")
 
+
+QUOTIDIA = os.path.join(os.path.dirname(__file__), 'quotidia')
 
 CLEAN_VOCABULARY = re.compile(r"^[@+]")
 
 CLI_ABOUT = """Quotidia allows you to define tasks on a recurring basis."""
+
+
+class Quotidium:
+    def __init__(self, qid: str, text: str, days: str, history=None):
+        self.qid = qid
+        self.text = text
+        self.days = days
+        self.history = history if history else []
+
+    @property
+    def as_dict(self):
+        this = {
+            '__quotidia__': True,
+            'qid': self.qid,
+            'text': self.text,
+            'days': self.days,
+            'history': [d.date().isoformat() for d in self.history]}
+        return this
+
+    def __str__(self):
+        return f"{self.qid}: `{self.text}` on {self.days}"
+
+    @property
+    def task_text(self):
+        return f"{self.text} {{qid:{self.qid}}}"
+
+    @property
+    def last_run(self):
+        return max(self.history, default=datetime.date.min)
+
+
+class QuotidiaEncoder(json.JSONEncoder):
+    def default(self, quotidia):
+        if isinstance(quotidia, Quotidium):
+            return quotidia.as_dict
+        else:
+            return super().default(quotidia)
+
+
+def load_quotidia(dct):
+    if "__quotidia__" in dct:
+        return Quotidium(
+            dct['qid'],
+            dct['text'],
+            dct['days'],
+            [datetime.date.fromisoformat(d) for d in dct['history']])
+    return dct
+
+
+class QuotidiaLib:
+    def __init__(self, directory):
+        self.directory = pathlib.Path(directory)
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+        self.quotidia_path = os.path.join(directory, 'quotidia.xml')
+        self.archive_path = os.path.join(directory, 'archive.xml')
+        self._qids = {}
+        self.now = datetime.datetime.now()
+        self.daycode = "MTWRFYS"[self.now.weekday()]
+        self.get_quotidia()
+
+    @property
+    def quotidia(self):
+        return self._qids
+
+    def get_quotidia(self):
+        for qfile in list(self.directory.glob("*.quotidia")):
+            self._qids[qfile.stem] = json.loads(qfile.read_text(),
+                                                object_hook=load_quotidia)
+
+    def add_quotidia(self, qid, text, days):
+        q = Quotidium(qid, text, days)
+        fname = "%s.quotidia" % qid
+        json.dump(q, (self.directory / fname).open(mode='w'),
+                  cls=QuotidiaEncoder)
+        LOG.info('Saved %s', qid)
+
+    def save_quotidium(self, q):
+        fname = f"{q.qid}.quotidia"
+        json.dump(q, (self.directory / fname).open(mode="w"),
+                  cls=QuotidiaEncoder)
+        LOG.info('saved %s', q.qid)
+
+    def get_todays_quotidia(self):
+        now = datetime.datetime.now()
+        daycode = "MTWRFYS"[now.weekday()]
+        LOG.debug("Checking for quotidia with daycode %s", daycode)
+        return {(qid, q) for (qid, q) in self._qids.items()
+                if daycode in q.days}
+
+    def process_quotidia(self):
+        q_to_run = []
+        for (qid, q) in self.get_todays_quotidia():
+            days = (self.now.date() - q.last_run).days
+            if days > 0:
+                q_to_run.append(q)
+        return q_to_run
+
+    def run_quotidia(self, qid):
+        if qid not in self._qids:
+            LOG.error('Cannot run qid %s: does not exist', qid)
+            raise ValueError('Cannot run qid %s: qid does not exist' % qid)
+        self._qids[qid].history.insert(0, datetime.datetime.now())
+        LOG.debug('Updated qid %s with current time', qid)
+        self.save_quotidium(self._qids[qid])
 
 
 class QuotidiaCLI(minioncmd.MinionCmd):
@@ -54,16 +164,23 @@ class QuotidiaCLI(minioncmd.MinionCmd):
                          completekey=completekey,
                          stdin=stdin,
                          stdout=stdout)
-        self.quotidia = {}
-        self._log.debug("Quotidias type: %s", type(self.Quotidias))
-        local_dir = quotidia_dir or QUOTIDIA
-        for fname in glob.glob(os.path.join(local_dir, "*.quotidia")):
-            flow_prefs = ConfigParser()
-            flow_prefs.read(fname)
-            name = os.path.splitext(os.path.split(fname)[1])[0]
-            self.quotidias[name] = flow_prefs
 
-        self._quotidia_dir = local_dir
+        self.qlib = QuotidiaLib(quotidia_dir)  # should come from the plugin
+
+    def do_run(self, text=None):
+        """Process the available quotidia"""
+        if text is None:
+            text = "pass"
+        else:
+            text = text.strip().lower()
+        quotidia = self.qlib.process_quotidia()
+        for q in quotidia:
+            if text == 'debug':
+                print('Adding', q)
+            self.master.cmdqueue.append(f"add {q.task_text}")
+            self.qlib.run_quotidia(q.qid)
+        else:
+            print('No new quotidia')
 
     def do_list(self, text):
         """Usage: list
@@ -71,7 +188,7 @@ class QuotidiaCLI(minioncmd.MinionCmd):
         List current quotidia
         """
         print("Quotidia list:", file=self.stdout)
-        for idx, flow in enumerate(self.quotidia, start=1):
+        for idx, flow in enumerate(self.qlib.quotidia, start=1):
             print(idx, flow, file=self.stdout)
         print()
 
@@ -81,12 +198,11 @@ class QuotidiaCLI(minioncmd.MinionCmd):
         Print the details of a given quotidia.
         """
         text = text.strip()
-        if text not in self.quotidia:
-            print('No quotidia "{}" found'.format(text))
+        if text not in self.qlib.quotidia:
+            print('No quotidia named "{}" found'.format(text))
             return
-        for key, val in self.quotidia[text]['Quotidia'].items():
-            print(key, val, sep=": ")
-        print()
+        q = self.qlib.quotidia[text]
+        print(q, "Last run on:", q.last_run)
 
     def do_create(self, text):
         """Usage: create NAME
@@ -146,6 +262,7 @@ Last Addition: datetime stamp of the last time this item was added."""
 
 class Quotidia(basetaskerplugin.SubCommandPlugin):
     def activate(self):
+        LOG.debug("Activaing Quotidia")
         self._log.debug("Activating Quotidia")
         if not self.hasConfigOption('directory'):
             self._log.debug("Setting Directory to default")
@@ -154,68 +271,24 @@ class Quotidia(basetaskerplugin.SubCommandPlugin):
         if not self.hasConfigOption('hidden-extensions'):
             self.setConfigOption('hidden-extensions', 'qid')
 
+        quotidia_folder = self.getConfigOption('directory')
+
         self.cli_name = 'quotidia'
-        self.cli = QuotidiaCLI()  # needs to be an instance
+        self.cli = QuotidiaCLI(
+            quotidia_dir=quotidia_folder)  # needs to be an instance
 
         parser = self.parser = argparse.ArgumentParser('quotidia')
         self.helpstr = 'Quotidia commands (see `help quotidia`)'
-        workflow_commands = parser.add_subparsers(title='quotidia commands',
+        quotidia_commands = parser.add_subparsers(title='quotidia commands',
                                                   dest='subcommand',
                                                   metavar='')
-        start_workflow = workflow_commands.add_parser(
-            'start',
-            help='start a workflow')
-        start_workflow.add_argument(
-            'name',
-            help="The name of the workflow to start")
-        start_workflow.add_argument(
-            'vocabulary', nargs=argparse.REMAINDER,
-            help="The vocabulary for the workflow instance")
 #
-        workflow_commands.add_parser('list', help='lists known workflows')
-
-        steps = workflow_commands.add_parser(
-            'steps',
-            help='displays templated steps for a given workflow')
-        steps.add_argument('text', nargs=argparse.REMAINDER)
-
-        instance = workflow_commands.add_parser(
-            'instances',
-            help='displays known instances of a workflow')
-        instance.add_argument('workflow')
-
-        info = workflow_commands.add_parser(
-            'info',
-            help="displays information about a workflow")
-        info.add_argument('workflow')
-
-        create = workflow_commands.add_parser(
-            'create',
-            help="creates a new workflow file")
-        create.add_argument('name', help="the name of the workflow to create")
-        create.add_argument('--edit', help="launch the editor automatically")
+        quotidia_commands.add_parser('list', help='lists known workflows')
+        run = quotidia_commands.add_parser('run', help='manually run quotidia')
+        run.add_argument('text', help="optional subcommand (debug)",
+                         default="pass", nargs='?')
+        info = quotidia_commands.add_parser('info',
+                                            help='details on a quotidium')
+        info.add_argument('name', help="the name of the quotidum")
 
         super().activate()
-
-    def complete_task(self, this):
-        self._log.debug('Quotidia checking completed task %s',
-                        this.extensions.get('uid', 'NO ID'))
-        if 'wn' in this.extensions:
-            flow = self.cli.workflows[this.extensions['wn']]
-            steps = flow['Steps']
-            if this.extensions['ws'] not in steps:
-                msg = "Workflow {} does not have step {}".format(
-                    flow,
-                    this.extensions['ws'])
-                self._log.error(msg)
-                print(msg)  # this will cause problems down the road
-                return (0, None, this)
-            next_step = str(int(this.extensions['ws'])+1)
-            if next_step in steps:
-                try:
-                    self.cli.add_workflow_task(this.extensions['wn'],
-                                               next_step,
-                                               this.extensions['wid'])
-                except KeyError as E:
-                    return(2, E, this)
-        return(0, None, this)

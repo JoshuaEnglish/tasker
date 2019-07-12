@@ -1,0 +1,404 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>tasker.plugins.QuotidiaPlugin &#8212; tasker  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for tasker.plugins.QuotidiaPlugin</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">About Quotidia</span>
+<span class="sd">==============</span>
+
+<span class="sd">Quotidia allows you to schedule tasks to appear in your task list</span>
+<span class="sd">under certain time-given constraints. For example, a reminder to</span>
+<span class="sd">pay rent on the first of each month, or to run a report every Monday.</span>
+
+<span class="sd">Each quotidium needs the following attributes:</span>
+<span class="sd">QID: System generated quote ID</span>
+<span class="sd">Text to add: including the Priority, if any</span>
+<span class="sd">Day Filter: SMTWRFY - any letter matching the days it should run</span>
+<span class="sd">Time Filter: first time the task should be listed (hold off on this idea)</span>
+<span class="sd">Last Addition: datetime stamp of the last time this item was added.</span>
+
+<span class="sd">Basic idea: On load, this should scan the quotidia and see if today matches a</span>
+<span class="sd">day the quotidium should be run. Then compare the last addition time to the</span>
+<span class="sd">current time. If it has appeared in the last 24 hours ... hold on. That won&#39;t</span>
+<span class="sd">work if I don&#39;t launch the program until the afternoon on Monday, then</span>
+<span class="sd">everything will be delayed until the next afternoon. I just need to check if</span>
+<span class="sd">the thing was run on the same day as today. This can be a day check.  &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">pathlib</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">configparser</span> <span class="k">import</span> <span class="n">ConfigParser</span>
+
+<span class="kn">import</span> <span class="nn">basetaskerplugin</span>
+<span class="kn">import</span> <span class="nn">minioncmd</span>
+
+
+<span class="n">QUOTIDIA</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;quotidia&#39;</span><span class="p">)</span>
+
+<span class="n">CLEAN_VOCABULARY</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^[@+]&quot;</span><span class="p">)</span>
+
+<span class="n">CLI_ABOUT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Quotidia allows you to define tasks on a recurring basis.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="Quotidium"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.Quotidium">[docs]</a><span class="k">class</span> <span class="nc">Quotidium</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">days</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qid</span> <span class="o">=</span> <span class="n">qid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">days</span> <span class="o">=</span> <span class="n">days</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">history</span> <span class="k">if</span> <span class="n">history</span> <span class="k">else</span> <span class="p">[]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">this</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;__quotidia__&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s1">&#39;qid&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">qid</span><span class="p">,</span>
+            <span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+            <span class="s1">&#39;days&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">days</span><span class="p">,</span>
+            <span class="s1">&#39;history&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">this</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s2">&quot;</span><span class="si">{self.qid}</span><span class="s2">: `</span><span class="si">{self.text}</span><span class="s2">` on </span><span class="si">{self.days}</span><span class="s2">&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">task_text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s2">&quot;</span><span class="si">{self.text}</span><span class="s2"> {{qid:</span><span class="si">{self.qid}</span><span class="s2">}}&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">last_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">min</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QuotidiaEncoder"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaEncoder">[docs]</a><span class="k">class</span> <span class="nc">QuotidiaEncoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
+<div class="viewcode-block" id="QuotidiaEncoder.default"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaEncoder.default">[docs]</a>    <span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quotidia</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">quotidia</span><span class="p">,</span> <span class="n">Quotidium</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">quotidia</span><span class="o">.</span><span class="n">as_dict</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">quotidia</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="load_quotidia"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.load_quotidia">[docs]</a><span class="k">def</span> <span class="nf">load_quotidia</span><span class="p">(</span><span class="n">dct</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s2">&quot;__quotidia__&quot;</span> <span class="ow">in</span> <span class="n">dct</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Quotidium</span><span class="p">(</span>
+            <span class="n">dct</span><span class="p">[</span><span class="s1">&#39;qid&#39;</span><span class="p">],</span>
+            <span class="n">dct</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">],</span>
+            <span class="n">dct</span><span class="p">[</span><span class="s1">&#39;days&#39;</span><span class="p">],</span>
+            <span class="n">dct</span><span class="p">[</span><span class="s1">&#39;history&#39;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">dct</span></div>
+
+
+<div class="viewcode-block" id="QuotidiaLib"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaLib">[docs]</a><span class="k">class</span> <span class="nc">QuotidiaLib</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">directory</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quotidia_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s1">&#39;quotidia.xml&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">archive_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s1">&#39;archive.xml&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qids</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">daycode</span> <span class="o">=</span> <span class="s2">&quot;MTWRFYS&quot;</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">weekday</span><span class="p">()]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_quotidia</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">quotidia</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qids</span>
+
+<div class="viewcode-block" id="QuotidiaLib.get_quotidia"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaLib.get_quotidia">[docs]</a>    <span class="k">def</span> <span class="nf">get_quotidia</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">qfile</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">directory</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.quotidia&quot;</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_qids</span><span class="p">[</span><span class="n">qfile</span><span class="o">.</span><span class="n">stem</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">qfile</span><span class="o">.</span><span class="n">read_text</span><span class="p">(),</span>
+                                                <span class="n">object_hook</span><span class="o">=</span><span class="n">load_quotidia</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="QuotidiaLib.add_quotidia"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaLib.add_quotidia">[docs]</a>    <span class="k">def</span> <span class="nf">add_quotidia</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qid</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">days</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">Quotidium</span><span class="p">(</span><span class="n">qid</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">days</span><span class="p">)</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">.quotidia&quot;</span> <span class="o">%</span> <span class="n">qid</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">directory</span> <span class="o">/</span> <span class="n">fname</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">),</span>
+                  <span class="bp">cls</span><span class="o">=</span><span class="n">QuotidiaEncoder</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saved </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">qid</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="QuotidiaLib.get_todays_quotidia"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaLib.get_todays_quotidia">[docs]</a>    <span class="k">def</span> <span class="nf">get_todays_quotidia</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="n">daycode</span> <span class="o">=</span> <span class="s2">&quot;MTWRFYS&quot;</span><span class="p">[</span><span class="n">now</span><span class="o">.</span><span class="n">weekday</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="p">{(</span><span class="n">qid</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">qid</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qids</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">daycode</span> <span class="ow">in</span> <span class="n">q</span><span class="o">.</span><span class="n">days</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="QuotidiaLib.process_quotidia"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaLib.process_quotidia">[docs]</a>    <span class="k">def</span> <span class="nf">process_quotidia</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">q_to_run</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">qid</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_todays_quotidia</span><span class="p">():</span>
+            <span class="n">days</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">now</span><span class="o">.</span><span class="n">date</span><span class="p">()</span> <span class="o">-</span> <span class="n">q</span><span class="o">.</span><span class="n">last_run</span><span class="o">.</span><span class="n">date</span><span class="p">())</span><span class="o">.</span><span class="n">days</span>
+            <span class="k">if</span> <span class="n">days</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">q_to_run</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">task_text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">q_to_run</span></div>
+
+<div class="viewcode-block" id="QuotidiaLib.run_quotidia"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaLib.run_quotidia">[docs]</a>    <span class="k">def</span> <span class="nf">run_quotidia</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qid</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">qid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qids</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Cannot run qid </span><span class="si">%s</span><span class="s1">: does not exist&#39;</span><span class="p">,</span> <span class="n">qid</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot run qid </span><span class="si">%s</span><span class="s1">: qid does not exist&#39;</span> <span class="o">%</span> <span class="n">qid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qids</span><span class="p">[</span><span class="n">qid</span><span class="p">]</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Updated qid </span><span class="si">%s</span><span class="s1"> with current time&#39;</span><span class="p">,</span> <span class="n">qid</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="QuotidiaCLI"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaCLI">[docs]</a><span class="k">class</span> <span class="nc">QuotidiaCLI</span><span class="p">(</span><span class="n">minioncmd</span><span class="o">.</span><span class="n">MinionCmd</span><span class="p">):</span>
+    <span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot;quotidia&gt; &quot;</span>
+    <span class="n">minion_header</span> <span class="o">=</span> <span class="s2">&quot;Other subcommands (type &lt;topic&gt; help)&quot;</span>
+    <span class="n">doc_leader</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Quotidia Help</span>
+
+<span class="s2">    Create and use pre-programmed tasks to generate sequentially without</span>
+<span class="s2">    clogging up the Z-priority list</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">completekey</span><span class="o">=</span><span class="s1">&#39;tab&#39;</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">quotidia_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s1">&#39;quotidia&#39;</span><span class="p">,</span>
+                         <span class="n">completekey</span><span class="o">=</span><span class="n">completekey</span><span class="p">,</span>
+                         <span class="n">stdin</span><span class="o">=</span><span class="n">stdin</span><span class="p">,</span>
+                         <span class="n">stdout</span><span class="o">=</span><span class="n">stdout</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;DEBUG:&quot;</span><span class="p">,</span> <span class="n">quotidia_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qlib</span> <span class="o">=</span> <span class="n">QuotidiaLib</span><span class="p">(</span><span class="n">quotidia_dir</span><span class="p">)</span>  <span class="c1"># should come from the plugin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_run</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="QuotidiaCLI.do_run"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaCLI.do_run">[docs]</a>    <span class="k">def</span> <span class="nf">do_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Process the available quotidia&quot;&quot;&quot;</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">quotidia</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qlib</span><span class="o">.</span><span class="n">process_quotidia</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">quotidia</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">text</span> <span class="o">==</span> <span class="s1">&#39;debug&#39;</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Adding&#39;</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="o">.</span><span class="n">cmdqueue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Add </span><span class="si">{q}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="QuotidiaCLI.do_list"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaCLI.do_list">[docs]</a>    <span class="k">def</span> <span class="nf">do_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Usage: list</span>
+
+<span class="sd">        List current quotidia</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Quotidia list:&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">flow</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qlib</span><span class="o">.</span><span class="n">quotidia</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">flow</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="QuotidiaCLI.do_info"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaCLI.do_info">[docs]</a>    <span class="k">def</span> <span class="nf">do_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Usage: info NAME</span>
+
+<span class="sd">        Print the details of a given quotidia.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">text</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">quotidia</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No quotidia &quot;</span><span class="si">{}</span><span class="s1">&quot; found&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+            <span class="k">return</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">quotidia</span><span class="p">[</span><span class="n">text</span><span class="p">][</span><span class="s1">&#39;Quotidia&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;: &quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="QuotidiaCLI.do_create"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaCLI.do_create">[docs]</a>    <span class="k">def</span> <span class="nf">do_create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Usage: create NAME</span>
+
+<span class="sd">        Create a new quotidia. A wizard collects the necessary information.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">newname</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">newname</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;No name specified&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Please provide a single-word name for the new workflow&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">newname</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Too many names given for workflow&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Please provide a single-word name for the workflow&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">newname</span> <span class="o">=</span> <span class="n">newname</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">newname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">quotidia</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Quotidia </span><span class="si">%s</span><span class="s1"> already exists&#39;</span><span class="p">,</span> <span class="n">newname</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Quotidia </span><span class="si">%s</span><span class="s2"> already existis&quot;</span> <span class="o">%</span> <span class="n">newname</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="sd">&quot;&quot;&quot;QID: System generated quote ID</span>
+<span class="sd">Text to add: including the Priority, if any</span>
+<span class="sd">Day Filter: SMTWRFY - any letter matching the days it should run</span>
+<span class="sd">Time Filter: first time the task should be listed (hold off on this idea)</span>
+<span class="sd">Last Addition: datetime stamp of the last time this item was added.&quot;&quot;&quot;</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Please enter the text for this quotidia: &quot;</span><span class="p">)</span>
+
+        <span class="n">day_ok</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">day_ok</span><span class="p">:</span>
+            <span class="n">days</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Please enter the days to run: [SMTWRFY]&quot;</span><span class="p">)</span>
+            <span class="n">day_ok</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^S?M?T?W?R?F?Y?$&quot;</span><span class="p">)</span>
+
+        <span class="n">cp</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="p">()</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s1">&#39;Quotidia&#39;</span><span class="p">)</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Quotidia&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">newname</span><span class="o">.</span><span class="n">title</span><span class="p">())</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Quotidia&#39;</span><span class="p">,</span> <span class="s1">&#39;task&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Quotidia&#39;</span><span class="p">,</span> <span class="s1">&#39;days&#39;</span><span class="p">,</span> <span class="n">days</span><span class="p">)</span>
+
+        <span class="n">fname</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">.quotidia&quot;</span> <span class="o">%</span> <span class="n">newname</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_quotidia_dir</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">cp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+
+        <span class="n">cp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">workflows</span><span class="p">[</span><span class="n">newname</span><span class="p">]</span> <span class="o">=</span> <span class="n">cp</span>
+        <span class="nb">print</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Created new quotidia in&quot;</span><span class="p">,</span> <span class="n">fpath</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="QuotidiaCLI.help_about"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.QuotidiaCLI.help_about">[docs]</a>    <span class="k">def</span> <span class="nf">help_about</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;About this plugin&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">CLI_ABOUT</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Quotidia"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.Quotidia">[docs]</a><span class="k">class</span> <span class="nc">Quotidia</span><span class="p">(</span><span class="n">basetaskerplugin</span><span class="o">.</span><span class="n">SubCommandPlugin</span><span class="p">):</span>
+<div class="viewcode-block" id="Quotidia.activate"><a class="viewcode-back" href="../../../tasker.plugins.QuotidiaPlugin.html#tasker.plugins.QuotidiaPlugin.Quotidia.activate">[docs]</a>    <span class="k">def</span> <span class="nf">activate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Activating Quotidia&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">hasConfigOption</span><span class="p">(</span><span class="s1">&#39;directory&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Setting Directory to default&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setConfigOption</span><span class="p">(</span><span class="s1">&#39;directory&#39;</span><span class="p">,</span> <span class="n">QUOTIDIA</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">hasConfigOption</span><span class="p">(</span><span class="s1">&#39;hidden-extensions&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setConfigOption</span><span class="p">(</span><span class="s1">&#39;hidden-extensions&#39;</span><span class="p">,</span> <span class="s1">&#39;qid&#39;</span><span class="p">)</span>
+
+        <span class="n">quotidia_folder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getConfigOption</span><span class="p">(</span><span class="s1">&#39;directory&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cli_name</span> <span class="o">=</span> <span class="s1">&#39;quotidia&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cli</span> <span class="o">=</span> <span class="n">QuotidiaCLI</span><span class="p">(</span><span class="n">quotidia_folder</span><span class="p">)</span>  <span class="c1"># needs to be an instance</span>
+
+        <span class="n">parser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="s1">&#39;quotidia&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">helpstr</span> <span class="o">=</span> <span class="s1">&#39;Quotidia commands (see `help quotidia`)&#39;</span>
+        <span class="n">workflow_commands</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s1">&#39;quotidia commands&#39;</span><span class="p">,</span>
+                                                  <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;subcommand&#39;</span><span class="p">,</span>
+                                                  <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">start_workflow</span> <span class="o">=</span> <span class="n">workflow_commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+            <span class="s1">&#39;start&#39;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;start a workflow&#39;</span><span class="p">)</span>
+        <span class="n">start_workflow</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;The name of the workflow to start&quot;</span><span class="p">)</span>
+        <span class="n">start_workflow</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s1">&#39;vocabulary&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">REMAINDER</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;The vocabulary for the workflow instance&quot;</span><span class="p">)</span>
+<span class="c1">#</span>
+        <span class="n">workflow_commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;list&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;lists known workflows&#39;</span><span class="p">)</span>
+
+        <span class="n">steps</span> <span class="o">=</span> <span class="n">workflow_commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+            <span class="s1">&#39;steps&#39;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;displays templated steps for a given workflow&#39;</span><span class="p">)</span>
+        <span class="n">steps</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">REMAINDER</span><span class="p">)</span>
+
+        <span class="n">instance</span> <span class="o">=</span> <span class="n">workflow_commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+            <span class="s1">&#39;instances&#39;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;displays known instances of a workflow&#39;</span><span class="p">)</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;workflow&#39;</span><span class="p">)</span>
+
+        <span class="n">info</span> <span class="o">=</span> <span class="n">workflow_commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+            <span class="s1">&#39;info&#39;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;displays information about a workflow&quot;</span><span class="p">)</span>
+        <span class="n">info</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;workflow&#39;</span><span class="p">)</span>
+
+        <span class="n">create</span> <span class="o">=</span> <span class="n">workflow_commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+            <span class="s1">&#39;create&#39;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;creates a new workflow file&quot;</span><span class="p">)</span>
+        <span class="n">create</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the name of the workflow to create&quot;</span><span class="p">)</span>
+        <span class="n">create</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--edit&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;launch the editor automatically&quot;</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">activate</span><span class="p">()</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">tasker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tasker.html">tasker package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Josh English.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

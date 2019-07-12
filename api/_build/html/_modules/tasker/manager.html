@@ -1,0 +1,178 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>tasker.manager &#8212; tasker  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for tasker.manager</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Thu Mar 17 11:49:57 2016</span>
+
+<span class="sd">@author: jenglish</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">configparser</span> <span class="k">import</span> <span class="n">ConfigParser</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> </span><span class="si">%(levelname)s</span><span class="s1">: </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+                    <span class="n">datefmt</span><span class="o">=</span><span class="s1">&#39;%Y-%m</span><span class="si">%d</span><span class="s1"> %I:%M:%S %p&#39;</span><span class="p">)</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;yapsy&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">yapsy.ConfigurablePluginManager</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="p">()</span>
+<span class="n">config</span><span class="o">.</span><span class="n">read_dict</span><span class="p">(</span>
+    <span class="p">{</span><span class="s1">&#39;Files&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;tasker-dir&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;APPDATA&#39;</span><span class="p">],</span> <span class="s1">&#39;tasker&#39;</span><span class="p">),</span>
+               <span class="s1">&#39;task-path&#39;</span><span class="p">:</span> <span class="s2">&quot;%(tasker-dir)s/todo.txt&quot;</span><span class="p">,</span>
+               <span class="s1">&#39;done-path&#39;</span><span class="p">:</span> <span class="s2">&quot;%(tasker-dir)s/done.txt&quot;</span><span class="p">,</span>
+               <span class="p">},</span>
+     <span class="s1">&#39;Tasker&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;hidden_extensions&#39;</span><span class="p">:</span> <span class="s1">&#39;uid&#39;</span><span class="p">}})</span>
+
+<span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">&quot;frozen&quot;</span><span class="p">):</span>
+    <span class="n">configdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">configdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+
+<span class="n">configpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">configdir</span><span class="p">,</span> <span class="s1">&#39;tasker.ini&#39;</span><span class="p">)</span>
+
+<span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">configpath</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="save_config"><a class="viewcode-back" href="../../tasker.manager.html#tasker.manager.save_config">[docs]</a><span class="k">def</span> <span class="nf">save_config</span><span class="p">():</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">configpath</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span></div>
+
+
+<span class="c1"># noinspection PyPep8Naming</span>
+<div class="viewcode-block" id="SingleFileAnalyzer"><a class="viewcode-back" href="../../tasker.manager.html#tasker.manager.SingleFileAnalyzer">[docs]</a><span class="k">class</span> <span class="nc">SingleFileAnalyzer</span><span class="p">(</span>
+    <span class="n">yapsy</span><span class="o">.</span><span class="n">PluginFileLocator</span><span class="o">.</span><span class="n">PluginFileAnalyzerMathingRegex</span><span class="p">):</span>
+<div class="viewcode-block" id="SingleFileAnalyzer.getInfosDictFromPlugin"><a class="viewcode-back" href="../../tasker.manager.html#tasker.manager.SingleFileAnalyzer.getInfosDictFromPlugin">[docs]</a>    <span class="k">def</span> <span class="nf">getInfosDictFromPlugin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dirpath</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the extracted plugin informations as a dictionary.</span>
+<span class="sd">        This function ensures that &quot;name&quot; and &quot;path&quot; are provided.</span>
+<span class="sd">        :param filename:</span>
+<span class="sd">        :param dirpath:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># use the filename alone to extract minimal informations.</span>
+        <span class="c1"># do not import the file, but it okay to read</span>
+        <span class="n">infos</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">module_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">plugin_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">module_name</span> <span class="o">==</span> <span class="s2">&quot;__init__&quot;</span><span class="p">:</span>
+            <span class="n">module_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">dirpath</span><span class="p">)</span>
+            <span class="n">plugin_filename</span> <span class="o">=</span> <span class="n">dirpath</span>
+        <span class="n">infos</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">module_name</span>
+        <span class="n">infos</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plugin_filename</span>
+        <span class="n">cf_parser</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="p">()</span>
+        <span class="n">cf_parser</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s2">&quot;Core&quot;</span><span class="p">)</span>
+        <span class="n">cf_parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;Core&quot;</span><span class="p">,</span> <span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="n">infos</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+        <span class="n">cf_parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;Core&quot;</span><span class="p">,</span> <span class="s2">&quot;Module&quot;</span><span class="p">,</span> <span class="n">infos</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">])</span>
+
+        <span class="c1"># must return these at minimum</span>
+        <span class="c1"># return None, cf_parser if plugin doesn&#39;t validate</span>
+        <span class="k">return</span> <span class="n">infos</span><span class="p">,</span> <span class="n">cf_parser</span></div></div>
+
+
+<span class="n">manager</span> <span class="o">=</span> <span class="n">yapsy</span><span class="o">.</span><span class="n">ConfigurablePluginManager</span><span class="o">.</span><span class="n">ConfigurablePluginManager</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<span class="n">locator</span> <span class="o">=</span> <span class="n">yapsy</span><span class="o">.</span><span class="n">PluginFileLocator</span><span class="o">.</span><span class="n">PluginFileLocator</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">SingleFileAnalyzer</span><span class="p">(</span><span class="s1">&#39;Singlefile&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;.+Plugin.py$&#39;</span><span class="p">),</span> <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">manager</span><span class="o">.</span><span class="n">setPluginLocator</span><span class="p">(</span><span class="n">locator</span><span class="p">)</span>
+<span class="n">manager</span><span class="o">.</span><span class="n">setPluginPlaces</span><span class="p">([</span><span class="s1">&#39;plugins&#39;</span><span class="p">,</span> <span class="p">])</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">tasker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tasker.html">tasker package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Josh English.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,691 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>tasker.core &#8212; tasker  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for tasker.core</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Thu Mar 17 10:29:54 2016</span>
+
+<span class="sd">@author: jenglish</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="c1"># from collections import defaultdict</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">chain</span>
+
+<span class="kn">import</span> <span class="nn">minioncmd</span>
+<span class="kn">import</span> <span class="nn">lister</span>
+
+<span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;1.5&quot;</span>
+<span class="n">__updated__</span> <span class="o">=</span> <span class="s2">&quot;2017-09-11&quot;</span>
+<span class="n">__history__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">1.1 archive projects should work now</span>
+<span class="s2">1.2 archive by number should work now</span>
+<span class="s2">1.3 Updated stock plugin code for plugin creation</span>
+<span class="s2">1.4 Can now filter tasks by open date</span>
+<span class="s2">1.5 Archive task now handles projects with hidden tasks</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="valid_date"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.valid_date">[docs]</a><span class="k">def</span> <span class="nf">valid_date</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Confirm dates in the arguments work as dates&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">string</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;today&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">string</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;yesterday&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">string</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;tomorrow&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid date: &#39;</span><span class="si">{0}</span><span class="s2">&#39;.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentTypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="add_core_subparsers"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.add_core_subparsers">[docs]</a><span class="k">def</span> <span class="nf">add_core_subparsers</span><span class="p">(</span><span class="n">commands</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Adds the core subparsers: list, add, do, priority, note</span>
+
+<span class="sd">    :param argparse.ArgumentParser commands: The main ArgumentParser instance</span>
+<span class="sd">                                             of the application</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">list_parser</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;list&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;list tasks&#39;</span><span class="p">,</span>
+                                      <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Tool for listing tasks&quot;</span><span class="p">,</span>
+                                      <span class="p">)</span>
+    <span class="n">list_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;-n&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_false&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;by_pri&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Prints task list in numerical order, otherwise by priority&quot;</span><span class="p">)</span>
+
+    <span class="n">list_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;-y&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;filterop&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Shows tasks matching any filter word. Default is to match all&quot;</span><span class="p">)</span>
+
+    <span class="n">list_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;-a&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;showcomplete&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Show completed (but not archived) tasks.&quot;</span><span class="p">)</span>
+
+    <span class="n">list_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;-x&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;showext&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Shows hidden text extensions&quot;</span><span class="p">)</span>
+
+    <span class="n">list_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;opendate&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">valid_date</span><span class="p">,</span>
+                             <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Lists tasks opened on a given date.&quot;</span><span class="p">)</span>
+
+    <span class="n">list_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;closedate&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">valid_date</span><span class="p">,</span>
+                             <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Lists tasks closed on a given date.&quot;</span><span class="p">)</span>
+
+    <span class="n">list_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--hidedate&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;hidedate&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">valid_date</span><span class="p">,</span>
+                             <span class="n">default</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">(),</span>
+                             <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Sets preview date for hidden tasks&quot;</span><span class="p">)</span>
+
+    <span class="n">list_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--showhidden&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;hidedate&#39;</span><span class="p">,</span>
+                             <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_const&quot;</span><span class="p">,</span>
+                             <span class="n">const</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">max</span><span class="p">,</span>
+                             <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Shows all hidden tasks&quot;</span><span class="p">)</span>
+
+    <span class="n">list_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;filters&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">REMAINDER</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Only lists tasks containing these words (or ~word to exclude)&quot;</span><span class="p">)</span>
+
+    <span class="n">add_parser</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;add&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;add a task&quot;</span><span class="p">)</span>
+    <span class="n">add_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-d&#39;</span><span class="p">,</span> <span class="s1">&#39;--done&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+                            <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Adds task as completed&quot;</span><span class="p">)</span>
+    <span class="n">add_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+                            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;text of the new task&quot;</span><span class="p">)</span>
+
+    <span class="n">do_parser</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;do&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;mark a task as complete&quot;</span><span class="p">)</span>
+    <span class="n">do_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;tasknum&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                           <span class="n">help</span><span class="o">=</span><span class="s2">&quot;number of the task to complete&quot;</span><span class="p">)</span>
+    <span class="n">do_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;comment&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">REMAINDER</span><span class="p">,</span>
+                           <span class="n">help</span><span class="o">=</span><span class="s2">&quot;comment to add to the completed task&quot;</span><span class="p">)</span>
+
+    <span class="n">priority_parser</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;pri&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;prioritize a task&quot;</span><span class="p">)</span>
+    <span class="n">priority_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;tasknum&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                                 <span class="n">help</span><span class="o">=</span><span class="s2">&quot;number of the task to prioritize&quot;</span><span class="p">)</span>
+    <span class="n">priority_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;priority&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                                 <span class="n">help</span><span class="o">=</span><span class="s2">&quot;letter of new priority or _ to clear&quot;</span><span class="p">)</span>
+    <span class="n">priority_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;note&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">REMAINDER</span><span class="p">,</span>
+                                 <span class="n">help</span><span class="o">=</span><span class="s2">&quot;optional note to attach to task&quot;</span><span class="p">)</span>
+
+    <span class="n">note_parser</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;note&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;notate tasks&#39;</span><span class="p">)</span>
+    <span class="n">note_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;tasknum&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                             <span class="n">help</span><span class="o">=</span><span class="s1">&#39;number of the task to prioritize&#39;</span><span class="p">)</span>
+    <span class="n">note_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;note&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">REMAINDER</span><span class="p">,</span>
+                             <span class="n">help</span><span class="o">=</span><span class="s2">&quot;note to add (blank removes note)&quot;</span><span class="p">)</span>
+
+    <span class="n">hide_parser</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;hide&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;set hide date for a task&#39;</span><span class="p">)</span>
+    <span class="n">hide_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;tasknum&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                             <span class="n">help</span><span class="o">=</span><span class="s1">&#39;number of the task to hide&#39;</span><span class="p">)</span>
+    <span class="n">hide_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;hidedate&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">valid_date</span><span class="p">,</span>
+                             <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Date in %Y-%m-</span><span class="si">%d</span><span class="s2"> format.&quot;</span><span class="p">)</span>
+
+    <span class="n">unhide_parser</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;unhide&#39;</span><span class="p">,</span>
+                                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Removes hide date for a task&#39;</span><span class="p">)</span>
+    <span class="n">unhide_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;tasknum&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                               <span class="n">help</span><span class="o">=</span><span class="s1">&#39;number of the task to unhide&#39;</span><span class="p">)</span></div>
+
+
+<span class="n">plugin_argparser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="s1">&#39;plugins&#39;</span><span class="p">)</span>
+<span class="n">plugin_commands</span> <span class="o">=</span> <span class="n">plugin_argparser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s1">&#39;commands&#39;</span><span class="p">,</span>
+                                                  <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;command&quot;</span><span class="p">,</span>
+                                                  <span class="n">help</span><span class="o">=</span><span class="s2">&quot;supported commands&quot;</span><span class="p">)</span>
+<span class="n">plugin_commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;list&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;List the known plugins&#39;</span><span class="p">)</span>
+
+<span class="n">activate</span> <span class="o">=</span> <span class="n">plugin_commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;activate&#39;</span><span class="p">,</span>
+                                      <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Activate plugins by name&#39;</span><span class="p">)</span>
+<span class="n">activate</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;name of the plugin to activate&#39;</span><span class="p">)</span>
+
+<span class="n">deactivate</span> <span class="o">=</span> <span class="n">plugin_commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;deactivate&#39;</span><span class="p">,</span>
+                                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Deactivate plugin by name&#39;</span><span class="p">)</span>
+<span class="n">deactivate</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;name of the plugin to deactivate&#39;</span><span class="p">)</span>
+
+<span class="n">plugin_commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;categories&#39;</span><span class="p">,</span>
+                           <span class="n">help</span><span class="o">=</span><span class="s1">&#39;list current plugin categories&#39;</span><span class="p">)</span>
+
+<span class="n">create</span> <span class="o">=</span> <span class="n">plugin_commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;create&#39;</span><span class="p">,</span>
+                                    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Create a new plugin&quot;</span><span class="p">)</span>
+<span class="n">create</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;name of the plugin to template&quot;</span><span class="p">)</span>
+<span class="n">create</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;kind&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;new&#39;</span><span class="p">,</span> <span class="s1">&#39;sub&#39;</span><span class="p">,</span> <span class="s1">&#39;generic&#39;</span><span class="p">],</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;The kind of plugin to template&quot;</span><span class="p">)</span>
+
+<span class="n">class_map</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;new&#39;</span><span class="p">:</span> <span class="s1">&#39;NewCommandPlugin&#39;</span><span class="p">,</span>
+             <span class="s1">&#39;sub&#39;</span><span class="p">:</span> <span class="s1">&#39;SubCommandPlugin&#39;</span><span class="p">,</span>
+             <span class="s1">&#39;generic&#39;</span><span class="p">:</span> <span class="s1">&#39;TaskerPlugin&#39;</span><span class="p">}</span>
+
+
+<span class="c1"># todo: Add About &lt;plugin&gt; and help &lt;plugin&gt; commands</span>
+<div class="viewcode-block" id="PluginCmd"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.PluginCmd">[docs]</a><span class="k">class</span> <span class="nc">PluginCmd</span><span class="p">(</span><span class="n">minioncmd</span><span class="o">.</span><span class="n">MinionCmd</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;PluginCmd(name [,master, manager, completekey, stdin, stout])</span>
+
+<span class="sd">    Subclass of MinionCmd that has access to the YAPSY</span>
+<span class="sd">    manager.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot;plugins&gt; &quot;</span>
+    <span class="n">doc_leader</span> <span class="o">=</span> <span class="s2">&quot;Plugins Help&quot;</span>
+    <span class="n">_log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;plugin&#39;</span><span class="p">)</span>
+    <span class="n">minion_header</span> <span class="o">=</span> <span class="s2">&quot;Other subcommands (type &lt;topic&gt; help)&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">master</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">manager</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">completekey</span><span class="o">=</span><span class="s1">&#39;tab&#39;</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">manager</span> <span class="o">=</span> <span class="n">manager</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">master</span><span class="p">,</span> <span class="n">completekey</span><span class="p">,</span> <span class="n">stdin</span><span class="p">,</span> <span class="n">stdout</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PluginCmd.get_plugin_name_and_category"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.PluginCmd.get_plugin_name_and_category">[docs]</a>    <span class="k">def</span> <span class="nf">get_plugin_name_and_category</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">info</span> <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">getAllPlugins</span><span class="p">()</span> <span class="k">if</span>
+                      <span class="n">info</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">category</span></div>
+
+<div class="viewcode-block" id="PluginCmd.do_list"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.PluginCmd.do_list">[docs]</a>    <span class="k">def</span> <span class="nf">do_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Lists all plugins and their categories&quot;&quot;&quot;</span>
+        <span class="n">lister</span><span class="o">.</span><span class="n">print_list</span><span class="p">([(</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">is_activated</span><span class="p">))</span>
+                           <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">getAllPlugins</span><span class="p">()],</span>
+                          <span class="s2">&quot;Name Category Activated&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">())</span></div>
+        <span class="c1"># for info in self.manager.getAllPlugins():</span>
+        <span class="c1">#     print(info.name, info.category, info.is_activated, sep=&quot;, &quot;)</span>
+
+<div class="viewcode-block" id="PluginCmd.do_categories"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.PluginCmd.do_categories">[docs]</a>    <span class="k">def</span> <span class="nf">do_categories</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Lists all plugin categories&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">getCategories</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">category</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PluginCmd.do_activate"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.PluginCmd.do_activate">[docs]</a>    <span class="k">def</span> <span class="nf">do_activate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Activates a plugin by name.</span>
+<span class="sd">        Plugin will be activated on next launch</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">stuff</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">maxsplit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">stuff</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">category</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_plugin_name_and_category</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">category</span> <span class="o">=</span> <span class="n">stuff</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">getPluginByName</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">category</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">info</span><span class="p">:</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">category</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_plugin_name_and_category</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No plugin found&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">activatePluginByName</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Plugin activated. Will be active when program restarts.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PluginCmd.do_deactivate"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.PluginCmd.do_deactivate">[docs]</a>    <span class="k">def</span> <span class="nf">do_deactivate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Deactivates a plugin by name.</span>
+<span class="sd">        Plugin will be deactivated on next launch.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">stuff</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">maxsplit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">stuff</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">category</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_plugin_name_and_category</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">category</span> <span class="o">=</span> <span class="n">stuff</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">getPluginByName</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">category</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">info</span><span class="p">:</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">category</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_plugin_name_and_category</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No plugin found&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">deactivatePluginByName</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Plugin activated. Will be active when program restarts.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PluginCmd.do_create"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.PluginCmd.do_create">[docs]</a>    <span class="k">def</span> <span class="nf">do_create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Creates a template for for a new plugin&quot;&quot;&quot;</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">create</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;USERNAME&#39;</span><span class="p">]</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">lowername</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">cls</span> <span class="o">=</span> <span class="n">class_map</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">kind</span><span class="p">]</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">clicode</span> <span class="o">=</span> <span class="n">CLI_CODE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="o">**</span><span class="nb">vars</span><span class="p">(</span><span class="n">args</span><span class="p">))</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;sub&#39;</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">clilink</span> <span class="o">=</span> <span class="n">CLI_LINK</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="o">**</span><span class="nb">vars</span><span class="p">(</span><span class="n">args</span><span class="p">))</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;sub&#39;</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">getPluginLocator</span><span class="p">()</span><span class="o">.</span><span class="n">plugins_places</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">def_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span>
+                                <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">Plugin.tasker-plugin&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">def_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">PLUGIN_DEFINITION</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="nb">vars</span><span class="p">(</span><span class="n">args</span><span class="p">)),</span> <span class="n">file</span><span class="o">=</span><span class="n">fp</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">code_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span>
+                                 <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">Plugin.py&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">code_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">PLUGIN_CODE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="nb">vars</span><span class="p">(</span><span class="n">args</span><span class="p">)),</span> <span class="n">file</span><span class="o">=</span><span class="n">fp</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The files have been written to:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">def_path</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">code_path</span><span class="p">)</span></div></div>
+
+
+<span class="n">PLUGIN_DEFINITION</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;# Plugin Definition File</span>
+<span class="s2"># generated by plugins create NAME TYPE</span>
+<span class="s2">[Core]</span>
+<span class="s2">Name = </span><span class="si">{name}</span><span class="s2"></span>
+<span class="s2">Module = </span><span class="si">{name}</span><span class="s2">Plugin</span>
+
+<span class="s2">[Documentation]</span>
+<span class="s2">Author = </span><span class="si">{user}</span><span class="s2"></span>
+<span class="s2">Version = 0.0</span>
+<span class="s2">Website = http://example.com</span>
+<span class="s2">Description = Twiddles its thumbs</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">CLI_CODE</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">import minioncmd</span>
+
+<span class="s1">class </span><span class="si">{name}</span><span class="s1">CLI(minioncmd.MinionCmd):</span>
+<span class="s1">    prompt = &quot;</span><span class="si">{lowername}</span><span class="s1">&gt; &quot;</span>
+
+<span class="s1">    def __init__(self, completekey=&#39;tab&#39;, stdin=None, stdout=None, ):</span>
+<span class="s1">        super().__init__(&#39;</span><span class="si">{lowername}</span><span class="s1">&#39;,</span>
+<span class="s1">                         completekey=completekey,</span>
+<span class="s1">                         stdin=stdin,</span>
+<span class="s1">                         stdout=stdout)</span>
+
+<span class="s1">&#39;&#39;&#39;</span>
+
+<span class="n">CLI_LINK</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">        self.cli_name = &#39;</span><span class="si">{lowername}</span><span class="s1">&#39;</span>
+<span class="s1">        self.cli = </span><span class="si">{name}</span><span class="s1">CLI()</span>
+
+<span class="s1">        &#39;&#39;&#39;</span>
+<span class="n">PLUGIN_CODE</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">&quot;&quot;&quot;</span>
+<span class="si">{name}</span><span class="s1">Plugin</span>
+
+<span class="s1">Twiddles its thumbs</span>
+
+<span class="s1">Created on </span><span class="si">{date}</span><span class="s1"></span>
+
+<span class="s1">@author: </span><span class="si">{user}</span><span class="s1"></span>
+<span class="s1">&quot;&quot;&quot;</span>
+<span class="s1">import argparse</span>
+<span class="s1">import basetaskerplugin</span>
+
+<span class="si">{clicode}</span><span class="s1"></span>
+<span class="s1">class </span><span class="si">{name}</span><span class="s1">Plugin(basetaskerplugin.</span><span class="si">{cls}</span><span class="s1">):</span>
+<span class="s1">    def activate(self):</span>
+<span class="s1">        self._log.debug(&#39;Activating </span><span class="si">{name}</span><span class="s1">&#39;)</span>
+<span class="s1">        # edit the following line</span>
+<span class="s1">        self.setConfigOption(&#39;public_methods&#39;, &#39;do_</span><span class="si">{name}</span><span class="s1">&#39;)</span>
+
+<span class="s1">        </span><span class="si">{clilink}</span><span class="s1"></span>
+<span class="s1">        # define argument parsers</span>
+<span class="s1">        </span><span class="si">{lowername}</span><span class="s1"> = argparse.ArgumentParser(&#39;</span><span class="si">{lowername}</span><span class="s1">&#39;)</span>
+
+<span class="s1">        # add parsers</span>
+
+<span class="s1">        self.parsers = {{</span>
+<span class="s1">            </span><span class="si">{lowername}</span><span class="s1">: &quot;Thumb twiddlers&quot;,</span>
+<span class="s1">        }}</span>
+
+<span class="s1">        super().activate()</span>
+
+<span class="s1">    def do_</span><span class="si">{lowername}</span><span class="s1">(self, text):</span>
+<span class="s1">        &quot;&quot;&quot;Thumb twiddler&quot;&quot;&quot;</span>
+<span class="s1">        pass</span>
+
+<span class="s1">    # hook method - delete if not going to use</span>
+<span class="s1">    def add_task(self, this):</span>
+<span class="s1">        &quot;&quot;&quot;Hook method called when adding tasks</span>
+
+<span class="s1">        This method can access the the TaskLib instance through the</span>
+<span class="s1">        ``self.lib`` property.</span>
+
+<span class="s1">        Args:</span>
+<span class="s1">            this: the :class:`Task` being added</span>
+
+<span class="s1">        Returns:</span>
+<span class="s1">            tuple: (code, message, this)</span>
+
+<span class="s1">            code is 0 for TASK_OK or 2 for TASK_EXT_ERROR</span>
+<span class="s1">            message is a string explaining the error (empty string if code</span>
+<span class="s1">            is 0)</span>
+<span class="s1">            this is the task, either as passed or if edited</span>
+<span class="s1">        &quot;&quot;&quot;</span>
+<span class="s1">        return (0, &quot;&quot;, this)</span>
+
+<span class="s1">    # hook method - delete if not going to use</span>
+<span class="s1">    def complete_task(self, this):</span>
+<span class="s1">        &quot;&quot;&quot;Hook method called when completing tasks</span>
+
+<span class="s1">        This method can access the the TaskLib instance through the</span>
+<span class="s1">        ``self.lib`` property.</span>
+
+<span class="s1">        Args:</span>
+<span class="s1">            this: the :class:`Task` being added</span>
+
+<span class="s1">        Returns:</span>
+<span class="s1">            tuple: (code, message, this)</span>
+
+<span class="s1">            code is 0 for TASK_OK or 2 for TASK_EXT_ERROR</span>
+<span class="s1">            message is a string explaining the error (empty string if code</span>
+<span class="s1">            is 0)</span>
+<span class="s1">            this is the task, either as passed or if edited</span>
+<span class="s1">        &quot;&quot;&quot;</span>
+
+<span class="s1">        return (0, &quot;&quot;, this)</span>
+
+<span class="s1">&#39;&#39;&#39;</span>
+
+
+<div class="viewcode-block" id="Limiter"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.Limiter">[docs]</a><span class="k">class</span> <span class="nc">Limiter</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Dict subclass for keeping a maximum or minimum values for each key</span>
+
+<span class="sd">    Limiters can be given a default mapping.</span>
+
+<span class="sd">    The default function of a limiter is max.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;descriptor __init of &#39;Limiter&#39; object &quot;</span>
+                            <span class="s2">&quot;needs an argument&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;expected at most 1 argument, got </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">Limiter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_func</span> <span class="o">=</span> <span class="n">kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;func&#39;</span><span class="p">,</span> <span class="nb">max</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__missing__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+        <span class="s1">&#39;like dict.__delitem__() but does not raise KeyError&#39;</span>
+        <span class="k">if</span> <span class="n">elem</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__delitem__</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">elem</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">elem</span><span class="p">],</span> <span class="n">value</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+
+<span class="n">archive_argparser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="s1">&#39;archive&#39;</span><span class="p">)</span>
+
+<span class="n">archive_commands</span> <span class="o">=</span> <span class="n">archive_argparser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s1">&#39;commands&#39;</span><span class="p">,</span>
+                                                    <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;archivecommand&quot;</span><span class="p">,</span>
+                                                    <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+<span class="n">archive_parent</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">add_help</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">archive_parent</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--days&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>
+                            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;minimum age of closed tasks to archive&#39;</span><span class="p">)</span>
+<span class="n">archive_parent</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s1">&#39;--force&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;force archive of older tasks in open projects&#39;</span><span class="p">)</span>
+
+<span class="n">archive_project_parser</span> <span class="o">=</span> <span class="n">archive_commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;project&#39;</span><span class="p">,</span>
+                                                     <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Archive by project&#39;</span><span class="p">,</span>
+                                                     <span class="n">parents</span><span class="o">=</span><span class="p">[</span><span class="n">archive_parent</span><span class="p">])</span>
+
+<span class="n">archive_project_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;projects&#39;</span><span class="p">,</span>
+                                    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;names of Projects to archive&quot;</span><span class="p">,</span>
+                                    <span class="n">nargs</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">REMAINDER</span><span class="p">)</span>
+
+<span class="n">archive_number_parser</span> <span class="o">=</span> <span class="n">archive_commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+    <span class="s1">&#39;number&#39;</span><span class="p">,</span>
+    <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Archive tasks by number&#39;</span><span class="p">,</span>
+    <span class="n">parents</span><span class="o">=</span><span class="p">[</span><span class="n">archive_parent</span><span class="p">])</span>
+
+<span class="n">archive_number_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;numbers&#39;</span><span class="p">,</span>
+                                   <span class="n">help</span><span class="o">=</span><span class="s2">&quot;numbers of tasks to archive&quot;</span><span class="p">,</span>
+                                   <span class="n">nargs</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">REMAINDER</span><span class="p">,</span>
+                                   <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ArchiveCmd"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.ArchiveCmd">[docs]</a><span class="k">class</span> <span class="nc">ArchiveCmd</span><span class="p">(</span><span class="n">minioncmd</span><span class="o">.</span><span class="n">MinionCmd</span><span class="p">):</span>
+    <span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot;archive&gt; &quot;</span>
+    <span class="n">doc_leader</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Archive Help</span>
+
+<span class="s2">    These commands archive tasks by project or number.</span>
+<span class="s2">    Tasks that are not old enough (set by --days) will not be archived.</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+
+    <span class="n">_log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;archive&#39;</span><span class="p">)</span>
+    <span class="n">minion_header</span> <span class="o">=</span> <span class="s2">&quot;Other subcommands (type &lt;topic&gt; help)&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">master</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">completekey</span><span class="o">=</span><span class="s1">&#39;tab&#39;</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">master</span><span class="p">,</span> <span class="n">completekey</span><span class="p">,</span> <span class="n">stdin</span><span class="p">,</span> <span class="n">stdout</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ArchiveCmd.do_number"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.ArchiveCmd.do_number">[docs]</a>    <span class="k">def</span> <span class="nf">do_number</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Archive tasks by number&quot;&quot;&quot;</span>
+        <span class="n">lib</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="o">.</span><span class="n">lib</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">archive_number_parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">sort_tasks</span><span class="p">(</span><span class="n">showcomplete</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">hidedate</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">max</span><span class="p">)</span>
+
+        <span class="n">tasks_to_archive</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;tasks to archive:&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">numbers</span><span class="p">)</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">num</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="n">num</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">numbers</span><span class="p">:</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">task</span><span class="o">.</span><span class="n">complete</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Task&quot;</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="s2">&quot;still open. Not archived&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="n">delta</span> <span class="o">=</span> <span class="n">now</span> <span class="o">-</span> <span class="n">task</span><span class="o">.</span><span class="n">end</span>
+                <span class="k">if</span> <span class="n">delta</span><span class="o">.</span><span class="n">days</span> <span class="o">&lt;=</span> <span class="n">args</span><span class="o">.</span><span class="n">days</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Task&quot;</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="s2">&quot;recently closed. Not archived&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+
+                <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">projects</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: Task&quot;</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="s2">&quot;may be part of a project.&quot;</span><span class="p">)</span>
+                <span class="n">tasks_to_archive</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;tasks I can archive&quot;</span><span class="p">,</span> <span class="n">tasks_to_archive</span><span class="p">)</span>
+
+        <span class="n">tasks</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="n">lib</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="n">done</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="n">lib</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;done-path&#39;</span><span class="p">])</span>
+
+        <span class="n">next_done</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">done</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">done</span> <span class="k">else</span> <span class="mi">1</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tasks_to_archive</span><span class="p">:</span>
+            <span class="n">done</span><span class="p">[</span><span class="n">next_done</span><span class="p">]</span> <span class="o">=</span> <span class="n">tasks</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">next_done</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">tasks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clean_up</span><span class="p">(</span><span class="n">tasks_to_archive</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ArchiveCmd.do_project"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.ArchiveCmd.do_project">[docs]</a>    <span class="k">def</span> <span class="nf">do_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Archive tasks in a given project if all tasks are closed&quot;&quot;&quot;</span>
+        <span class="n">lib</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="o">.</span><span class="n">lib</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">archive_project_parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">sort_tasks</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">projects</span><span class="p">,</span>
+                               <span class="n">filterop</span><span class="o">=</span><span class="nb">any</span><span class="p">,</span>
+                               <span class="n">showcomplete</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                               <span class="n">hidedate</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">max</span><span class="p">)</span>
+        <span class="c1"># tasks is a list of tuples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Found </span><span class="si">%d</span><span class="s1"> candidates to archive&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">))</span>
+
+        <span class="c1"># create a dictionary of projects, last_date</span>
+        <span class="n">open_projects</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">task</span><span class="o">.</span><span class="n">projects</span>
+                                    <span class="k">for</span> <span class="n">num</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span>
+                                    <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">end</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">]))</span>
+        <span class="c1"># end_dates = defaultdict(set)</span>
+        <span class="n">end_dates</span> <span class="o">=</span> <span class="n">Limiter</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">num</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">proj</span> <span class="ow">in</span> <span class="n">task</span><span class="o">.</span><span class="n">projects</span><span class="p">:</span>
+                <span class="n">end_dates</span><span class="p">[</span><span class="n">proj</span><span class="p">]</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">end</span>  <span class="c1"># will ignore None</span>
+                <span class="c1"># if task.end is not None:</span>
+                <span class="c1">#    end_dates[proj].add(task.end)</span>
+                <span class="c1">#    end_dates[proj] = task.end</span>
+        <span class="c1"># end_dates = dict((proj, max(dates))</span>
+        <span class="c1">#                  for proj, dates in end_dates.items())</span>
+
+        <span class="k">for</span> <span class="n">proj</span> <span class="ow">in</span> <span class="n">open_projects</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Project </span><span class="si">%s</span><span class="s1"> is still open. Not archived.&#39;</span><span class="p">,</span> <span class="n">proj</span><span class="p">)</span>
+            <span class="n">end_dates</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="c1"># if proj in end_dates:</span>
+            <span class="c1">#    del end_dates[proj]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">end_dates</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No projects to archive&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;end dates: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">end_dates</span><span class="p">)</span>
+
+        <span class="n">projects_to_archive</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">tasks_to_archive</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="n">archive_date</span> <span class="o">=</span> <span class="n">now</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">days</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">proj</span> <span class="ow">in</span> <span class="n">end_dates</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">end_dates</span><span class="p">[</span><span class="n">proj</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">archive_date</span><span class="p">:</span>
+                <span class="c1"># delta = now - end_dates[proj]</span>
+                <span class="c1"># if delta.days &gt;= args.days:</span>
+                <span class="n">projects_to_archive</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">proj</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Project </span><span class="si">%s</span><span class="s1"> is not old enough to archive&#39;</span><span class="p">,</span> <span class="n">proj</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">projects_to_archive</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No projects to archive&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">num</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">end</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># don&#39;t archive open tasks</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">now</span> <span class="o">-</span> <span class="n">task</span><span class="o">.</span><span class="n">end</span><span class="p">)</span><span class="o">.</span><span class="n">days</span> <span class="o">&lt;=</span> <span class="n">args</span><span class="o">.</span><span class="n">days</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># don&#39;t archive recently closed tasks</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">proj</span> <span class="ow">in</span> <span class="n">projects_to_archive</span> <span class="k">for</span> <span class="n">proj</span> <span class="ow">in</span> <span class="n">task</span><span class="o">.</span><span class="n">projects</span><span class="p">):</span>
+                <span class="n">tasks_to_archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">clean_up</span><span class="p">(</span><span class="n">tasks_to_archive</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ArchiveCmd.clean_up"><a class="viewcode-back" href="../../tasker.core.html#tasker.core.ArchiveCmd.clean_up">[docs]</a>    <span class="k">def</span> <span class="nf">clean_up</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tasks_to_archive</span><span class="p">):</span>
+        <span class="n">lib</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="o">.</span><span class="n">lib</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="n">lib</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="n">done</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="n">lib</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;done-path&#39;</span><span class="p">])</span>
+
+        <span class="n">next_done</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">done</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">done</span> <span class="k">else</span> <span class="mi">1</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tasks_to_archive</span><span class="p">:</span>
+            <span class="n">done</span><span class="p">[</span><span class="n">next_done</span><span class="p">]</span> <span class="o">=</span> <span class="n">tasks</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">next_done</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">tasks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="n">lib</span><span class="o">.</span><span class="n">write_tasks</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">lib</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;task-path&#39;</span><span class="p">])</span>
+        <span class="n">lib</span><span class="o">.</span><span class="n">write_tasks</span><span class="p">(</span><span class="n">done</span><span class="p">,</span> <span class="n">lib</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;Files&#39;</span><span class="p">][</span><span class="s1">&#39;done-path&#39;</span><span class="p">])</span>
+
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Archived </span><span class="si">{}</span><span class="s2"> tasks&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks_to_archive</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">tasker</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tasker.html">tasker package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Josh English.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
