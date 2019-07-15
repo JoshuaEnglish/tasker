@@ -29,8 +29,6 @@ import pathlib
 import re
 import logging
 
-from configparser import ConfigParser
-
 import basetaskerplugin
 import minioncmd
 
@@ -118,6 +116,7 @@ class QuotidiaLib:
         json.dump(q, (self.directory / fname).open(mode='w'),
                   cls=QuotidiaEncoder)
         LOG.info('Saved %s', qid)
+        self._qids[qid] = q
 
     def save_quotidium(self, q):
         fname = f"{q.qid}.quotidia"
@@ -222,7 +221,7 @@ class QuotidiaCLI(minioncmd.MinionCmd):
             return None
 
         newname = newname[0]
-        if newname in self.quotidia:
+        if newname in self.qlib.quotidia:
             self._log.error('Quotidia %s already exists', newname)
             print("Quotidia %s already existis" % newname)
             return None
@@ -233,27 +232,18 @@ Day Filter: SMTWRFY - any letter matching the days it should run
 Time Filter: first time the task should be listed (hold off on this idea)
 Last Addition: datetime stamp of the last time this item was added."""
         text = input("Please enter the text for this quotidia: ")
+        if not text:
+            print("Canceling")
+            return None
 
         day_ok = False
         while not day_ok:
             days = input("Please enter the days to run: [SMTWRFY]")
-            day_ok = re.match(r"^S?M?T?W?R?F?Y?$")
+            day_ok = re.match(r"^S?M?T?W?R?F?Y?$", days)
 
-        cp = ConfigParser()
-        cp.add_section('Quotidia')
-        cp.set('Quotidia', 'name', newname.title())
-        cp.set('Quotidia', 'task', text)
-        cp.set('Quotidia', 'days', days)
-
-        fname = "%s.quotidia" % newname.lower()
-        fpath = os.path.join(self._quotidia_dir, fname)
-        with open(fpath, 'w') as fp:
-            cp.write(fp)
-
-        cp.write(self.stdout)
-        self.workflows[newname] = cp
-        print()
-        print("Created new quotidia in", fpath)
+        fname = "%s.quotidia" % newname
+        self.qlib.add_quotidia(newname, text, days)
+        print("Created new quotidia in", fname)
 
     def help_about(self):
         """About this plugin"""
