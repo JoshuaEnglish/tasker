@@ -173,11 +173,16 @@ class QuotidiaCLI(minioncmd.MinionCmd):
         else:
             text = text.strip().lower()
         quotidia = self.qlib.process_quotidia()
+        qcount = 0
         for q in quotidia:
             if text == 'debug':
                 print('Adding', q)
             self.master.cmdqueue.append(f"add {q.task_text}")
             self.qlib.run_quotidia(q.qid)
+            qcount += 1
+
+        if qcount:
+            print(f"Added {qcount} tasks")
         else:
             print('No new quotidia')
 
