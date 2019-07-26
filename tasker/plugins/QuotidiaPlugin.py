@@ -56,7 +56,7 @@ class Quotidium:
             'qid': self.qid,
             'text': self.text,
             'days': self.days,
-            'history': [d.date().isoformat() for d in self.history]}
+            'history': [d.isoformat() for d in self.history]}
         return this
 
     def __str__(self):
@@ -143,7 +143,7 @@ class QuotidiaLib:
         if qid not in self._qids:
             LOG.error('Cannot run qid %s: does not exist', qid)
             raise ValueError('Cannot run qid %s: qid does not exist' % qid)
-        self._qids[qid].history.insert(0, datetime.datetime.now())
+        self._qids[qid].history.insert(0, datetime.date.today())
         LOG.debug('Updated qid %s with current time', qid)
         self.save_quotidium(self._qids[qid])
 
