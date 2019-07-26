@@ -231,11 +231,6 @@ class QuotidiaCLI(minioncmd.MinionCmd):
             print("Quotidia %s already existis" % newname)
             return None
 
-        """QID: System generated quote ID
-Text to add: including the Priority, if any
-Day Filter: SMTWRFY - any letter matching the days it should run
-Time Filter: first time the task should be listed (hold off on this idea)
-Last Addition: datetime stamp of the last time this item was added."""
         text = input("Please enter the text for this quotidia: ")
         if not text:
             print("Canceling")
@@ -277,13 +272,18 @@ class Quotidia(basetaskerplugin.SubCommandPlugin):
         quotidia_commands = parser.add_subparsers(title='quotidia commands',
                                                   dest='subcommand',
                                                   metavar='')
-#
-        quotidia_commands.add_parser('list', help='lists known workflows')
+
+        quotidia_commands.add_parser('list', help='lists known quotidia')
         run = quotidia_commands.add_parser('run', help='manually run quotidia')
         run.add_argument('text', help="optional subcommand (debug)",
                          default="pass", nargs='?')
         info = quotidia_commands.add_parser('info',
                                             help='details on a quotidium')
-        info.add_argument('name', help="the name of the quotidum")
+        info.add_argument('name', help="the name of the quotidium")
+
+        create = quotidia_commands.add_parser('new',
+                                              help='create a new quotidium')
+        create.add_argument('name',
+                            help='the name of the new quotidium')
 
         super().activate()
