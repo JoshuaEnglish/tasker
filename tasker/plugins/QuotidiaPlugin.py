@@ -43,6 +43,9 @@ CLI_ABOUT = """Quotidia allows you to define tasks on a recurring basis."""
 
 
 class Quotidium:
+    """Quotidium(qid, text, days [,history])
+    Create a Quotidium object.
+    """
     def __init__(self, qid: str, text: str, days: str, history=None):
         self.qid = qid
         self.text = text
@@ -72,6 +75,7 @@ class Quotidium:
 
 
 class QuotidiaEncoder(json.JSONEncoder):
+    """Custom JSON Encoder"""
     def default(self, quotidia):
         if isinstance(quotidia, Quotidium):
             return quotidia.as_dict
@@ -94,8 +98,6 @@ class QuotidiaLib:
         self.directory = pathlib.Path(directory)
         if not os.path.exists(directory):
             os.mkdir(directory)
-        self.quotidia_path = os.path.join(directory, 'quotidia.xml')
-        self.archive_path = os.path.join(directory, 'archive.xml')
         self._qids = {}
         self.now = datetime.datetime.now()
         self.daycode = "MTWRFYS"[self.now.weekday()]
