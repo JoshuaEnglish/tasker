@@ -238,15 +238,23 @@ class WorkflowCLI(minioncmd.MinionCmd):
         print()
 
     def do_instances(self, text):
-        """Usage: instances NAME
+        """Usage: instances NAME TAIL
 
         Prints a list of known instances.
         """
-        text = text.strip()
-        if text not in self.workflows:
-            print('No workflow "{}" found'.format(text))
+        parser = (self._argparser._subparsers._group_actions[0].
+                  choices['instances'])
+        args = parser.parse_args(text.split())
+        if args.workflow not in self.workflows:
+            print('No workflow "{}" found'.format(args.workflow))
             return
-        for key, val in self.workflows[text]['Instances'].items():
+        stuff = list(self.workflows[args.workflow]['Instances'].items())
+        if args.tail == 'all':
+            sl = slice(None, None)
+        else:
+            sl = slice(-1*int(args.tail), None)
+
+        for key, val in stuff[sl]:
             print(key, val, sep=": ")
         print()
 
@@ -466,6 +474,9 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
             'instances',
             help='displays known instances of a workflow')
         instance.add_argument('workflow')
+        instance.add_argument(
+            '--tail', default='all',
+            help="Trim the output to the end of the list")
 
         info = workflow_commands.add_parser(
             'info',
@@ -484,6 +495,8 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
         skip.add_argument('tasknum', type=int,
                           help='Task number')
         skip.add_argument('reason', nargs=argparse.REMAINDER)
+
+        self.cli._argparser = parser
 
         super().activate()
 
