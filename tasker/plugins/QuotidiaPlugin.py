@@ -39,17 +39,29 @@ QUOTIDIA = os.path.join(os.path.dirname(__file__), 'quotidia')
 
 CLEAN_VOCABULARY = re.compile(r"^[@+]")
 
-CLI_ABOUT = """Quotidia allows you to define tasks on a recurring basis."""
+CLI_ABOUT = """Quotidia allows you to define tasks based on the day of week or
+the day of the month."""
+
+DAYS_FILTER = """The days filter can either be a series of letters indicating
+the day of the week [SMTWRFY] or days of the month separated by semicolons
+[1;15]. There is no shortcut for "last day of the month" or "last Friday of
+the month" or "Saturday before the fourth Sunday of the month".
+
+There is also no mechanism for days of the year (say, "Celebrate Towel Day on
+May 25" or "Remind people that tau is better on March 14 and June 28th").
+"""
 
 
 class Quotidium:
     """Quotidium(qid, text, days [,history])
     Create a Quotidium object.
     """
-    def __init__(self, qid: str, text: str, days: str, history=None):
+    def __init__(self, qid: str, text: str, days: str,
+                 active: bool = True, history=None):
         self.qid = qid
         self.text = text
         self.days = days
+        self.active = active
         self.history = history if history else []
 
     @property
@@ -59,6 +71,7 @@ class Quotidium:
             'qid': self.qid,
             'text': self.text,
             'days': self.days,
+            'active': self.active,
             'history': [d.isoformat() for d in self.history]}
         return this
 
@@ -73,6 +86,10 @@ class Quotidium:
     def last_run(self):
         return max(self.history, default=datetime.date.min)
 
+    @property
+    def recurancetype(self):
+        return "DOW" if self.days.isalpha() else "DOM"
+
 
 class QuotidiaEncoder(json.JSONEncoder):
     """Custom JSON Encoder"""
@@ -85,10 +102,14 @@ class QuotidiaEncoder(json.JSONEncoder):
 
 def load_quotidia(dct):
     if "__quotidia__" in dct:
+        # add active flag if quotidium was created before the flag was added
+        if 'active' not in dct:
+            dct['active'] = True
         return Quotidium(
             dct['qid'],
             dct['text'],
             dct['days'],
+            dct['active'],
             [datetime.date.fromisoformat(d) for d in dct['history']])
     return dct
 
@@ -100,7 +121,6 @@ class QuotidiaLib:
             os.mkdir(directory)
         self._qids = {}
         self.now = datetime.datetime.now()
-        self.daycode = "MTWRFYS"[self.now.weekday()]
         self.get_quotidia()
 
     @property
@@ -126,12 +146,36 @@ class QuotidiaLib:
                   cls=QuotidiaEncoder)
         LOG.info('saved %s', q.qid)
 
+    def get_todays_quotidia_dev(self):
+        """Return a dictinary of {qid: q} for quotidia that should be run
+        today.
+        Checks against the day of the week.
+        Checks against the day of the month.
+        """
+        # Need to determine if a day was skipped and add it if necessary
+        # If I don't run it on Monday but do on Tuesday, anything that
+        # should haverun on Monday sohuld be included
+        today = datetime.date.now()
+        dow = "MTWRFYS"[today.weekday()]
+        dom = today.day
+
+
     def get_todays_quotidia(self):
+        """Return a dictionary of {qid: q} for quotidia that could be run
+        today.
+        Checks against the day of the week.
+        Checks against the day of the month.
+        """
         now = datetime.datetime.now()
         daycode = "MTWRFYS"[now.weekday()]
         LOG.debug("Checking for quotidia with daycode %s", daycode)
-        return {(qid, q) for (qid, q) in self._qids.items()
-                if daycode in q.days}
+        by_weekday = {(qid, q) for (qid, q) in self._qids.items()
+                      if daycode in q.days}
+        dom = str(now.day)
+        by_dom = {(qid, q) for (qid, q) in self._qids.items()
+                  if dom in q.days.split(';')}
+        by_weekday.update(by_dom)
+        return by_weekday
 
     def process_quotidia(self):
         q_to_run = []
@@ -155,8 +199,8 @@ class QuotidiaCLI(minioncmd.MinionCmd):
     minion_header = "Other subcommands (type <topic> help)"
     doc_leader = """Quotidia Help
 
-    Create and use pre-programmed tasks to generate sequentially without
-    clogging up the Z-priority list
+    Create and use pre-programmed tasks to generate automatically without
+    clogging up the Z-priority list or hiding hundreds of future tasks.
     """
 
     def __init__(self, completekey='tab', stdin=None, stdout=None,
@@ -194,8 +238,9 @@ class QuotidiaCLI(minioncmd.MinionCmd):
         List current quotidia
         """
         print("Quotidia list:", file=self.stdout)
-        for idx, flow in enumerate(self.qlib.quotidia, start=1):
-            print(idx, flow, file=self.stdout)
+        for idx, flow in enumerate(self.qlib._qids, start=1):
+            print(idx, self.qlib._qids[flow].recurancetype,
+                  flow, file=self.stdout)
         print()
 
     def do_info(self, text):
@@ -210,8 +255,8 @@ class QuotidiaCLI(minioncmd.MinionCmd):
         q = self.qlib.quotidia[text]
         print(q, "Last run on:", q.last_run)
 
-    def do_create(self, text):
-        """Usage: create NAME
+    def do_new(self, text):
+        """Usage: new NAME
 
         Create a new quotidia. A wizard collects the necessary information.
         """
@@ -240,8 +285,8 @@ class QuotidiaCLI(minioncmd.MinionCmd):
 
         day_ok = False
         while not day_ok:
-            days = input("Please enter the days to run: [SMTWRFY]")
-            day_ok = re.match(r"^S?M?T?W?R?F?Y?$", days)
+            days = input("Please enter the days to run: [SMTWRFY or 1;2;...]")
+            day_ok = re.match(r"^S?M?T?W?R?F?Y?$|^(\d{1,2};?)+$", days)
 
         fname = "%s.quotidia" % newname
         self.qlib.add_quotidia(newname, text, days)
@@ -250,6 +295,10 @@ class QuotidiaCLI(minioncmd.MinionCmd):
     def help_about(self):
         """About this plugin"""
         print(CLI_ABOUT)
+
+    def help_days(self):
+        "Information about the days filter"
+        print(DAYS_FILTER)
 
 
 class Quotidia(basetaskerplugin.SubCommandPlugin):
