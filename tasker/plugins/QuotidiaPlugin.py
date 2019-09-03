@@ -24,6 +24,7 @@ the thing was run on the same day as today. This can be a day check.  """
 import os
 import argparse
 import datetime
+import calendar
 import json
 import pathlib
 import re
@@ -154,11 +155,31 @@ class QuotidiaLib:
         """
         # Need to determine if a day was skipped and add it if necessary
         # If I don't run it on Monday but do on Tuesday, anything that
-        # should haverun on Monday sohuld be included
-        today = datetime.date.now()
-        dow = "MTWRFYS"[today.weekday()]
-        dom = today.day
+        # should haverun on Monday should be included
+        dayinits = "MTWRFYS"
 
+        def _daysago(startday, dinit):
+            return (startday - dayinits.index(dinit)) % 7
+
+        today = datetime.date.today()
+        tasks_to_add = set()
+        for qid, q in self._qids.items():
+            days_since_run = (today - q.last_run).days
+            if q.recurancetype == 'DOW':
+                should_have_run = min(
+                    (_daysago(today.weekday(), d) for d in q.days))
+                if (should_have_run < days_since_run):
+                    tasks_to_add.add((qid, q))
+            if q.recurancetype == 'DOM':
+                dago = 99999
+                for day in q.days.split(';'):
+                    lyear, lmonth = calendar.prevmonth(today.year, today.month)
+                    should_have_run = datetime.date(lyear, lmonth, int(day))
+                    dago = min((today - should_have_run).days, dago)
+                if dago < days_since_run:
+                    tasks_to_add.add((qid, q))
+
+        return tasks_to_add
 
     def get_todays_quotidia(self):
         """Return a dictionary of {qid: q} for quotidia that could be run
@@ -175,17 +196,19 @@ class QuotidiaLib:
         by_dom = {(qid, q) for (qid, q) in self._qids.items()
                   if dom in q.days.split(';')}
         by_weekday.update(by_dom)
+        print(by_weekday, type(by_weekday))
         return by_weekday
 
     def process_quotidia(self):
         q_to_run = []
-        for (qid, q) in self.get_todays_quotidia():
+        for (qid, q) in self.get_todays_quotidia_dev():
             days = (self.now.date() - q.last_run).days
             if days > 0:
                 q_to_run.append(q)
         return q_to_run
 
     def run_quotidia(self, qid):
+        """Updates quotidium with latest run data"""
         if qid not in self._qids:
             LOG.error('Cannot run qid %s: does not exist', qid)
             raise ValueError('Cannot run qid %s: qid does not exist' % qid)
@@ -254,6 +277,22 @@ class QuotidiaCLI(minioncmd.MinionCmd):
             return
         q = self.qlib.quotidia[text]
         print(q, "Last run on:", q.last_run)
+
+    def do_details(self, name):
+        """Usage: details NAME
+
+        Print details about a given quotidia"""
+        text = name.strip()
+        if text not in self.qlib.quotidia:
+            print(f'No quotidia name "{text}" found.')
+            return
+        q = self.qlib.quotidia[text]
+        print(f'QID: {q.qid}')
+        print(f'Text: {q.task_text}')
+        print(f'Days: {q.days}')
+        print(f'RType: {q.recurancetype}')
+        print(f'Last Run: {q.last_run}')
+        print(f'Active: {q.active}')
 
     def do_new(self, text):
         """Usage: new NAME
@@ -329,8 +368,12 @@ class Quotidia(basetaskerplugin.SubCommandPlugin):
         run.add_argument('text', help="optional subcommand (debug)",
                          default="pass", nargs='?')
         info = quotidia_commands.add_parser('info',
-                                            help='details on a quotidium')
+                                            help='info about a quotidium')
         info.add_argument('name', help="the name of the quotidium")
+
+        details = quotidia_commands.add_parser('details',
+                                               help='details on a quotidium')
+        details.add_argument('name', help='the name of the quotidium')
 
         create = quotidia_commands.add_parser('new',
                                               help='create a new quotidium')
