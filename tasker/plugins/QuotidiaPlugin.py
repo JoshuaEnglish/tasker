@@ -29,6 +29,7 @@ import json
 import pathlib
 import re
 import logging
+import itertools
 
 import basetaskerplugin
 import minioncmd
@@ -170,6 +171,11 @@ class QuotidiaLib:
                     (_daysago(today.weekday(), d) for d in q.days))
                 if (should_have_run < days_since_run):
                     tasks_to_add.add((qid, q))
+                    logging.debug("%s ran %d days ago, adding",
+                                  qid, days_since_run)
+                else:
+                    logging.debug("%s ran %d days ago. Skipping",
+                                  qid, days_since_run)
             if q.recurancetype == 'DOM':
                 dago = 99999
                 for day in q.days.split(';'):
@@ -258,13 +264,28 @@ class QuotidiaCLI(minioncmd.MinionCmd):
     def do_list(self, text):
         """Usage: list
 
-        List current quotidia
+        List current quotidia. Can add fields to include in the report
+        such as `last_run` or `task_text`.
         """
+        fields = text.split()
         print("Quotidia list:", file=self.stdout)
+        idxlen = len(str(len(self.qlib._qids)))
+        idlen = max(len(qid) for qid in self.qlib._qids)
+        lengths = {}
+        for field, flow in itertools.product(fields, self.qlib._qids):
+            lengths[field] = max(
+                lengths.setdefault(field, 0),
+                len(str(getattr(self.qlib._qids[flow], field))))
+
         for idx, flow in enumerate(self.qlib._qids, start=1):
-            print(idx, self.qlib._qids[flow].recurancetype,
-                  flow, file=self.stdout)
-        print()
+            print(f"{idx:{idxlen}}", self.qlib._qids[flow].recurancetype,
+                  f"{flow:{idlen}}", end=' ', file=self.stdout)
+            for field in fields:
+                thing = str(getattr(self.qlib._qids[flow], field))
+                print(f"{thing:{lengths[field]}}",
+                      end=" ")
+
+            print(file=self.stdout)
 
     def do_info(self, text):
         """Usage: info NAME
@@ -363,16 +384,26 @@ class Quotidia(basetaskerplugin.SubCommandPlugin):
                                                   dest='subcommand',
                                                   metavar='')
 
-        quotidia_commands.add_parser('list', help='lists known quotidia')
+        lister = quotidia_commands.add_parser(
+            'list',
+            help='lists known quotidia')
+        lister.add_argument(
+            'text',
+            help="optional fields",
+            nargs="*")
+
         run = quotidia_commands.add_parser('run', help='manually run quotidia')
         run.add_argument('text', help="optional subcommand (debug)",
                          default="pass", nargs='?')
-        info = quotidia_commands.add_parser('info',
-                                            help='info about a quotidium')
+
+        info = quotidia_commands.add_parser(
+            'info',
+            help='info about a quotidium')
         info.add_argument('name', help="the name of the quotidium")
 
-        details = quotidia_commands.add_parser('details',
-                                               help='details on a quotidium')
+        details = quotidia_commands.add_parser(
+            'details',
+            help='details on a quotidium')
         details.add_argument('name', help='the name of the quotidium')
 
         create = quotidia_commands.add_parser('new',
