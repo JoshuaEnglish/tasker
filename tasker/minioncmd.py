@@ -124,6 +124,9 @@ class BossCmd(ExtHelpCmd):
         #: dynamically applied to minions
         self.switchers = {}
 
+        # Flag to check if we are processing the command queue
+        self._processing_command_queue = False
+
     def preloop(self):
         """Sets the instance ``inloop`` property to ``True``"""
         self.inloop = True
@@ -193,8 +196,9 @@ class BossCmd(ExtHelpCmd):
             return True
 
         switch_to_minion.__name__ = "do_%s" % name
-        switch_to_minion.__doc__ = ("Send a single command to the {} "
-                                    "subprogram or begin its loop").format(name)
+        switch_to_minion.__doc__ = (
+            "Send a single command to the {} "
+            "subprogram or begin its loop").format(name)
 
         self.switchers[name] = switch_to_minion
 
@@ -224,11 +228,9 @@ class BossCmd(ExtHelpCmd):
         :rtype: boolean
         """
         stop = super().onecmd(line)
-        self.process_queue()
-#        while len(self.cmdqueue):
-#            text = self.cmdqueue.pop(0)
-#            self._log.debug("Processing queued command: %s", text)
-#            self.onecmd(text)
+        if not self._processing_command_queue:
+            self._processing_command_queue = True
+            self.process_queue()
         return stop
 
     def process_queue(self):
@@ -236,6 +238,7 @@ class BossCmd(ExtHelpCmd):
             text = self.cmdqueue.pop(0)
             self._log.debug("Processing queued command: %s", text)
             self.onecmd(text)
+        self._processing_command_queue = False
 
 
 class MinionCmd(ExtHelpCmd):
