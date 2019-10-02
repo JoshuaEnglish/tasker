@@ -262,6 +262,10 @@ class DashboardCLI(minioncmd.MinionCmd):
         projectid = words.pop(0)
         name = ' '.join(words)
 
+        while not name:
+            print("Please provide a name for the project in a single line")
+            name = input("> ")
+
         background = []
         print("Please provide some background. Enter DONE on a single line to "
               "finish.")
@@ -285,11 +289,13 @@ class DashboardCLI(minioncmd.MinionCmd):
         """Usage: details PROJECTID [inorder]
 
         Print details of a project. If second word is 'inorder' then notes
-        will be printed in chronological order.
+        will be printed in chronological order. (Default is reverse
+        chronological order.)
         """
         words = text.split()
         projectid = words.pop(0)
-        inorder = words and words[0].lower() in ['inorder', 'true', '--inorder']
+        orderflags = ['inorder', 'true', '--inorder']
+        inorder = words and words[0].lower() in orderflags
         try:
             details = self.dashlib.get_project_details(projectid, inorder)
         except DashboardError as E:
