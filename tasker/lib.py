@@ -31,7 +31,7 @@ __history__ = """
 
 
 TIMEFMT = '%Y-%m-%dT%H:%M:%S'
-IDFMT = '%H%M%S%d%m%y'
+IDFMT = '%H%M%S%f%d%m%y'
 DATEFMT = '%Y-%m-%d'
 
 re_task = re.compile(
