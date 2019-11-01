@@ -17,6 +17,7 @@ which enhances the basic :meth:`~ExtHelpCmd.do_help` method.
 
 import cmd
 import logging
+import time
 
 
 class ExtHelpCmd(cmd.Cmd):
@@ -238,6 +239,7 @@ class BossCmd(ExtHelpCmd):
             text = self.cmdqueue.pop(0)
             self._log.debug("Processing queued command: %s", text)
             self.onecmd(text)
+            time.sleep(10)  # small small delay to guarantee unique ids.
         self._processing_command_queue = False
 
 
