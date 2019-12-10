@@ -165,6 +165,8 @@ class QuotidiaLib:
         today = datetime.date.today()
         tasks_to_add = set()
         for qid, q in self._qids.items():
+            if not q.active:
+                continue
             days_since_run = (today - q.last_run).days
             if q.recurancetype == 'DOW':
                 should_have_run = min(
@@ -389,7 +391,7 @@ class Quotidia(basetaskerplugin.SubCommandPlugin):
             help='lists known quotidia')
         lister.add_argument(
             'text',
-            help="optional fields",
+            help="optional fields (i.e. active last_run task_text)",
             nargs="*")
 
         run = quotidia_commands.add_parser('run', help='manually run quotidia')
