@@ -89,6 +89,10 @@ class Quotidium:
         return max(self.history, default=datetime.date.min)
 
     @property
+    def run_count(self):
+        return len(self.history)
+
+    @property
     def recurancetype(self):
         return "DOW" if self.days.isalpha() else "DOM"
 
@@ -147,6 +151,18 @@ class QuotidiaLib:
         json.dump(q, (self.directory / fname).open(mode="w"),
                   cls=QuotidiaEncoder)
         LOG.info('saved %s', q.qid)
+
+    def activate_quotidium(self, qid):
+        q = self._qids[qid]
+        LOG.debug('quotidium to activate %s', q)
+        q.active = True
+        self.save_quotidium(q)
+
+    def deactivate_quotidium(self, qid):
+        q = self._qids[qid]
+        LOG.debug('quotidium to deactivate %s', q)
+        q.active = False
+        self.save_quotidium(q)
 
     def get_todays_quotidia_dev(self):
         """Return a dictinary of {qid: q} for quotidia that should be run
@@ -218,7 +234,7 @@ class QuotidiaLib:
     def run_quotidia(self, qid):
         """Updates quotidium with latest run data"""
         if qid not in self._qids:
-            LOG.error('Cannot run qid %s: does not exist', qid)
+            LOG.critical('Cannot run qid %s: does not exist', qid)
             raise ValueError('Cannot run qid %s: qid does not exist' % qid)
         self._qids[qid].history.insert(0, datetime.date.today())
         LOG.debug('Updated qid %s with current time', qid)
@@ -354,6 +370,18 @@ class QuotidiaCLI(minioncmd.MinionCmd):
         self.qlib.add_quotidia(newname, text, days)
         print("Created new quotidia in", fname)
 
+    def do_activate(self, text):
+        """Usage: activate QID
+
+        Activate a quotidia"""
+        self.qlib.activate_quotidium(text)
+
+    def do_deactivate(self, text):
+        """Usage: deactivate QID
+
+        Activate a quotidia"""
+        self.qlib.deactivate_quotidium(text)
+
     def help_about(self):
         """About this plugin"""
         print(CLI_ABOUT)
@@ -412,5 +440,19 @@ class Quotidia(basetaskerplugin.SubCommandPlugin):
                                               help='create a new quotidium')
         create.add_argument('name',
                             help='the name of the new quotidium')
+
+        activate = quotidia_commands.add_parser(
+            'activate',
+            help="Turn on a quotidium")
+        activate.add_argument(
+            'qid',
+            help='the name of the quotidium to activate')
+
+        deactivate = quotidia_commands.add_parser(
+            'deactivate',
+            help="Turn off a quotidium")
+        deactivate.add_argument(
+            'qid',
+            help='the name of the quotidium to deactivate')
 
         super().activate()
