@@ -20,6 +20,13 @@ import lister
 
 DASHBOARD = os.path.join(os.path.dirname(__file__), 'dashboards')
 
+__todo__ = """
+Option to include DONE projects in report
+Option to exclude not DONE projects in report (or only DONE)
+Command to archive projects
+Command to report on archive
+"""
+
 
 class DashboardError(ValueError):
     pass
