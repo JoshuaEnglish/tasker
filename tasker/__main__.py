@@ -250,8 +250,8 @@ def load_plugins(manager, CLI):
                 cli = getattr(plugin, 'cli')
                 CLI.add_minion(name, cli)
             else:
-                log.warn("Subcommand plugin %s has no MinionCmd instance",
-                         info.name)
+                log.warning("Subcommand plugin %s has no MinionCmd instance",
+                            info.name)
 
         elif info.category == 'NewCommand':
             log.info('Adding %s NewCommand to CLI', info.name)
