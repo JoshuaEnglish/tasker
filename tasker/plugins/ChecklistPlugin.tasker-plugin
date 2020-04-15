@@ -1,0 +1,11 @@
+# Plugin Definition File
+# manually created becasue I forgot I automated the creation
+[Core]
+Name = Checklist
+Module = ChecklistPlugin
+
+[Documentation]
+Author = Josh English
+Version = 1.0
+Website = https://joshuarenglish.com
+Description = Checklist manager

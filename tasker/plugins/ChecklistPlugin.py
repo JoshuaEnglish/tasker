@@ -11,7 +11,11 @@ import pathlib
 import copy
 import datetime
 import argparse
-import xml.etree.ElementTree as ET
+from string import Template
+try:
+    from lxml import etree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
 
 import basetaskerplugin
 import minioncmd
@@ -30,7 +34,6 @@ HERE = pathlib.Path(__file__).resolve().parent
 CHECKLISTS = HERE / 'checklists'
 
 
-
 class ChecklistLib(object):
     def __init__(self, directory):
         self._log = logging.getLogger('checklistlib')
@@ -41,13 +44,34 @@ class ChecklistLib(object):
         self.checklists = {}
         self.paths = {}
         for path in self.directory.glob('*.xml'):
-            node = ET.parse(path)
+            node = ET.parse(str(path))
             root = node.getroot()
             self.checklists[path.stem] = root
             self.paths[path.stem] = path.resolve()
-            node.write(self.directory / 'backup' / f"{path.stem}.bak",
+            node.write(str(self.directory / 'backup' / f"{path.stem}.bak"),
                        encoding='utf-8',
                        xml_declaration=True)
+
+    def create_report(self):
+        '''return a list of checklists, instances, number of tasks, and
+        number of open tasks, and a completion ratio.'''
+        res = []
+        self._log.debug('Creating Report')
+        for clist in self.checklists:
+            self._log.debug('Scanning checklist %s', clist)
+            for inst in self.list_instances(clist):
+                self._log.debug('Checking instance %s', inst)
+                this = self.checklists[clist].find(
+                    f'instance[@id="{inst}"]')
+                groupcnt = 0
+                opencnt = 0
+                for group in this.iterfind('group/subgroup'):
+                    groupcnt += 1
+                    if not self._is_subgroup_complete(group):
+                        opencnt += 1
+                res.append((clist, inst, groupcnt, opencnt,
+                           1.0 - float(opencnt)/groupcnt))
+        return res
 
     def new_template(self, name):
         """creates a default empty checklist file"""
@@ -108,10 +132,41 @@ class ChecklistLib(object):
             msg = 'Checklist id %s already exists', newid
             self._log.error(msg)
             return BAD, msg
+        # is it possible to automatically add completed="false" flags
+        # to all actions, and dated="false" if it doesn't exist?
+        self._log.debug('Setting unset completed and dated actions')
+        for action in candidate.findall(".//action"):
+            if 'completed' not in action.attrib:
+                action.attrib['completed'] = 'false'
+            if 'dated' not in action.attrib:
+                action.attrib['dated'] = 'false'
+
+        self._log.debug("Creating tasks for checklist")
+        for trigger in candidate.findall('.//trigger'):
+            # ensure the {cn:} tag is in the text
+            t = Template(trigger.text)
+            text = t.substitute(instanceid=newid)
+
+            cntag = f"{{cn:{checklistname}}}"
+            if cntag not in text:
+                text = text+" "+cntag
+
+            cidtag = f"{{cid:{newid}}}"
+            if cidtag not in text:
+                text = text+" "+cidtag
+
+            csteptag = f"{{cstep:{trigger.getparent().get('id')}}}"
+            if csteptag not in text:
+                text = text+" "+csteptag
+
+            trigger.text = text
+            self._plugin.lib.add_task(text)
+
         this.append(candidate)
         self._write_checklist(checklistname)
         msg = f"Created {checklistname} instance for {newid}"
         self._log.info(msg)
+
         return True, msg
 
     def _write_checklist(self, checklistname):
@@ -145,7 +200,7 @@ class ChecklistLib(object):
             f'instance[@id="{checklistid}"]')
         if this is None:
             self._log.error('No %s checklist instance for %s',
-                          checklistname, checklistid)
+                            checklistname, checklistid)
             return False
 
         return [group for group in this.iterfind('group/subgroup')
@@ -164,12 +219,10 @@ class ChecklistLib(object):
 
         return completed
 
-    def _get_subgroup(self, checklistname, instanceid, subgroupid):
-        """return the node for a subgroup. Return None if no
-        subgroup is found"""
-
-        self._log.debug('Getting %s subgroups of %s (%s)',
-                      subgroupid, instanceid, checklistname)
+    def _get_instance(self, checklistname, instanceid):
+        '''return the instance node if it exists'''
+        self._log.debug('Getting %s instance of %s',
+                        instanceid, checklistname)
         if checklistname not in self.checklists:
             self._log.error('No checklist named %s', checklistname)
             return None
@@ -177,13 +230,27 @@ class ChecklistLib(object):
             f'instance[@id="{instanceid}"]')
         if this is None:
             self._log.error('No %s checklist instance for %s',
-                          checklistname, instanceid)
+                            checklistname, instanceid)
+            return None
+        return this
+
+    def _get_subgroup(self, checklistname, instanceid, subgroupid):
+        """return the node for a subgroup. Return None if no
+        subgroup is found"""
+
+        self._log.debug('Getting %s subgroups of %s (%s)',
+                        subgroupid, instanceid, checklistname)
+        # if checklistname not in self.checklists:
+        #     self._log.error('No checklist named %s', checklistname)
+        #     return None
+        this = self._get_instance(checklistname, instanceid)
+        if this is None:
             return None
 
         res = this.find(f'group/subgroup[@id="{subgroupid}"]')
         if res is None:
-            self._log.error('No subgroup under % with id %s',
-                          instanceid, subgroupid)
+            self._log.error('No subgroup under %s with id %s',
+                            instanceid, subgroupid)
         return res
 
     def list_inputs(self, checklistname, instance, subgroup):
@@ -226,7 +293,7 @@ class ChecklistLib(object):
         """
         value = value or 'true'
         self._log.info('Marking %s:%d complete in %s (%s)',
-                     subgroup, number, instance, checklistname)
+                       subgroup, number, instance, checklistname)
         subgroup = self._get_subgroup(checklistname, instance, subgroup)
         if subgroup is None:
             msg = f"No subgroup {subgroup} in {instance} of {checklistname}"
@@ -318,8 +385,20 @@ class ChecklistCLI(minioncmd.MinionCmd):
         instance of a checklist. Also notes if the task has separate
         inputs or an information block
         '''
-        clist, inst, *junk = text.split(maxsplit=2)
+        try:
+            clist, inst, *junk = text.split(maxsplit=2)
+        except ValueError as E:
+            print(E)
+            return False
         headers = ['ID', 'Name', 'Inputs', 'Info']
+        nodes = self.checklib.get_open_subgroups(clist, inst)
+        if nodes is None:
+            print(f'No checklist "{clist}" found')
+            return False
+        if nodes is False:
+            print(f'No instance "{inst}" found')
+            return False
+
         stuff = [(node.get('id'), node.get('name'),
                   str(node.find('input') is not None),
                   str(node.find('information') is not None))
@@ -365,19 +444,45 @@ class ChecklistCLI(minioncmd.MinionCmd):
         for info in subgroup.findall('information'):
             print(info.text)
 
+    def do_report(self, text):
+        '''lists a report of all checklists'''
+        header = "Checklist Instance Tasks Open Progress".split()
+        lister.print_list(
+            [(c, i, str(g), str(o), f'{r:02f}%') for c, i, g, o, r in
+             self.checklib.create_report()],
+            header)
+
+    def do_subgroups(self, text):
+        """Usage: subgroups checklist instance
+        Prints subgroups of the instance"""
+        try:
+            clist, inst, *junk = text.split(maxsplit=2)
+        except ValueError as E:
+            print(E)
+            return False
+        inst = self.checklib._get_instance(clist, inst)
+
     def do_inputs(self, text):
         """Usage: inputs checklist instance subgroupid
         Lists inputs related to a task."""
-        clist, inst, sgid, *junk = text.split(maxsplit=3)
+        try:
+            clist, inst, sgid, *junk = text.split(maxsplit=3)
+        except ValueError as E:
+            print(E)
+            return False
         header = '# Input Value'.split()
         lister.print_list(
-            [(str(i), n, str(t)) for i,n,t in
-              self.checklib.list_inputs(clist, inst, sgid)],
+            [(str(i), n, str(t)) for i, n, t in
+             self.checklib.list_inputs(clist, inst, sgid)],
             header)
 
     def do_fill(self, text):
         """Usage: fill checklist instance subgroup number value"""
-        clist, inst, sgid, num, *value = text.split(maxsplit=4)
+        try:
+            clist, inst, sgid, num, *value = text.split(maxsplit=4)
+        except ValueError as E:
+            print(E)
+            return False
         res, msg = self.checklib.fill_input(
             clist, inst, sgid, int(num), ''.join(value))
         if res:
@@ -388,13 +493,19 @@ class ChecklistCLI(minioncmd.MinionCmd):
     def do_do(self, text):
         """Usage: do checklist instance subgroupid number [,date]
         Mark a particular action complete. Will default to today's date
-        if date is required but no date given"""
-        clist, inst, sgid, num, *stuff = text.split(maxsplit=4)
+        if date is required but no date given.
+        Date should by in ISO format (YYYY-MM-DD)
+        """
+        try:
+            clist, inst, sgid, num, *stuff = text.split(maxsplit=4)
+        except ValueError as E:
+            print(E)
+            return False
         if len(stuff) == 0:
             stuff.append(datetime.date.today().isoformat())
         try:
             datetime.date.fromisoformat(stuff[0])
-            this_date =stuff[0]
+            this_date = stuff[0]
         except (ValueError, TypeError):
             this_date = datetime.date.today().isoformat()
         res, msg = self.checklib.complete_action(
@@ -407,18 +518,6 @@ class ChecklistCLI(minioncmd.MinionCmd):
             print(res, msg)
         else:
             print(msg)
-        """subgroup = self.checklib._get_subgroup(clist, inst, sgid)
-        if subgroup is None:
-            print('No subgroup found')
-            return False
-        res = {}
-        for idx, node in enumerate(subgroup.findall('action'), 1):
-            res[str(idx)] = node
-        if num not in res:
-            print("No action number in subgroup found")
-            return False
-        res[num].set('completed', this_date)
-        self.checklib._write_checklist(clist)"""
 
 
 class ChecklistPlugin(basetaskerplugin.SubCommandPlugin):
@@ -430,7 +529,7 @@ class ChecklistPlugin(basetaskerplugin.SubCommandPlugin):
 
         self.cli_name = 'checklist'
         self.checklib = ChecklistLib(self.getConfigOption('directory'))
-
+        self.checklib._plugin = self
         self.cli = ChecklistCLI(checklib=self.checklib)
 
         parser = self.parser = argparse.ArgumentParser('checklist')
@@ -452,6 +551,42 @@ class ChecklistPlugin(basetaskerplugin.SubCommandPlugin):
             parser: 'Checklists'}
 
         super().activate()
+
+    def complete_task(self, this):
+        """Hook method called when completing tasks
+
+        This method can access the the TaskLib instance through the
+        ``self.lib`` property.
+
+        Args:
+            this: the :class:`Task` being added
+
+        Returns:
+            tuple: (code, message, this)
+
+            code is 0 for TASK_OK or 2 for TASK_EXT_ERROR
+            message is a string explaining the error (empty string if code
+            is 0)
+            this is the task, either as passed or if edited
+        """
+        # Check if the completed task refers to a checklist
+        if 'cn' not in this.extensions:
+            return (0, None, this)
+
+        subgroup = self.checklib._get_subgroup(
+            this.extensions.get('cn', ''),
+            this.extensions.get('cid', ''),
+            this.extensions.get('cstep', ''))
+        if subgroup is None:
+            return (0, None, this)
+
+        if not self.checklib._is_subgroup_complete(subgroup):
+            msg = "Please complete the %s subgroup on the %s checklist"
+            msg = msg.format(this.extensions['cstep'],
+                             this.extensions['cid'])
+            print(msg)
+
+        return (0, "", this)
 
 
 if __name__ == '__main__':

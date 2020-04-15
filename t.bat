@@ -1,3 +1,3 @@
 @echo off
 
-python tasker %*
+python  tasker %*
