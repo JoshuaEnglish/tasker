@@ -191,6 +191,7 @@ class ChecklistLib(object):
         """get_open_subgroups(checklistname, checklistid)
         Return actual nodes of subgroups that are not fully marked
         as complete.
+        Return list of tuples (groupname, [list of subgroups])
         """
         self._log.info('Listing open subgroups of %s', checklistid)
         if checklistname not in self.checklists:
@@ -202,9 +203,16 @@ class ChecklistLib(object):
             self._log.error('No %s checklist instance for %s',
                             checklistname, checklistid)
             return False
+        groups = [(g.get('name'), g) for g in this.iterfind('group')]
+        # check that a group has open subgroups
+        res = []
+        for gname, gnode in groups:
+            opentasks = [sg for sg in gnode.iterfind('subgroup')
+                         if not self._is_subgroup_complete(sg)]
+            if opentasks:
+                res.append((gname, opentasks))
 
-        return [group for group in this.iterfind('group/subgroup')
-                if not self._is_subgroup_complete(group)]
+        return res
 
     def _is_subgroup_complete(self, node):
         """Return true if all the actions in a node are complete"""
@@ -388,22 +396,26 @@ class ChecklistCLI(minioncmd.MinionCmd):
         try:
             clist, inst, *junk = text.split(maxsplit=2)
         except ValueError as E:
+            self._log.error(E)
             print(E)
             return False
         headers = ['ID', 'Name', 'Inputs', 'Info']
-        nodes = self.checklib.get_open_subgroups(clist, inst)
-        if nodes is None:
-            print(f'No checklist "{clist}" found')
+        if clist not in self.checklib.checklists:
+            print(f"No checklist named {clist}")
             return False
-        if nodes is False:
+        instance = self.checklib._get_instance(clist, inst)
+        if instance is None:
             print(f'No instance "{inst}" found')
             return False
-
-        stuff = [(node.get('id'), node.get('name'),
-                  str(node.find('input') is not None),
-                  str(node.find('information') is not None))
-                 for node in self.checklib.get_open_subgroups(clist, inst)]
-        lister.print_list(stuff, headers)
+        print(clist, inst)
+        for gname, nodes in self.checklib.get_open_subgroups(clist, inst):
+            print(gname)
+            print('-'*len(gname))
+            stuff = [(node.get('id'), node.get('name'),
+                      str(node.find('input') is not None),
+                      str(node.find('information') is not None))
+                     for node in nodes]
+            lister.print_list(stuff, headers)
 
     def do_actions(self, text):
         """Usage actions checklist instance subgroupid
