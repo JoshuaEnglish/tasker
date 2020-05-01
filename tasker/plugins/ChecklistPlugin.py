@@ -438,6 +438,29 @@ class ChecklistCLI(minioncmd.MinionCmd):
                         node.get('dated', 'false')])
         lister.print_list(res, '# Action Completed Dated'.split())
 
+    def do_getheader(self, text):
+        """usage getheader checklist instance
+        Lists the header information"""
+        try:
+            clist, inst, *junk = text.split(maxsplit=2)
+        except ValueError as E:
+            self._log.error(E)
+            print(E)
+            return False
+        if clist not in self.checklib.checklists:
+            print(f"No checklist named {clist}")
+            return False
+        instance = self.checklib._get_instance(clist, inst)
+        if instance is None:
+            print(f'No instance "{inst}" found')
+            return False
+
+        header = 'Name Value'.split()
+        lister.print_list(
+            [(i.get('name'), i.text.strip()) for i in
+             instance.findall('header/input')],
+            header)
+
     def do_getinfo(self, text):
         """Usage getinfo checklist instance subgroupid
         List information about a task."""
@@ -473,6 +496,20 @@ class ChecklistCLI(minioncmd.MinionCmd):
             print(E)
             return False
         inst = self.checklib._get_instance(clist, inst)
+        if inst is None:
+            print("No instance found.")
+            return None
+
+        stuff = []
+        for group in inst.findall('group'):
+            thisgroup = group.get('name')
+            for subgroup in group.findall('subgroup'):
+                stuff.append((thisgroup,
+                              subgroup.get('id'),
+                              subgroup.get('name')))
+        lister.print_list(
+            stuff,
+            ["Group", "Subgroup ID", "Subgroup Name"])
 
     def do_inputs(self, text):
         """Usage: inputs checklist instance subgroupid
@@ -530,6 +567,36 @@ class ChecklistCLI(minioncmd.MinionCmd):
             print(res, msg)
         else:
             print(msg)
+
+    def do_nexttasks(self, text):
+        """Usage nexttasks [checklist]
+        Returns a list of the next tasks to be done.
+        If a checklist name is given, only looks through that checklist type
+        """
+        checklists = text.split()
+        if not checklists:
+            checklists = self.checklib.checklists
+
+        res = []
+
+        for listname in checklists:
+            if listname not in self.checklib.checklists:
+                continue
+
+            for inst in self.checklib.list_instances(listname):
+                open_subgroups = self.checklib.get_open_subgroups(
+                    listname, inst)
+                if open_subgroups:
+                    res.append((
+                        listname,
+                        inst,
+                        open_subgroups[0][0],
+                        open_subgroups[0][1][0].get('id'),
+                        open_subgroups[0][1][0].get('name')))
+
+        lister.print_list(
+            res,
+            ['Checklist', 'Instance', 'Group', 'ID', 'Name'])
 
 
 class ChecklistPlugin(basetaskerplugin.SubCommandPlugin):
