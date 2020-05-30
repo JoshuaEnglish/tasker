@@ -6,6 +6,7 @@ Manages complex checklists that the workflow plugin cannot handle well
 Created on 2020-03-24
 """
 
+import os
 import logging
 import pathlib
 import copy
@@ -332,6 +333,49 @@ class ChecklistLib(object):
         to the day. Will query for any unanswered inputs'''
         pass
 
+    def html_report(self):
+        '''create and open an HTML report of the current checklists'''
+        html = ET.Element('html')
+        body = ET.SubElement(html, 'body')
+
+        red = "#ff0000"
+        green = "#00ff00"
+
+        for checklist in self.checklists:
+            node = self.checklists[checklist]
+            ET.SubElement(body, 'h1').text = checklist
+
+            table = ET.SubElement(body, 'table', border="1")
+            thead = ET.SubElement(table, 'thead')
+            tr = ET.SubElement(thead, 'tr')
+            ET.SubElement(tr, 'th').text = ""
+            tr2 = ET.SubElement(thead, 'tr')
+            ET.SubElement(tr2, 'th').text = "Key"
+            tbody = ET.SubElement(table, 'tbody')
+            template = node.find('_template')
+            for group in template.findall('group'):
+                cols = len(group.findall('subgroup'))
+                ET.SubElement(
+                    tr, 'th', colspan="%d" % cols).text = group.get('name')
+                for subgroup in group.findall('subgroup'):
+                    ET.SubElement(tr2, 'th').text = subgroup.get('name')
+
+            subgroups = [sb.get('name')
+                         for sb in template.findall('group/subgroup')]
+
+            for instance in node.findall('instance'):
+                row = ET.SubElement(tbody, 'tr')
+                ET.SubElement(row, 'td').text = instance.get('id')
+                for subgroup in subgroups:
+                    sg = instance.find(f'group/subgroup[@name="{subgroup}"]')
+                    col = green if self._is_subgroup_complete(sg) else red
+                    ET.SubElement(row, 'td', bgcolor=col)
+
+        report_name = self.directory / 'report.html'
+        with open(report_name, 'wb') as fp:
+            fp.write(ET.tostring(html))
+        os.startfile(report_name)
+
 
 class ChecklistCLI(minioncmd.MinionCmd):
     prompt = 'checklist>'
@@ -348,6 +392,10 @@ class ChecklistCLI(minioncmd.MinionCmd):
                          stdin=stdin,
                          stdout=stdout)
         self.checklib = checklib
+
+    def do_html(self, text):
+        """create and open an HTML report"""
+        self.checklib.html_report()
 
     def do_new(self, text):
         """creates a new checklist skeleton. User will need to manually edit"""
@@ -597,6 +645,11 @@ class ChecklistCLI(minioncmd.MinionCmd):
         lister.print_list(
             res,
             ['Checklist', 'Instance', 'Group', 'ID', 'Name'])
+
+    def do_headertable(self, text):
+        """Usage: headertable checklist
+        Report on the header data for all instances of a checklist
+        """
 
 
 class ChecklistPlugin(basetaskerplugin.SubCommandPlugin):
