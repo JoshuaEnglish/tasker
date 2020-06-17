@@ -1,0 +1,11 @@
+{% extends "basic.html" %}
+{% block content %}
+<h2>Mark {{idx}} as Complete</h2>
+<p>{{text}}</p>
+<form action='/do' method="post">
+    <input name='tasknum' type="hidden" value="{{idx}}"/>
+    <input name="comment" type="text"/>
+    <input id="markasdone" value="Mark Complete" type="submit"/>
+    <a href='/tasks'>Cancel</a>
+</form>
+{% endblock %}

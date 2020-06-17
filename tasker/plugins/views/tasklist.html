@@ -1,0 +1,43 @@
+{% extends "basic.html" %}
+{% block content %}
+<h2>Tasks</h2>
+<div id="filters">
+    <form action="/tasks" method="POST">
+        Priority: <select id='priority' name='pri'>
+            {% for pri in priorities %}
+            <option value="{{pri}}">{{pri}}</option>
+            {% endfor %}
+        </select>
+        Project: <select id="project" name="project">
+            <option value="">Any</option>
+            {% for project in projects %}
+            <option value="{{project}}">{{project}}</option>
+            {% endfor %}
+        </select>
+        Context: <select id="context" name="context">
+            <option value="">Any</option>
+            {% for context in contexts %}
+            <option value="{{context}}">{{context}}</option>
+            {% endfor %}</select>
+        Include Closed:<input type="checkbox" name="showcomplete"/>
+        <input type="text" name="text"/>
+        <input type="submit" id="filtertasks" value="Filter"/>
+    </form>
+</div>
+<table>
+{% for idx, task in tasks %}
+<tr>
+    <td class='taskidx'>{{idx}}</td>
+    <td class="tasktext">{{task}}</td>
+    <td class='dotask'><a href="/dotask/{{idx}}">Mark Done</a>
+</tr>
+{% endfor %}
+</table>
+<div id='addnewtask'>
+    <h2>Add New Task</h2>
+    <form action='/newtask' method="post">
+        New Task: <input name='tasktext' type='text' id="newtaskinput"/>
+        <input id="submitbutton" value="Add" type="submit" />
+    </form>
+</div>
+{% endblock %}
