@@ -320,6 +320,7 @@ class {name}Plugin(basetaskerplugin.{cls}):
         self._log.debug('Activating {name}')
         # edit the following line
         self.setConfigOption('public_methods', 'do_{name}')
+        self.setConfigOption('directory', '${{Files:tasker-dir}}/{name})
 
         {clilink}
         # define argument parsers
