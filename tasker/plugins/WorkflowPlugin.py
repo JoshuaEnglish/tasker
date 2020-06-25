@@ -448,7 +448,8 @@ class Workflow(basetaskerplugin.SubCommandPlugin):
             self.setConfigOption('hidden-extensions', 'wid,ws,wn')
 
         self.cli_name = 'workflow'
-        self.cli = WorkflowCLI()  # needs to be an instance
+        self.cli = WorkflowCLI(
+            workflow_dir=self.getConfigOption('directory'))
 
         parser = self.parser = argparse.ArgumentParser('workflow')
         self.helpstr = 'Workflows commands (see `help workflow`)'
