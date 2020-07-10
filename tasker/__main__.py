@@ -9,6 +9,7 @@ import sys
 import os
 import argparse
 import logging
+import logging.handlers as handlers
 
 from configparser import ConfigParser, ExtendedInterpolation
 
@@ -41,7 +42,7 @@ The argument parser needs to be aware of the plug ins to load, so:
 """
 
 log = logging.getLogger()
-# log.setLevel(0)
+# log.setLevel(logging.NOTSET)
 
 screen_handler = logging.StreamHandler()
 
@@ -74,6 +75,14 @@ config.read([
     os.path.join(INSTALL_DIR, 'defaults.ini'),
     configpath
 ])
+
+# now that we have a directory to dump our logs...
+daily_handler = handlers.TimedRotatingFileHandler(
+    config.get('Files', 'tasker-dir')+'/daily.log',
+    when="D", interval=1)
+daily_handler.setLevel(logging.INFO)
+daily_handler.setFormatter(formatter)
+log.addHandler(daily_handler)
 
 
 def save_config():
@@ -299,7 +308,7 @@ def main():
                 add_subparser(newparser, plugin.parsers[newparser])
 
     args = parser.parse_args(sys.argv[1:])
-    log.setLevel(30 - (args.verbose - args.quiet) * 10)
+    # log.setLevel(30 - (args.verbose - args.quiet) * 10)
     screen_handler.setLevel(30 - (args.verbose - args.quiet) * 10)
     log.info(args)
 
