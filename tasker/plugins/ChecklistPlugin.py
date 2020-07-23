@@ -219,6 +219,8 @@ class ChecklistLib(object):
         """Return true if all the actions in a node are complete"""
         self._log.debug('Checking if %s is complete', node)
         completed = True
+        if node.getparent().get('status', '') == 'abandoned':
+            return True
         for action in node.findall('action'):
             if action.get('completed', 'false') == 'false':
                 completed = False
@@ -340,6 +342,8 @@ class ChecklistLib(object):
 
         red = "#ff0000"
         green = "#00ff00"
+        black = "#333333"
+        grey = "#cccccc"
 
         for checklist in self.checklists:
             node = self.checklists[checklist]
@@ -368,8 +372,27 @@ class ChecklistLib(object):
                 ET.SubElement(row, 'td').text = instance.get('id')
                 for subgroup in subgroups:
                     sg = instance.find(f'group/subgroup[@name="{subgroup}"]')
-                    col = green if self._is_subgroup_complete(sg) else red
+                    if sg is None:
+                        col = black
+                    elif sg.getparent().get('status', '') == 'abandoned':
+                        col = grey
+                    else:
+                        col = green if self._is_subgroup_complete(sg) else red
                     ET.SubElement(row, 'td', bgcolor=col)
+
+        ET.SubElement(body, "h1").text = "Color Key"
+        table = ET.SubElement(body, 'table', border="1")
+        thead = ET.SubElement(table, 'thead')
+        tr = ET.SubElement(thead, 'tr')
+        ET.SubElement(tr, 'th').text = "Color"
+        ET.SubElement(tr, 'th').text = "Meaning"
+        tbody = ET.SubElement(table, 'tbody')
+        cols = (green, red, black, grey)
+        meanings = ('Complete', 'Incomplete', 'Missing', 'Abandonded')
+        for col, meaning in zip(cols, meanings):
+            row = ET.SubElement(tbody, 'tr')
+            ET.SubElement(row, 'td', bgcolor=col)
+            ET.SubElement(row, 'td').text = meaning
 
         report_name = self.directory / 'report.html'
         with open(report_name, 'wb') as fp:
