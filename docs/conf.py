@@ -14,13 +14,13 @@
 
 import sys
 import os
-import shlex
+# import shlex
+from better import better_theme_path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath(r'../tasker'))
-print("Inserting:", os.path.abspath(r'../tasker'))
 
 
 # -- General configuration ------------------------------------------------
@@ -47,7 +47,7 @@ templates_path = ['_templates']
 source_suffix = '.txt'
 
 # The encoding of source files.
-#source_encoding = 'utf-8-sig'
+source_encoding = 'utf-8'
 
 # The master toctree document.
 master_doc = 'index'
@@ -71,7 +71,7 @@ release = '1.4.0.2017.02.02'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -115,22 +115,23 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'butterick'
+html_theme = 'better'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+html_theme_options = {}
+html_theme_options['cssfiles'] = ['_static/butterick.css']
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = ['.']
+html_theme_path = [better_theme_path]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 #html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-#html_short_title = None
+html_short_title = "Home"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -157,7 +158,8 @@ html_static_path = ['_static']
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
-#html_use_smartypants = True
+html_use_smartypants = False
+smartquotes = False
 
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {

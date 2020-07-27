@@ -45,6 +45,7 @@ Extending Tasker
 
    pluginprimer
    pendplugin
+   error
 
 Under the Hood
 --------------
