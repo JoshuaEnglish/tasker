@@ -1,0 +1,41 @@
+There's a particular challenge when trying to trouble shoot or develop plugins
+live. It's hard to just run the XPlugin.py file because it doesn't load up
+the whole system. There is a way using the undocumented poweruser mode::
+
+    > t --power
+    poweruser>python
+    Tasker Python Session
+    >>> plugin = manager.getPlugByName('Quotidia', 'SubCommand')
+    <yapsy.PluginInfo.PluginInfo object at 0x05CA3830>
+    >>> qlib = plugin.plugin_object.cli.qlib
+    <yapsy_loaded_plugin_Quotidia_0.QuotidiaLib object at 0x05FD30F0>
+    >>>
+
+The structure of the plugin requires drilling through the CLI to get to the
+Quotitia Library. In this case, I need to recreate the way the Quotidia plugin
+decides which quotidia to add.
+
+The flaw: Currently quotidia has to be run daily, and it checks either a
+day of the week letter or a day of the month. If I set up a quotidia to run
+on the 20th but the 20th is a Sunday, when I run `quotidia run` on Monday, I
+get nothing.
+
+So I need to explore potential solutions using actual live data. Jumping
+into poweruser mode allows me to play with live data.
+
+The Quotidia Plugin file has a Quotidia object to store individual objects,
+a QuotidiaLib object to manage the library, the QuotidiaCLI that overlays the
+QuotidiaLib object. The Quotidia object is the actual plugin. 
+
+The plugin keeps a reference to the CLI, the CLI keeps the object to the Lib.
+
+After loading the live library, I can explore the data::
+
+    >>> for qid, q in qlib.quotidia.items():
+    ...     print(q.recurancetype, qid, q.days, q.last_run)
+    ...
+    DOW HR T 2019-08-06
+    DOM UpdateWarning 20 0001-01-01
+    ... etc.
+
+

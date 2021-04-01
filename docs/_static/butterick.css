@@ -1,0 +1,76 @@
+/*
+ * butterick.css
+ * ~~~~~~~~~
+ *
+ * Sphinx stylesheet -- Butterick theme.
+ *
+ * :copyright: Copyright 2016 by Josh English, see AUTHORS.
+ * :license: BSD, see LICENSE for details.
+ *
+ * This theme is inspired by Matthew Butterick's Practical Typography
+ *
+ */
+
+
+/* -- page layout ----------------------------------------------------------- */
+
+
+@media all {html {font-size: 18px;}}
+@media all and (max-width:800px){html {font-size: 18px;}}
+@media all and (max-width:760px){html {font-size: 18px;}}
+@media all and (max-width:720px){html {font-size: 18px;}}
+@media all and (max-width:680px){html {font-size: 17px;}}
+@media all and (max-width:640px){html {font-size: 16px;}}
+@media all and (max-width:600px){html {font-size: 15px;}}
+@media all and (max-width:560px){html {font-size: 14px;}}
+@media all and (max-width:520px){html {font-size: 13px;}}
+@media all and (max-width:480px){html {font-size: 12px;}}
+
+@font-face{
+    font-family: 'Charter';
+    font-weight: 400;
+    font-style: normal;
+    font-stretch: normal;
+    src: url('OTF/Charter Regular.otf') format('opentype');
+}
+
+
+.figure {
+    border: solid 1px #333333;
+    padding: 3px;
+    }
+
+.figure p {
+    text-align: center;
+    background-color: #cccccc;}
+
+body { font-family: 'Charter', serif; }
+
+.body {
+    font-family: 'Charter', serif}
+
+div.admonition-todo {
+    border: 1px grey solid;
+    }
+
+.footnote-reference {
+    vertical-align: super;
+    font-size: 0.7em;
+    line-height: normal;
+    position: relative;}
+    
+table > caption {
+    font-size: x-large%;
+    font-weight: 600;
+    text-align: left;
+    margin-top: 1em;
+    
+}
+
+div.section > h2 {
+    border-top: 1px solid black;
+}
+
+.strike {
+    text-decoration: line-through;
+}
